@@ -1,0 +1,3 @@
+[submodule "fantom-sfc"]
+	path = fantom-sfc
+	url = https://github.com/Fantom-foundation/fantom-sfc
