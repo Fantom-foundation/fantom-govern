@@ -43,6 +43,84 @@ class TransactionHandler {
         return txHash;
     };
 
+    async increaseProposalDeposit(from, value, proposalId) {
+        const nonce = await this.web3.eth.getTransactionCount(from);
+        const gasPrice = await this.web3.eth.getGasPrice();
+
+        const txMsg = {
+            from: from,
+            to: this.contractAddr,
+            value: value,
+            data: this.governance.methods.increaseProposalDeposit(proposalId).encodeABI(),
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            nonce: this.web3.utils.toHex(nonce)
+        }
+
+        let txHash;
+        await this.web3.eth.sendTransaction(txMsg, function(err, hash) {
+            if (err) 
+                throw(err);
+
+            if (hash) {
+                console.log("tx sendSignedTransaction hash:", hash); 
+                txHash = hash;
+            }
+        });
+        return txHash;
+    }
+
+    async vote(from, proposalId, choises) {
+        const nonce = await this.web3.eth.getTransactionCount(from);
+        const gasPrice = await this.web3.eth.getGasPrice();
+
+        const txMsg = {
+            from: from,
+            to: this.contractAddr,
+            value: "0",
+            data: this.governance.methods.vote(proposalId, choises).encodeABI(),
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            nonce: this.web3.utils.toHex(nonce)
+        }
+
+        let txHash;
+        await this.web3.eth.sendTransaction(txMsg, function(err, hash) {
+            if (err) 
+                throw(err);
+
+            if (hash) {
+                console.log("tx sendSignedTransaction hash:", hash); 
+                txHash = hash;
+            }
+        });
+        return txHash;
+    }
+
+    async handleDeadlines(from, startIdx, quantity) {
+        const nonce = await this.web3.eth.getTransactionCount(from);
+        const gasPrice = await this.web3.eth.getGasPrice();
+
+        const txMsg = {
+            from: from,
+            to: this.contractAddr,
+            value: "0",
+            data: this.governance.methods.handleDeadlines(startIdx, quantity).encodeABI(),
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            nonce: this.web3.utils.toHex(nonce)
+        }
+
+        let txHash;
+        await this.web3.eth.sendTransaction(txMsg, function(err, hash) {
+            if (err) 
+                throw(err);
+
+            if (hash) {
+                console.log("tx sendSignedTransaction hash:", hash); 
+                txHash = hash;
+            }
+        });
+        return txHash;
+    }
+
     getTotalVotes(from, propType) {
         return new Promise(resolve => {
             this.governance.methods.totalVotes(propType).call({from}, function (error, result) {

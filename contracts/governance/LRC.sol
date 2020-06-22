@@ -42,6 +42,7 @@ library LRC {
     }
 
     function calculateARC(LrcOption storage self) public {
+
         uint256 maxPossibleResistance = self.totalVotes * maxScale;
         uint256 rebasedActualResistance = self.resistance * rebaseScale;
         self.arc = rebasedActualResistance / maxPossibleResistance;

@@ -27,9 +27,7 @@ contract StatusConstants {
     }
 
     function failStatus(uint256 status) public pure returns (uint256) {
-        status &= ~(1 << BIT_IS_ACTIVE);
-        status &= ~(1 << BIT_IS_ACCEPTED);
-        status &= ~(1 << BIT_IS_IMPLEMENTED);
+        status = 1 << BIT_IS_FAILED;
         return status;
     }
 
@@ -101,8 +99,8 @@ contract Constants is StatusConstants {
     uint256 constant CANCEL_DELEGATION_FEE = 123;
 
     // temprorary timestamp constants
-    uint256 constant DEPOSITING_PERIOD = 1 weeks;
-    uint256 constant VOTING_PERIOD = 1 weeks;
+    uint256 constant DEPOSITING_PERIOD = 30 seconds;
+    uint256 constant VOTING_PERIOD = 30 seconds;
 
     function typeExecutable() public pure returns (uint8) {
         return TYPE_EXECUTABLE;

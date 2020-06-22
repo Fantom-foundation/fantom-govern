@@ -40,8 +40,24 @@ async function resolveProposal(web3, govContract, proposalFactory, dummySfcAddr)
     }];
     let topics = ["0xfd9732adde846a19b596a7f5b72cce832b433844e7c3921219e44a83d7295bac"];
     let decodeRes = web3.eth.abi.decodeLog(inputs, receiptData, topics);
-    console.log();
-    return decodeRes.proposalId;
+    const newProposalId = decodeRes.proposalId;
+    console.log("newProposalId", newProposalId);
+
+    //increaseProposalDeposit
+
+    txHash = await govContract.transactions.increaseProposalDeposit(coinbase, deposit, newProposalId);
+
+    // sleep
+    // Я НЕ ПОНИМАЮ ЧТО ТУТ ПРОИСХОДИТ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    await new Promise(r => setTimeout(r, 60000));
+    txHash = await govContract.transactions.handleDeadlines(coinbase, "0", "40");
+
+    // await new Promise(r => setTimeout(r, 45001));
+    const voteChoises = ["1", "0"];
+    txHash = await govContract.transactions.vote(coinbase, newProposalId, voteChoises);
+
+    await new Promise(r => setTimeout(r, 60000));
+    txHash = await govContract.transactions.handleDeadlines(coinbase, "0", "40");
 }
 
 async function deployContracts(web3) {

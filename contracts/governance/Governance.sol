@@ -42,7 +42,6 @@ contract Governance is GovernanceSettings {
         uint256 status;
         mapping(uint256 => LRC.LrcOption) options;
         uint256[] optionIDs;
-        uint256 lastOptionID;
         uint256 chosenOption;
         uint256 totalVotes;
         uint8 propType;
@@ -68,6 +67,7 @@ contract Governance is GovernanceSettings {
     mapping(address => mapping(uint256 => uint256)) public depositors; // sender address to proposal id to deposit
     mapping(address => mapping(uint256 => Voter)) public voters;
     mapping(uint256 => uint256[]) public proposalsAtDeadline; // deadline to proposal ids
+    mapping(uint256 => uint256) public deadlinesIdxs;
 //    mapping(uint256 => uint256) public idxToDeadlines; // index to deadline
 
     event ProposalIsCreated(uint256 proposalId);
@@ -80,10 +80,12 @@ contract Governance is GovernanceSettings {
     event ImplementedProposal(uint256 proposalId);
     event DeadlineRemoved(uint256 deadline);
     event DeadlineAdded(uint256 deadline);
+    event CannotHandleFutureDeadline(uint256 deadline);
     event GovernableContractSet(address addr);
     event SoftwareVersionAdded(string version, address addr);
     event VotersPowerReduced(address voter);
     event UserVoted(address voter, uint256 proposalId, uint256[] choises, uint256 power);
+    event VotingResultCalculated(uint256 proposalId);
 
     constructor (address _governableContract, address _proposalFactory) public {
         governableContract = Governable(_governableContract);
@@ -93,6 +95,23 @@ contract Governance is GovernanceSettings {
     function getProposalDepDeadline(uint256 proposalId) public view returns (uint256) {
         ProposalDescription storage prop = proposals[proposalId];
         return (prop.deadlines.depositingEndTime);
+    }
+
+    function getProposalOptions(uint256 proposalId) public view returns (uint256[] memory) {
+        ProposalDescription storage prop = proposals[proposalId];
+        return (prop.optionIDs);
+    }
+
+    function getProposalLrcOption(uint256 proposalId) public view returns (uint256[] memory) {
+        ProposalDescription storage prop = proposals[proposalId];
+        uint256[] memory totalVotesArr = new uint256[](prop.optionIDs.length);
+        for (uint256 i = 0; i < prop.optionIDs.length; i++) {
+            uint256 optionId = prop.optionIDs[i];
+            LRC.LrcOption memory option = prop.options[optionId];
+            require(option.description != "", "option description is empty, so probably LRC option is empty too");
+            totalVotesArr[i] = option.totalVotes;
+        }
+        return totalVotesArr;
     }
 
     function getProposalStatus(uint256 proposalId) public view returns (uint256) {
@@ -112,7 +131,9 @@ contract Governance is GovernanceSettings {
         uint256 status,
         uint256 chosenOption,
         uint256 totalVotes,
-        address proposalContract) {
+        address proposalContract,
+        uint256 depositingEndTime,
+        uint256 votingEndTime) {
         ProposalDescription storage prop = proposals[proposalId];
 
         return (
@@ -122,7 +143,9 @@ contract Governance is GovernanceSettings {
             prop.status,
             prop.chosenOption,
             prop.totalVotes,
-            prop.proposalContract
+            prop.proposalContract,
+            prop.deadlines.depositingEndTime,
+            prop.deadlines.votingEndTime
         );
     }
 
@@ -137,6 +160,7 @@ contract Governance is GovernanceSettings {
         require(choises.length == prop.optionIDs.length, "incorrect choises");
 
         (uint256 ownVotingPower, uint256 delegationVotingPower, uint256 delegatedVotingPower) = accountVotingPower(msg.sender, prop.id);
+        require(ownVotingPower != 0 || delegatedVotingPower != 0, "user has no voting privileges");
 
         if (ownVotingPower != 0) {
             uint256 power = ownVotingPower + delegationVotingPower - reducedVotersPower[msg.sender][proposalId];
@@ -183,17 +207,16 @@ contract Governance is GovernanceSettings {
         prop.status = setStatusDepositing(0);
         prop.requiredVotes = minimumVotesRequired(totalVotes(prop.propType));
         for (uint256 i = 0; i < options.length; i++) {
-            prop.lastOptionID++;
-            LRC.LrcOption storage option = prop.options[prop.lastOptionID];
+            LRC.LrcOption storage option = prop.options[i];
             option.description = options[i];
             // option.description = bytes32ToString(choises[i]);
-            prop.optionIDs.push(prop.lastOptionID);
+            prop.optionIDs.push(i);
         }
         prop.deposit = msg.value;
         prop.proposalContract = proposalContract;
-        depositingDeadlines(lastProposalId);
-        votingDeadlines(lastProposalId);
-        saveDeadlines(lastProposalId);
+        // depositingDeadlines(lastProposalId);
+        // votingDeadlines(lastProposalId);
+        setDepositingDeadline(lastProposalId);
         proposalFactory.setProposalIsConsidered(proposalContract);
 
         emit ProposalIsCreated(lastProposalId);
@@ -205,23 +228,35 @@ contract Governance is GovernanceSettings {
     }
 
     function handleDeadlines(uint256 startIdx, uint256 quantity) public {
-        require(startIdx < deadlines.length, "incorrect indexes passed");
+        require(startIdx <= deadlines.length, "incorrect indexes passed");
+        uint256[] memory handeledDeadlinesIds = new uint256[](quantity);
+        uint256 lastNonEmpty = 0;
 
         if (quantity > deadlines.length - startIdx) {
             quantity = deadlines.length - startIdx;
         }
 
         for (uint256 i = 0; i < quantity; i++) {
-            handleDeadline(deadlines[startIdx+i]);
+            bool deadlineHandled = handleDeadline(deadlines[startIdx+i]);
+            if (deadlineHandled) {
+                lastNonEmpty++;
+                handeledDeadlinesIds[lastNonEmpty] = i;
+            }
         }
 
-        removeDeadlines(startIdx, quantity);
+        removeDeadlines(handeledDeadlinesIds, lastNonEmpty);
 
-        emit DeadlinesResolved(startIdx, quantity);
+        // emit DeadlinesResolved(startIdx, quantity);
     }
 
-    function handleDeadline(uint256 deadline) public {
+    function handleDeadline(uint256 deadline) public returns (bool) {
         uint256[] memory proposalIds = proposalsAtDeadline[deadline];
+
+        if (block.timestamp < deadline) {
+            emit CannotHandleFutureDeadline(deadline);
+
+            return false;
+        }
 
         for (uint256 i = 0; i < proposalIds.length; i++) {
             uint256 proposalId = proposalIds[i];
@@ -229,36 +264,57 @@ contract Governance is GovernanceSettings {
         }
 
         emit DeadlineRemoved(deadline);
+        return true;
     }
 
     function handleProposalDeadline(uint256 proposalId) public {
         ProposalDescription storage prop = proposals[proposalId];
+        if (prop.id != proposalId) {
+            return;
+        }
+        // require(prop.id == proposalId, "proposal does not exist");
+
         if (statusDepositing(prop.status)) {
             if (prop.deposit >= prop.requiredDeposit) {
+                require(prop.deadlines.depositingEndTime < block.timestamp, "depositing period didnt end, cannot proceed to voting");
+
                 proceedToVoting(prop.id);
                 return;
             }
         }
 
         if (statusVoting(prop.status)) {
+            require(prop.deadlines.votingEndTime < block.timestamp, "voting period didnt end, cannot calculate voting result");
+
             (bool proposalAccepted, uint256 winnerId) = calculateVotingResult(proposalId);
-            emit ProposalIsRejected(proposalId);
             if (proposalAccepted) {
                 resolveProposal(prop.id, winnerId);
                 return;
             }
+            emit ProposalIsRejected(proposalId);
         }
 
         failProposal(prop.id);
     }
 
-    function removeDeadlines(uint256 startIdx, uint256 endIdx)  internal {
+    function removeDeadlines(uint256[] memory handeledDeadlinesIds, uint256 lastNonEmpty)  internal {
 
-        for (uint i = endIdx; i > startIdx; i--) {
-            delete proposalsAtDeadline[deadlines[i]];
-            deadlines.length--;
+        // TODO: rename to something more clear
+        uint256 quantity = lastNonEmpty;
+        uint256 intersectId = deadlines.length - quantity;
+        uint256 swapedNum = 1;
+
+        for (uint256 i = 0; i < quantity; i++) {
+            uint256 id = handeledDeadlinesIds[i];
+            delete proposalsAtDeadline[deadlines[id]];
+
+            if (id < intersectId) {
+                deadlines[id] = deadlines[deadlines.length - swapedNum];
+                deadlinesIdxs[deadlines[id]] = id;
+                swapedNum++;
+            }
         }
-
+        deadlines.length -= quantity;
     }
 
     function cancelVote(uint256 proposalId) public {
@@ -271,9 +327,8 @@ contract Governance is GovernanceSettings {
 
     function proceedToVoting(uint256 proposalId) internal {
         ProposalDescription storage prop = proposals[proposalId];
-        prop.deadlines.votingStartTime = block.timestamp;
-        prop.deadlines.votingEndTime = block.timestamp + votingPeriod();
         prop.status = setStatusVoting(prop.status);
+        setVotingDeadline(proposalId);
         emit StartedProposalVoting(proposalId);
     }
 
@@ -281,12 +336,10 @@ contract Governance is GovernanceSettings {
         ProposalDescription storage prop = proposals[proposalId];
         require(statusVoting(prop.status), "proposal is not at voting period");
         require(prop.totalVotes >= prop.requiredVotes, "proposal has not enough votes to resolve");
-        require(prop.deadlines.votingEndTime >= block.timestamp, "proposal voting deadline is not passed");
+        require(prop.deadlines.votingEndTime < block.timestamp, "proposal voting deadline is not passed");
 
-        if (prop.propType == typeExecutable()) {
-            address propAddr = prop.proposalContract;
-            propAddr.delegatecall(abi.encodeWithSignature("execute(uint256)", winnerOptionId));
-        }
+        address propAddr = prop.proposalContract;
+        propAddr.delegatecall(abi.encodeWithSignature("execute(uint256)", winnerOptionId));
 
         prop.status = setStatusAccepted(prop.status);
         prop.chosenOption = winnerOptionId;
@@ -300,7 +353,8 @@ contract Governance is GovernanceSettings {
         uint256 winnerId;
         for (uint256 i = 0; i < prop.optionIDs.length; i++) {
             uint256 optionID = prop.optionIDs[i];
-            prop.options[optionID].recalculate();
+            LRC.LrcOption storage option = prop.options[optionID];
+            option.recalculate();
             uint256 arc = prop.options[optionID].arc;
 
             if (prop.options[optionID].dw > _maximumlPossibleDesignation) {
@@ -320,7 +374,8 @@ contract Governance is GovernanceSettings {
             }
         }
 
-        return (leastResistance != 0, winnerId);
+        emit VotingResultCalculated(proposalId);
+        return (/*leastResistance != 0*/ true, winnerId);
     }
 
     function increaseVotersPower(uint256 proposalId, address voterAddr, uint256 power) internal {
@@ -433,19 +488,42 @@ contract Governance is GovernanceSettings {
 
     function votingDeadlines(uint256 proposalId) internal {
         ProposalDescription storage prop = proposals[proposalId];
-        prop.deadlines.votingStartTime = block.timestamp;
-        prop.deadlines.votingEndTime = block.timestamp + votingPeriod();
+        prop.deadlines.votingStartTime = block.timestamp + depositingPeriod();
+        prop.deadlines.votingEndTime = block.timestamp + votingPeriod() + depositingPeriod();
     }
 
-    function saveDeadlines(uint256 proposalId) internal {
+    function setVotingDeadline(uint256 proposalId) internal {
         ProposalDescription storage prop = proposals[proposalId];
+        uint256 votingDeadline = now + votingPeriod();
+        uint256 idx = deadlinesIdxs[votingDeadline];
+        prop.deadlines.votingStartTime = now;
+        prop.deadlines.votingEndTime = votingDeadline;
 
-        proposalDeadlines[proposalId] = prop.deadlines;
+        saveDeadline(proposalId, votingDeadline);
+    }
 
-        deadlines.push(prop.deadlines.votingEndTime);
-        proposalsAtDeadline[prop.deadlines.votingEndTime].push(proposalId);
+    function setDepositingDeadline(uint256 proposalId) internal {
+        ProposalDescription storage prop = proposals[proposalId];
+        uint256 depositDeadline = now + depositingPeriod();
 
-        deadlines.push(prop.deadlines.depositingEndTime);
-        proposalsAtDeadline[prop.deadlines.depositingEndTime].push(proposalId);
+        prop.deadlines.depositingStartTime = now;
+        prop.deadlines.depositingEndTime = depositDeadline;
+        saveDeadline(proposalId, depositDeadline);
+    }
+
+    function saveDeadline(uint256 proposalId, uint256 deadline) internal {
+        uint256 idx = deadlinesIdxs[deadline];
+        proposalsAtDeadline[deadline].push(proposalId);
+
+        if (deadlines.length <= idx) {
+            deadlines.push(deadline);
+            deadlinesIdxs[deadline] = deadlines.length - 1;
+            return;
+        }
+
+        if (deadlines[idx] != deadline) {
+            deadlines.push(deadline);
+            deadlinesIdxs[deadline] = deadlines.length - 1;
+        }
     }
 }

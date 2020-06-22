@@ -1,9 +1,9 @@
 const LRC = artifacts.require("LRC");
-const Governance = artifacts.require("Governance");
+const Governance = artifacts.require("TestGovernance");
 const TestStakers = artifacts.require("TestStakers");
 const UnitTestProposal = artifacts.require("UnitTestProposal");
 const UpgradeabilityProxy = artifacts.require('UpgradeabilityProxy');
-const ProposalFactory = artifacts.require('ProposalFactory');
+const ProposalFactory = artifacts.require('TestProposalFactory');
 const DummySoftwareContract = artifacts.require('DummySoftwareContract');
 
 module.exports = async(deployer, network) => {
