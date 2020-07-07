@@ -27,9 +27,10 @@ const DummySoftwareUpgradeProposal = artifacts.require('DummySoftwareUpgradeProp
 const GovernanceProd = artifacts.require("Governance");
 const stakerMetadata = "0x0001";
 
-const minStartingDeposit = "150";
-const minProposalDeposit = "1500";
-const largeProposalDeposit = "15000";
+const ftmScale = new BN("1000000000000000000")
+const minStartingDeposit = new BN("100000").mul(ftmScale);
+const minProposalDeposit = new BN("500000").mul(ftmScale);
+const largeProposalDeposit = new BN("1000000").mul(ftmScale);
 const expectedMinimumVotesRequired = "";
 
 const minute = 60;
@@ -42,6 +43,8 @@ const statusDepositing = new BN("1"); // 0x01 (just active )
 const statusVoting = new BN("5"); // 0x01 (active) |= 1 << 2
 const statusFail = new BN("16");
 
+
+// TODO: there are some blocks of code that appear from func to func with a barely noticeable differences. Blocks can be easily agregated within a function ( to shorten and simplify code )
 contract('Governance test', async ([acc0, acc1, acc2, acc3, acc4, acc5, contractAddr]) => {
     beforeEach(async () => {
         if (!showLogs)
@@ -120,7 +123,7 @@ contract('Governance test', async ([acc0, acc1, acc2, acc3, acc4, acc5, contract
         await expectRevert(this.governance.createProposal(proposalAddress, "0", {from: sender, value: minStartingDeposit}), "required deposit for a proposal is too small");
 
         // not realy a nice line of code, but short. we assume that minProposalDeposit is string, not BN
-        let enlargedProposalDeposit = new BN(minProposalDeposit + "0");
+        let enlargedProposalDeposit = minProposalDeposit.mul(new BN(10));
         tx = await this.governance.createProposal(proposalAddress, enlargedProposalDeposit, {from: sender, value: minStartingDeposit});
         let newProposalId = tx.logs[0].args.proposalId;
         let prop = await this.governance.getProposalDescription(newProposalId);
@@ -143,8 +146,8 @@ contract('Governance test', async ([acc0, acc1, acc2, acc3, acc4, acc5, contract
 
         for (const proposalId of proposalIds) {
             let prop = await this.governanceProd.getProposalDescription(proposalId);
-            expect(prop.depositingEndTime).to.be.bignumber.equal(new BN(expectedDeadline), "depositingDeadLine is set with error");
-            expect(prop.status).to.be.bignumber.equal(statusDepositing, "proposal status should be 'depositing'");
+            expect(prop.depositingEndTime).to.be.bignumber.equal(new BN(expectedDeadline));
+            expect(prop.status).to.be.bignumber.equal(statusDepositing);
         }
 
         // we imitate 10 seconds of waiting here. this time is not enought for deadline to pass
@@ -283,8 +286,122 @@ contract('Governance test', async ([acc0, acc1, acc2, acc3, acc4, acc5, contract
         expect(op2.dw).to.be.bignumber.equal(options[1].dw);
     })
 
-    it ("test proposal execution", async () => {
-        return;
+    it("test cancel vote", async() => {
+        let minStake = await this.stakers.minStake();
+        let mediumStake = minStake.mul(new BN("2"));
+        let largeStake = minStake.mul(new BN("3"));
+        let stakersDesc = [ 
+            { address: acc1, stake: minStake,    choises: ["4", "1"] },
+            { address: acc2, stake: mediumStake, choises: ["1", "0"] }, 
+            { address: acc3, stake: mediumStake, choises: ["2", "0"] }, 
+        ];
+
+        let stakedAmount = await createStakersSet(this.stakers, stakersDesc);
+        for (const stakerDesc of stakersDesc) {
+            let accWp = await this.governanceProd.accountVotingPower(stakerDesc.address, 0);
+            expect(accWp[0]).to.be.bignumber.equal(stakerDesc.stake);
+        }
+
+        let options = [ new testHelper.LrcOption(), new testHelper.LrcOption()];
+        let proposalId = await getPtpWithVoting(this.proposalFactory, this.governanceProd, acc0);
+        for (const stakerDesc of stakersDesc) {
+            await this.governanceProd.vote(proposalId, stakerDesc.choises, {from: stakerDesc.address});
+            for (let i = 0; i < stakerDesc.choises.length; i++) {
+                let choise = stakerDesc.choises[i];
+                let c = parseInt(choise);   
+                options[i].opinions[c].count = options[i].opinions[c].count.add(stakerDesc.stake);
+                options[i].totalVotes = options[i].totalVotes.add(stakerDesc.stake);
+            }
+        }
+
+        op1 = await this.governanceProd.getProposalLrcOption(proposalId, 0);
+        op2 = await this.governanceProd.getProposalLrcOption(proposalId, 1);
+        options.forEach(option => {
+            option.calculate();
+            console.log("option.rawCount", option.rawCount.toString());
+        });
+        expect(op1.totalVotes).to.be.bignumber.equal(options[0].totalVotes);
+        expect(op2.totalVotes).to.be.bignumber.equal(options[1].totalVotes);
+
+
+        for (const stakerDesc of stakersDesc) {
+            await this.governanceProd.cancelVote(proposalId, {from: stakerDesc.address});
+        }
+
+        op1 = await this.governanceProd.getProposalLrcOption(proposalId, 0);
+        op2 = await this.governanceProd.getProposalLrcOption(proposalId, 1);
+        expect(op1.totalVotes).to.be.bignumber.equal(new BN(0));
+        expect(op2.totalVotes).to.be.bignumber.equal(new BN(0));
+    })
+
+    it("test lrc constants", async () => {
+        // 4.1. create stakeres
+        let minStake = await this.stakers.minStake();
+        let mediumStake = minStake.mul(new BN("2"));
+        let largeStake = minStake.mul(new BN("3"));
+        let stakersDesc = [ 
+            { address: acc1, stake: minStake,    choises: ["4", "1"] },
+            { address: acc2, stake: mediumStake, choises: ["1", "0"] }, 
+            { address: acc3, stake: mediumStake, choises: ["2", "0"] }, 
+        ];
+
+        let delegatorsDesc = [
+            { address: acc4, stake: mediumStake, choises: ["2", "0"], delegationTo: "2" },
+            { address: acc5, stake: largeStake,  choises: ["0", "4"], delegationTo: "3" }
+        ];
+
+        let stakedAmount = await createStakersSet(this.stakers, stakersDesc);
+        for (const stakerDesc of stakersDesc) {
+            let accWp = await this.governanceProd.accountVotingPower(stakerDesc.address, 0);
+            expect(accWp[0]).to.be.bignumber.equal(stakerDesc.stake);
+        }
+
+        // 4.2. create delegators
+    
+        let delegatedAmount = await createDelegatorsSet(this.stakers, delegatorsDesc);
+        for (const delegatorDesc of delegatorsDesc) {
+            let accWp = await this.governanceProd.accountVotingPower(delegatorDesc.address, 0);
+            expect(accWp[2]).to.be.bignumber.equal(delegatorDesc.stake);
+        }
+
+        let totalStake = stakedAmount.add(delegatedAmount);
+        console.log("totalStake d", totalStake.toString());
+        
+        let options = [ new testHelper.LrcOption(), new testHelper.LrcOption()];
+        let proposalId = await getPtpWithVoting(this.proposalFactory, this.governanceProd, acc0);
+        for (const stakerDesc of stakersDesc) {
+            await this.governanceProd.vote(proposalId, stakerDesc.choises, {from: stakerDesc.address});
+            for (let i = 0; i < stakerDesc.choises.length; i++) {
+                let choise = stakerDesc.choises[i];
+                let c = parseInt(choise);   
+                options[i].opinions[c].count = options[i].opinions[c].count.add(stakerDesc.stake);
+                options[i].totalVotes = options[i].totalVotes.add(stakerDesc.stake);
+            }
+        }
+
+        let op1 = await this.governanceProd.getProposalLrcOption(proposalId, 0);
+        let op2 = await this.governanceProd.getProposalLrcOption(proposalId, 1);
+        let ops = [ op1, op2 ];
+
+        for (let i = 0; i < ops.length; i++) {
+            expect(op[i].resistance).to.be.bignumber.equal(options[i].rawCount);
+            expect(op[i].arc).to.be.bignumber.equal(options[i].arc);
+            expect(op[i].dw).to.be.bignumber.equal(options[i].dw);
+            expect(op[i].totalVotes).to.be.bignumber.equal(options[i].totalVotes);    
+        }
+        let totalVotes = await this.stakers.getTotalVotes(proposalId);
+        expect(totalVotes).to.be.bignumber.equal(options[0].totalVotes);
+
+        await this.stakers.prepareToWithdrawStake({from: acc1});
+        await testHelper.advanceTimeAndBlock(86400 * 7, web3); 
+        await this.stakers.makeEpochSnapshots(10000);
+
+
+        // check that ltc calculates correctly
+
+    })
+
+    it ("test lrc voting fail", async () => {
         let minStake = await this.stakers.minStake();
         let mediumStake = minStake.mul(new BN("2"));
         let largeStake = minStake.mul(new BN("3"));
@@ -318,13 +435,12 @@ async function getPtpWithVoting(proposalFactory, governance, sender) {
 }
 
 async function getExpectedRequiredVotes(totalVotes) {
-    let a1 = totalVotes.mul(new BN(67));
+    let a1 = totalVotes.mul(new BN(20));
     let a2 = a1.div(new BN(100));
     // let consensus = oneThird.add(new BN(1));
     return a2;
 }
 
-// 
 async function createStakersSet(stakersContract, stakersDesc) {
     for (const stakerDesc of stakersDesc) {
         await stakersContract._createStake({from: stakerDesc.address, value: stakerDesc.stake});
@@ -342,7 +458,23 @@ async function createStakersSet(stakersContract, stakersDesc) {
     return totalStake;
 }
 
-// нужно - получить все дедлайны Вообще
+async function createDelegatorsSet(stakersContract, depositorsDesc) {
+    for (const depositorDesc of depositorsDesc) {
+        await stakersContract.createDelegation(depositorDesc.delegationTo, {from: depositorDesc.address, value: depositorDesc.stake});
+    }
+
+    let totalDelegation = depositorsDesc.reduce((accumulator, depositor) => { 
+        let acc = accumulator;
+        if (accumulator.stake) {
+            acc = accumulator.stake;
+        } 
+        
+        return acc.add(depositor.stake);  
+    });
+
+    return totalDelegation;
+}
+
 async function resolveProp(governance, id, acc1) {
     await governance.increaseProposalDeposit(id, {from: acc1, value: minProposalDeposit});
 

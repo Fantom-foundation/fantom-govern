@@ -92,6 +92,24 @@ contract Governance is GovernanceSettings {
         proposalFactory = IProposalFactory(_proposalFactory);
     }
 
+    function userReducedStake(address voter, uint256 power) external {
+        require(msg.sender == address(governableContract), "only governable contract can reduce user stake");
+        Voter memory vtr = voters[voter];
+        if (vtr.power == 0) {
+            return;
+        }
+        reduceVotersPower(proposalId, voter, power);
+    }
+
+    function userReducedDelegation(address voter, uint256 power) external {
+        require(msg.sender == address(governableContract), "only governable contract can reduce user delegation");
+        Voter memory vtr = voters[voter];
+        if (vtr.power == 0) {
+            return;
+        }
+        reduceVotersPower(proposalId, voter, power);
+    }
+
     function getProposalDepDeadline(uint256 proposalId) public view returns (uint256) {
         ProposalDescription storage prop = proposals[proposalId];
         return (prop.deadlines.depositingEndTime);
@@ -102,7 +120,25 @@ contract Governance is GovernanceSettings {
         return (prop.optionIDs);
     }
 
-    function getProposalLrcOption(uint256 proposalId) public view returns (uint256[] memory) {
+    function getProposalLrcOption(uint256 proposalId, uint256 optionId) public view 
+    returns (
+        bytes32 description,
+        uint256 arc,
+        uint256 dw,
+        uint256 resistance,
+        uint256 totalVotes,
+        uint256 maxPossibleVotes
+    ) {
+        ProposalDescription storage prop = proposals[proposalId];
+        uint256[] memory totalVotesArr = new uint256[](prop.optionIDs.length);
+        LRC.LrcOption memory option = prop.options[optionId];
+        require(option.description != "", "option description is empty, so probably LRC option is empty too");
+
+        return (option.description, option.arc, option.dw, option.resistance, option.totalVotes, option.maxPossibleVotes);
+    }
+
+    // special contract method for debugging purposes
+    function getProposalOptionsTotalVotes(uint256 proposalId) public view returns (uint256[] memory) {
         ProposalDescription storage prop = proposals[proposalId];
         uint256[] memory totalVotesArr = new uint256[](prop.optionIDs.length);
         for (uint256 i = 0; i < prop.optionIDs.length; i++) {
@@ -128,6 +164,7 @@ contract Governance is GovernanceSettings {
         string memory description,
         uint256 requiredVotes,
         uint256 deposit,
+        uint256 requiredDeposit,
         uint256 status,
         uint256 chosenOption,
         uint256 totalVotes,
@@ -140,6 +177,7 @@ contract Governance is GovernanceSettings {
             prop.description,
             prop.requiredVotes,
             prop.deposit,
+            prop.requiredDeposit,
             prop.status,
             prop.chosenOption,
             prop.totalVotes,
@@ -275,16 +313,13 @@ contract Governance is GovernanceSettings {
         // require(prop.id == proposalId, "proposal does not exist");
 
         if (statusDepositing(prop.status)) {
-            if (prop.deposit >= prop.requiredDeposit) {
-                require(prop.deadlines.depositingEndTime < block.timestamp, "depositing period didnt end, cannot proceed to voting");
-
+            if (prop.deposit >= prop.requiredDeposit && prop.deadlines.depositingEndTime < block.timestamp) {
                 proceedToVoting(prop.id);
                 return;
             }
         }
 
-        if (statusVoting(prop.status)) {
-            require(prop.deadlines.votingEndTime < block.timestamp, "voting period didnt end, cannot calculate voting result");
+        if (statusVoting(prop.status) && prop.deadlines.votingEndTime < block.timestamp) {
 
             (bool proposalAccepted, uint256 winnerId) = calculateVotingResult(proposalId);
             if (proposalAccepted) {
@@ -419,6 +454,7 @@ contract Governance is GovernanceSettings {
         for (uint256 i = 0; i < prop.optionIDs.length; i++) {
             uint256 optionID = prop.optionIDs[i];
             prop.options[optionID].addVote(choises[i], power);
+            prop.options[optionID].recalculate();
         }
     }
 
