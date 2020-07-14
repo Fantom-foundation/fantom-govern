@@ -59,10 +59,6 @@ contract Governance is GovernanceSettings {
     bytes4 abstractProposalInterfaceId;
 
     mapping(uint256 => ProposalDescription) proposals;
-    mapping(uint256 => uint256) deposits;
-    mapping(uint256 => uint256) proposalRequiredDeposit;
-    mapping(uint256 => uint256) votes;
-    mapping(uint256 => uint256) proposalRequiredVotes;
     mapping(uint256 => ProposalTimeline) proposalDeadlines; // proposal ID to Deadline
     mapping(address => mapping(uint256 => uint256)) public reducedVotersPower; // sender address to proposal id to power
     mapping(address => mapping(uint256 => uint256)) public depositors; // sender address to proposal id to deposit
