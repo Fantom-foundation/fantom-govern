@@ -15,13 +15,10 @@ contract StatusConstants {
     uint256 constant BIT_IS_IMPLEMENTED = 5;
 
     // tasks
-    uint256 constant TASK_DEPOSIT = 1;
     uint256 constant TASK_VOTING = 2;
 
     // statuses
     uint256 constant ACTIVE = 1;
-    uint256 constant STATUS_DEPOSITING = ACTIVE;
-    uint256 STATUS_DEPOSITING_FAILED = failStatus(STATUS_DEPOSITING); // immutable
     uint256 STATUS_VOTING = setStatusVoting(ACTIVE); // immutable
     uint256 STATUS_VOTING_FAILED = failStatus(STATUS_VOTING); // immutable
 
@@ -34,11 +31,6 @@ contract StatusConstants {
         status &= ~(1 << BIT_IS_ACTIVE);
         status &= ~(1 << BIT_IS_ACCEPTED);
         status &= ~(1 << BIT_IS_IMPLEMENTED);
-        return status;
-    }
-
-    function setStatusDepositing(uint256 status) public pure returns (uint256) {
-        status |= 1 << BIT_IS_ACTIVE;
         return status;
     }
 
@@ -58,14 +50,6 @@ contract StatusConstants {
 
     function statusInactive(uint256 status) internal view returns (bool) {
         return (status >> BIT_IS_ACTIVE) & 1 == 0;
-    }
-
-    function statusDepositing(uint256 status) internal view returns (bool) {
-        return status == STATUS_DEPOSITING;
-    }
-
-    function statusDepositingFailed(uint256 status) internal view returns (bool) {
-        return status == STATUS_DEPOSITING_FAILED;
     }
 
     function statusVoting(uint256 status) internal view returns (bool) {
@@ -92,20 +76,11 @@ contract Constants is StatusConstants {
     // uint256 constant TYPE_IMMEDIATE_ACTION = 0x3; // immediate action type
     uint8 constant TYPE_EXECUTABLE = 0x4;
 
-    // deposit constants are temprorary
-    uint256 constant SOFTWARE_UPGRADE_MIN_DEPOSIT = 150;
-    uint256 constant SOFTWARE_UPGRADE_REQUIRED_DEPOSIT = 1500;
-    uint256 constant PLAIN_TEXT_MIN_DEPOSIT = 150;
-    uint256 constant PLAIN_TEXT_REQUIRED_DEPOSIT = 1500;
-    uint256 constant IMMEDIATE_ACTION_MIN_DEPOSIT = 150;
-    uint256 constant IMMEDIATE_ACTION_REQUIRED_DEPOSIT = 1500;
-
     // temprorary constant
     uint256 constant CANCEL_VOTE_FEE = 123;
     uint256 constant CANCEL_DELEGATION_FEE = 123;
 
     // temprorary timestamp constants
-    uint256 constant DEPOSITING_PERIOD = 1 weeks;
     uint256 constant VOTING_PERIOD = 1 weeks;
 
     function typeExecutable() public pure returns (uint8) {
@@ -122,10 +97,6 @@ contract Constants is StatusConstants {
 
     function votingPeriod() public view returns (uint256) {
         return VOTING_PERIOD;
-    }
-
-    function depositingPeriod() public view returns (uint256) {
-        return DEPOSITING_PERIOD;
     }
 
     function minVotesRequired(uint256 totalVotersNum, uint256 proposalType) public pure returns (uint256) {

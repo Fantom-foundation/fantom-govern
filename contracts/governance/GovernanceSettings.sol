@@ -8,19 +8,14 @@ import "../common/ImplementationValidator.sol";
 
 
 contract GovernanceSettings is Constants {
-    uint256 _minimumDeposit = 1500; // minimum deposit
-    uint256 _minimumStartingDeposit = 150;
+    uint256 _proposalFee = 1500;
     uint256 _minimumVotesRequiredNum = 67;
     uint256 _minimumVotesRequiredDenum = 100;
     uint256 _maximumlPossibleResistance = 4000;
     uint256 _maximumlPossibleDesignation = 4000;
 
-    function minimumDeposit() public view returns(uint256) {
-        return _minimumDeposit;
-    }
-
-    function minimumStartingDeposit() public view returns(uint256) {
-        return _minimumStartingDeposit;
+    function proposalFee() public view returns(uint256) {
+        return _proposalFee;
     }
 
     function minimumVotesRequired(uint256 totalVotersNum) public view returns(uint256) {

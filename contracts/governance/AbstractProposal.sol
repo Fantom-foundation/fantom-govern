@@ -10,8 +10,6 @@ contract AbstractProposal {
     using SafeMath for uint256;
 
     struct ProposalTimeline {
-        uint256 depositingStartTime;
-        uint256 depositingEndTime;
         uint256 votingStartTime;
         uint256 votingEndTime;
         uint256 votingStartEpoch;
@@ -22,8 +20,6 @@ contract AbstractProposal {
     uint256 public id;
     uint256 public propType;
     uint256 public status; // status is a bitmask, check out "constants" for a further info
-    uint256 public deposit;
-    uint256 public requiredDeposit;
     uint256 public permissionsRequired; // might be a bitmask?
     uint256 public minVotesRequired;
     uint256 public totalVotes;
