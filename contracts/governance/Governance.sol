@@ -202,7 +202,7 @@ contract Governance is GovernanceSettings {
         emit TasksErased(erased);
     }
 
-    // handleTask calls handleProposalTask and marks task as inactive if it was handled
+    // handleTask calls handleTaskAssignments and marks task as inactive if it was handled
     function handleTask(uint256 taskIdx) internal returns(bool handled) {
         require(taskIdx < tasks.length, "incorrect task index");
         Task storage task = tasks[taskIdx];
@@ -210,15 +210,15 @@ contract Governance is GovernanceSettings {
             return false;
         }
         ProposalDescription storage prop = proposals[tasks[taskIdx].proposalID];
-        handled = handleProposalTask(prop, task.assignment);
+        handled = handleTaskAssignments(prop, task.assignment);
         if (handled) {
             task.active = false;
         }
         return handled;
     }
 
-    // handleProposalTask iterates through assignment types and calls a specific handler
-    function handleProposalTask(ProposalDescription storage prop, uint256 assignment) internal returns(bool handled) {
+    // handleTaskAssignments iterates through assignment types and calls a specific handler
+    function handleTaskAssignments(ProposalDescription storage prop, uint256 assignment) internal returns(bool handled) {
         if (assignment == TASK_VOTING) {
             return handleVotingTask(prop);
         }
