@@ -14,6 +14,10 @@ contract StatusConstants {
     uint256 constant BIT_IS_FAILED = 4;
     uint256 constant BIT_IS_IMPLEMENTED = 5;
 
+    // tasks
+    uint256 constant TASK_DEPOSIT = 1;
+    uint256 constant TASK_VOTING = 2;
+
     // statuses
     uint256 constant ACTIVE = 1;
     uint256 constant STATUS_DEPOSITING = ACTIVE;
