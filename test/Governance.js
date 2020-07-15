@@ -81,8 +81,8 @@ contract('Governance test', async ([acc1, acc2, contractAddr]) => {
 
         await this.governance.createProposal(this.proposal.address, IS_VOTING, 1,
             [String("0x0000000000000").valueOf(), String("0x00000000000001").valueOf()], createMsg);
-        let voter = await this.governance.voters.call(acc1, proposalID);
-        await expect(voter.power).to.be.bignumber.equal(new BN('0'));
+        let vote = await this.governance.votes.call(acc1, proposalID);
+        await expect(vote.power).to.be.bignumber.equal(new BN('0'));
 
         await this.governance.vote(proposalID,
             [String("0x0000000000000").valueOf(), String("0x00000000000001").valueOf()], voteMsg);
@@ -117,8 +117,8 @@ contract('Governance test', async ([acc1, acc2, contractAddr]) => {
         await this.governance.vote(proposalID,
             [String("0x0000000000000").valueOf(), String("0x00000000000001").valueOf()], voteMsg);
 
-        let voter = await this.governance.voters.call(acc1, proposalID);
-        await expect(voter.power).to.be.bignumber.equal(new BN(ether('3.0')));
+        let vote = await this.governance.votes.call(acc1, proposalID);
+        await expect(vote.power).to.be.bignumber.equal(new BN(ether('3.0')));
     });
 
     it('check vote - with staker create delegation', async () => {
@@ -138,8 +138,8 @@ contract('Governance test', async ([acc1, acc2, contractAddr]) => {
         await this.governance.vote(proposalID,
             [String("0x0000000000000").valueOf(), String("0x00000000000001").valueOf()], voteMsg);
 
-        let voter = await this.governance.voters.call(acc1, proposalID);
-        await expect(voter.power).to.be.bignumber.equal(new BN(ether('4.0')));
+        let vote = await this.governance.votes.call(acc1, proposalID);
+        await expect(vote.power).to.be.bignumber.equal(new BN(ether('4.0')));
     });
 
     it('check increase proposal deposit - proposal with a given id doesnt exist', async () => {
@@ -291,13 +291,13 @@ contract('Governance test', async ([acc1, acc2, contractAddr]) => {
 
         await this.governance.cancelVote(proposalID, {from: acc1});
 
-        let voter = await this.governance.voters.call(acc1, proposalID);
-        await expect(voter.power).to.be.bignumber.equal(new BN(ether('0.0')));
-        await expect(voter.previousDelegation).to.be.equal("0x0000000000000000000000000000000000000000");
+        let vote = await this.governance.votes.call(acc1, proposalID);
+        await expect(vote.power).to.be.bignumber.equal(new BN(ether('0.0')));
+        await expect(vote.previousDelegation).to.be.equal("0x0000000000000000000000000000000000000000");
 
-        voter = await this.governance.voters.call(acc2, proposalID);
-        await expect(voter.power).to.be.bignumber.equal(new BN(ether('4.0')));
-        await expect(voter.previousDelegation).to.be.equal("0x0000000000000000000000000000000000000000");
+        vote = await this.governance.votes.call(acc2, proposalID);
+        await expect(vote.power).to.be.bignumber.equal(new BN(ether('4.0')));
+        await expect(vote.previousDelegation).to.be.equal("0x0000000000000000000000000000000000000000");
     });
 
     it('check cancel vote - incorrect choises', async () => {

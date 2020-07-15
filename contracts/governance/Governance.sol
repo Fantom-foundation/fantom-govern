@@ -19,7 +19,7 @@ contract Governance is GovernanceSettings {
     using SafeMath for uint256;
     using LRC for LRC.LrcOption;
 
-    struct Voter {
+    struct Vote {
         uint256 power;
         uint256[] choises;
         address previousDelegation;
@@ -62,7 +62,7 @@ contract Governance is GovernanceSettings {
     mapping(uint256 => ProposalTimeline) proposalDeadlines; // proposal ID to Deadline
     mapping(address => mapping(uint256 => uint256)) public reducedVotersPower; // sender address to proposal id to power
     mapping(address => mapping(uint256 => uint256)) public depositors; // sender address to proposal id to deposit
-    mapping(address => mapping(uint256 => Voter)) public voters;
+    mapping(address => mapping(uint256 => Vote)) public votes;
     mapping(uint256 => uint256[]) public proposalsAtDeadline; // deadline to proposal ids
 //    mapping(uint256 => uint256) public idxToDeadlines; // index to deadline
 
@@ -127,24 +127,24 @@ contract Governance is GovernanceSettings {
 
         require(prop.id == proposalId, "proposal with a given id doesnt exist");
         require(statusVoting(prop.status), "proposal is not at voting period");
-        require(voters[msg.sender][proposalId].power == 0, "this account has already voted. try to cancel a vote if you want to revote");
+        require(votes[msg.sender][proposalId].power == 0, "this account has already voted. try to cancel a vote if you want to revote");
         require(prop.deposit != 0, "proposal didnt enter depositing period");
         require(prop.deposit >= prop.requiredDeposit, "proposal is not at voting period");
         require(choises.length == prop.optionIDs.length, "incorrect choises");
 
-        (uint256 ownVotingPower, uint256 delegationVotingPower, uint256 delegatedVotingPower) = accountVotingPower(msg.sender, prop.id);
+        (uint256 ownVotingPower, uint256 delegatedMeVotingPower, uint256 delegatedVotingPower) = accountVotingPower(msg.sender, prop.id);
 
         if (ownVotingPower != 0) {
-            uint256 power = ownVotingPower + delegationVotingPower - reducedVotersPower[msg.sender][proposalId];
+            uint256 power = ownVotingPower + delegatedMeVotingPower - reducedVotersPower[msg.sender][proposalId];
             makeVote(proposalId, choises, power);
         }
 
         if (delegatedVotingPower != 0) {
             address delegatedTo = governableContract.delegatedVotesTo(msg.sender);
-            recountVoter(proposalId, delegatedTo);
+            recountVote(proposalId, delegatedTo);
             reduceVotersPower(proposalId, delegatedTo, delegatedVotingPower);
             makeVote(proposalId, choises, delegatedVotingPower);
-            voters[msg.sender][proposalId].previousDelegation = delegatedTo;
+            votes[msg.sender][proposalId].previousDelegation = delegatedTo;
         }
     }
 
@@ -320,31 +320,31 @@ contract Governance is GovernanceSettings {
     }
 
     function increaseVotersPower(uint256 proposalId, address voterAddr, uint256 power) internal {
-        voters[voterAddr][proposalId].power += power;
+        votes[voterAddr][proposalId].power += power;
         // reducedVotersPower[voter][proposalId] -= power;
-        Voter storage voter = voters[msg.sender][proposalId];
-        voter.power += power;
-        addChoisesToProp(proposalId, voter.choises, power);
+        Vote storage v = votes[msg.sender][proposalId];
+        v.power += power;
+        addChoisesToProp(proposalId, v.choises, power);
     }
 
-    function _cancelVote(uint256 proposalId, address voterAddr) internal {
-        Voter memory voter = voters[voterAddr][proposalId];
+    function _cancelVote(uint256 proposalId, address voteAddr) internal {
+        Vote memory v = votes[voteAddr][proposalId];
         ProposalDescription storage prop = proposals[proposalId];
 
-        // prop.choises[voter.choise] -= voter.power;
-        if (voters[voterAddr][proposalId].previousDelegation != address(0)) {
-            increaseVotersPower(proposalId, voterAddr, voter.power);
+        // prop.choises[v.choise] -= v.power;
+        if (votes[voteAddr][proposalId].previousDelegation != address(0)) {
+            increaseVotersPower(proposalId, voteAddr, v.power);
         }
 
-        removeChoisesFromProp(proposalId, voter.choises, voter.power);
-        delete voters[voterAddr][proposalId];
+        removeChoisesFromProp(proposalId, v.choises, v.power);
+        delete votes[voteAddr][proposalId];
     }
 
     function makeVote(uint256 proposalId, uint256[] memory choises, uint256 power) internal {
 
-        Voter storage voter = voters[msg.sender][proposalId];
-        voter.choises = choises;
-        voter.power = power;
+        Vote storage v = votes[msg.sender][proposalId];
+        v.choises = choises;
+        v.power = power;
         addChoisesToProp(proposalId, choises, power);
 
         emit UserVoted(msg.sender, proposalId, choises, power);
@@ -376,28 +376,26 @@ contract Governance is GovernanceSettings {
         }
     }
 
-    function recountVoter(uint256 proposalId, address voterAddr) internal {
-        Voter memory voter = voters[voterAddr][proposalId];
+    function recountVote(uint256 proposalId, address voterAddr) internal {
+        Vote memory v = votes[voterAddr][proposalId];
         ProposalDescription storage prop = proposals[proposalId];
         _cancelVote(proposalId, voterAddr);
 
-        (uint256 ownVotingPower, uint256 delegationVotingPower, uint256 delegatedVotingPower) = accountVotingPower(voterAddr, prop.id);
+        (uint256 ownVotingPower, uint256 delegatedMeVotingPower, uint256 delegatedVotingPower) = accountVotingPower(voterAddr, prop.id);
         uint256 power;
         if (ownVotingPower > 0) {
-            power = ownVotingPower + delegationVotingPower - reducedVotersPower[voterAddr][proposalId];
+            power = ownVotingPower + delegatedMeVotingPower - reducedVotersPower[voterAddr][proposalId];
         }
         if (delegatedVotingPower > 0) {
-            power = delegatedVotingPower + delegationVotingPower - reducedVotersPower[voterAddr][proposalId];
+            power = delegatedVotingPower + delegatedMeVotingPower - reducedVotersPower[voterAddr][proposalId];
         }
 
-        makeVote(proposalId, voter.choises, power);
+        makeVote(proposalId, v.choises, power);
     }
 
     function reduceVotersPower(uint256 proposalId, address voter, uint256 power) internal {
-        // uint256[] choises = voters[voter][proposalId].choises;
-
         ProposalDescription storage prop = proposals[proposalId];
-        voters[voter][proposalId].power -= power;
+        votes[voter][proposalId].power -= power;
         reducedVotersPower[voter][proposalId] += power;
         emit VotersPowerReduced(voter);
     }
