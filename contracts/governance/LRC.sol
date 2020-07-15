@@ -27,8 +27,8 @@ library LRC {
         uint256 maxPossibleVotes;
     }
 
-    struct LRCChoise {
-        bytes32[] choises;
+    struct LRCChoice {
+        bytes32[] choices;
         uint256 power;
     }
 

@@ -43,10 +43,10 @@ contract('Governance test', async ([acc1, acc2, contractAddr]) => {
             [String("0x0000000000000").valueOf(), String("0x00000000000001").valueOf()], validProposalMsg);
     });
 
-    it('create proposal - choises is empty', async () => {
+    it('create proposal - choices is empty', async () => {
         let validProposalMsg = {from: acc1, value: ether('1.0')}; //ether('2.0')
 
-        await expectRevert(this.governance.createProposal(this.proposal.address, IS_VOTING, 1, [], validProposalMsg), "choises is empty")
+        await expectRevert(this.governance.createProposal(this.proposal.address, IS_VOTING, 1, [], validProposalMsg), "choices is empty")
     });
 
     it('check vote - proposal with a given id doesnt exist', async () => {
@@ -92,7 +92,7 @@ contract('Governance test', async ([acc1, acc2, contractAddr]) => {
             "this account has already voted. try to cancel a vote if you want to revote");
     });
 
-    it('check vote - incorrect choises', async () => {
+    it('check vote - incorrect choices', async () => {
         let createMsg = {from: acc1, value: ether('1.0')};
         let voteMsg = {from: acc1};
         const proposalID = 1;
@@ -100,7 +100,7 @@ contract('Governance test', async ([acc1, acc2, contractAddr]) => {
         await this.governance.createProposal(this.proposal.address, IS_VOTING, 1,
             [String("0x0000000000000").valueOf(), String("0x00000000000001").valueOf()], createMsg);
 
-        await expectRevert(this.governance.vote(proposalID, [String("0x0000000000001").valueOf()], voteMsg), "incorrect choises");
+        await expectRevert(this.governance.vote(proposalID, [String("0x0000000000001").valueOf()], voteMsg), "incorrect choices");
     });
 
     it('check vote - without staker create delegation', async () => {
@@ -300,7 +300,7 @@ contract('Governance test', async ([acc1, acc2, contractAddr]) => {
         await expect(vote.previousDelegation).to.be.equal("0x0000000000000000000000000000000000000000");
     });
 
-    it('check cancel vote - incorrect choises', async () => {
+    it('check cancel vote - incorrect choices', async () => {
         const proposalID = 1;
 
         await this.stakers.createStake(stakerMetadata, {from: acc1, value: ether('3.0')});
@@ -314,7 +314,7 @@ contract('Governance test', async ([acc1, acc2, contractAddr]) => {
         await this.governance.vote(proposalID,
             [String("0x0000000000000").valueOf(), String("0x00000000000001").valueOf()], {from: acc2});
 
-        await expectRevert(this.governance.cancelVote(proposalID, {from: acc1}), "incorrect choises");
+        await expectRevert(this.governance.cancelVote(proposalID, {from: acc1}), "incorrect choices");
     });
 
     it('check lrc', async () => {

@@ -28,7 +28,7 @@ contract AbstractProposal {
     uint256 public minVotesRequired;
     uint256 public totalVotes;
     bool public executable;
-    mapping (uint256 => uint256) public choises;
+    mapping (uint256 => uint256) public choices;
 
     ProposalTimeline deadlines;
 
