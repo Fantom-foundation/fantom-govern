@@ -29,7 +29,7 @@ library LRC {
 
     struct LRCChoice {
         bytes32[] choices;
-        uint256 power;
+        uint256 weight;
     }
 
     // function addScale(uint256 scale, uint256 idx) public {
@@ -61,9 +61,9 @@ library LRC {
 
     }
 
-    function addVote(LrcOption storage self, uint256 opinionId, uint256 power) public {
+    function addVote(LrcOption storage self, uint256 opinionId, uint256 weight) public {
         require(opinionId < OptionsNum, "inappropriate opinion id");
-        self.opinions[opinionId].totalVotes += power;
+        self.opinions[opinionId].totalVotes += weight;
 
         uint256 scale;
         if (opinionId == OptionsNum - 1) {
@@ -72,13 +72,13 @@ library LRC {
             scale = opinionId;
         }
 
-        self.totalVotes += power;
-        self.resistance += power * scale;
+        self.totalVotes += weight;
+        self.resistance += weight * scale;
     }
 
-    function removeVote(LrcOption storage self, uint256 opinionId, uint256 power) public {
+    function removeVote(LrcOption storage self, uint256 opinionId, uint256 weight) public {
         require(opinionId < OptionsNum, "inappropriate opinion id");
-        self.opinions[opinionId].totalVotes -= power;
+        self.opinions[opinionId].totalVotes -= weight;
 
         uint256 scale;
         if (opinionId == OptionsNum - 1) {
@@ -86,7 +86,7 @@ library LRC {
         }
         scale = opinionId;
 
-        self.totalVotes -= power;
-        self.resistance -= power * scale;
+        self.totalVotes -= weight;
+        self.resistance -= weight * scale;
     }
 }

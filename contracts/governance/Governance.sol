@@ -20,9 +20,8 @@ contract Governance is GovernanceSettings {
     using LRC for LRC.LrcOption;
 
     struct Vote {
-        uint256 power;
+        uint256 weight;
         uint256[] choices;
-        address previousDelegation;
     }
 
     struct ProposalTimeline {
@@ -40,7 +39,7 @@ contract Governance is GovernanceSettings {
         uint256[] optionIDs;
         uint256 lastOptionID;
         uint256 chosenOption;
-        uint256 totalVotes;
+        uint256 totalWeight;
         uint8 propType;
         address proposalContract;
     }
@@ -54,37 +53,38 @@ contract Governance is GovernanceSettings {
     Governable governableContract;
     ImplementationValidator implementationValidator;
     IProposalFactory proposalFactory;
-    uint256 public lastProposalId;
+    uint256 public lastProposalID;
     Task[] public tasks;
     bytes4 abstractProposalInterfaceId;
 
     mapping(uint256 => ProposalDescription) proposals;
     mapping(uint256 => ProposalTimeline) proposalDeadlines; // proposal ID to Deadline
-    mapping(address => mapping(uint256 => uint256)) public reducedVotersPower; // sender address to proposal id to power
-    mapping(address => mapping(uint256 => Vote)) public votes;
+    mapping(address => mapping(uint256 => uint256)) public overriddenWeight; // sender address to proposal id to weight
+    mapping(address => mapping(address => mapping(uint256 => Vote))) public votes; // voter, delegationReceiver, proposalID -> Vote
 
-    event ProposalIsCreated(uint256 proposalId);
-    event ProposalIsResolved(uint256 proposalId);
-    event RejectedProposal(uint256 proposalId);
-    event StartedProposalVoting(uint256 proposalId);
+    event ProposalIsCreated(uint256 proposalID);
+    event ProposalIsResolved(uint256 proposalID);
+    event RejectedProposal(uint256 proposalID);
+    event StartedProposalVoting(uint256 proposalID);
     event TasksHandled(uint256 startIdx, uint256 endIdx, uint256 handled);
     event TasksErased(uint256 quantity);
-    event ResolvedProposal(uint256 proposalId);
-    event ImplementedProposal(uint256 proposalId);
+    event ResolvedProposal(uint256 proposalID);
+    event ImplementedProposal(uint256 proposalID);
     event DeadlineRemoved(uint256 deadline);
     event DeadlineAdded(uint256 deadline);
     event GovernableContractSet(address addr);
     event SoftwareVersionAdded(string version, address addr);
-    event VotersPowerReduced(address voter);
-    event UserVoted(address voter, uint256 proposalId, uint256[] choices, uint256 power);
+    event VoteWeightOverridden(address voter, uint256 diff);
+    event VoteWeightUnOverridden(address voter, uint256 diff);
+    event Voted(address voter, address delegatedTo, uint256 proposalID, uint256[] choices, uint256 weight);
 
     constructor (address _governableContract, address _proposalFactory) public {
         governableContract = Governable(_governableContract);
         proposalFactory = IProposalFactory(_proposalFactory);
     }
 
-    function getProposalStatus(uint256 proposalId) public view returns (uint256) {
-        ProposalDescription storage prop = proposals[proposalId];
+    function getProposalStatus(uint256 proposalID) public view returns (uint256) {
+        ProposalDescription storage prop = proposals[proposalID];
         return (prop.status);
     }
 
@@ -92,48 +92,39 @@ contract Governance is GovernanceSettings {
         return (tasks.length);
     }
 
-    function getProposalDescription(uint256 proposalId) public view 
+    function getProposalDescription(uint256 proposalID) public view 
     returns (
         string memory description,
         uint256 requiredVotes,
         uint256 status,
         uint256 chosenOption,
-        uint256 totalVotes,
+        uint256 totalWeight,
         address proposalContract) {
-        ProposalDescription storage prop = proposals[proposalId];
+        ProposalDescription storage prop = proposals[proposalID];
 
         return (
             prop.description,
             prop.requiredVotes,
             prop.status,
             prop.chosenOption,
-            prop.totalVotes,
+            prop.totalWeight,
             prop.proposalContract
         );
     }
 
-    function vote(uint256 proposalId, uint256[] memory choices) public {
-        ProposalDescription storage prop = proposals[proposalId];
+    function vote(address delegatedTo, uint256 proposalID, uint256[] memory choices) internal {
+        if (delegatedTo == address(0)) {
+            delegatedTo = msg.sender;
+        }
 
-        require(prop.id == proposalId, "proposal with a given id doesnt exist");
+        ProposalDescription storage prop = proposals[proposalID];
+
+        require(prop.id == proposalID, "proposal with a given id doesnt exist");
         require(statusVoting(prop.status), "proposal is not at voting period");
-        require(votes[msg.sender][proposalId].power == 0, "this account has already voted. try to cancel a vote if you want to revote");
+        require(votes[msg.sender][delegatedTo][proposalID].weight == 0, "vote already exists");
         require(choices.length == prop.optionIDs.length, "incorrect choices");
 
-        (uint256 ownVotingPower, uint256 delegatedMeVotingPower, uint256 delegatedVotingPower) = accountVotingPower(msg.sender, prop.id);
-
-        if (ownVotingPower != 0) {
-            uint256 power = ownVotingPower + delegatedMeVotingPower - reducedVotersPower[msg.sender][proposalId];
-            makeVote(proposalId, choices, power);
-        }
-
-        if (delegatedVotingPower != 0) {
-            address delegatedTo = governableContract.delegatedVotesTo(msg.sender);
-            recountVote(proposalId, delegatedTo);
-            reduceVotersPower(proposalId, delegatedTo, delegatedVotingPower);
-            makeVote(proposalId, choices, delegatedVotingPower);
-            votes[msg.sender][proposalId].previousDelegation = delegatedTo;
-        }
+        require(_processNewVote(prop.id, msg.sender, delegatedTo, choices) != 0, "zero weight");
     }
 
     function createProposal(address proposalContract) public payable {
@@ -145,11 +136,11 @@ contract Governance is GovernanceSettings {
         bytes32[] memory options = proposal.getOptions();
         require(options.length != 0, "proposal options is empty - nothing to vote for");
 
-        lastProposalId++;
-        ProposalDescription storage prop = proposals[lastProposalId];
-        prop.id = lastProposalId;
+        lastProposalID++;
+        ProposalDescription storage prop = proposals[lastProposalID];
+        prop.id = lastProposalID;
         prop.status = setStatusVoting(0);
-        prop.requiredVotes = minimumVotesRequired(totalVotes(prop.propType));
+        prop.requiredVotes = minimumVotesRequired(governableContract.getTotalWeight());
         for (uint256 i = 0; i < options.length; i++) {
             prop.lastOptionID++;
             LRC.LrcOption storage option = prop.options[prop.lastOptionID];
@@ -158,14 +149,14 @@ contract Governance is GovernanceSettings {
             prop.optionIDs.push(prop.lastOptionID);
         }
         prop.proposalContract = proposalContract;
-        votingDeadlines(lastProposalId);
-        addTasks(lastProposalId);
+        votingDeadlines(lastProposalID);
+        addTasks(lastProposalID);
         proposalFactory.setProposalIsConsidered(proposalContract);
 
         // burn the proposal fee
         burn(msg.value);
 
-        emit ProposalIsCreated(lastProposalId);
+        emit ProposalIsCreated(lastProposalID);
     }
 
     function validateProposalContract(address proposalContract) public {
@@ -228,7 +219,7 @@ contract Governance is GovernanceSettings {
     // handleVotingTask handles only TASK_VOTING
     function handleVotingTask(ProposalDescription storage prop) internal returns (bool handled) {
         bool ready = statusVoting(prop.status) &&
-        (prop.totalVotes >= prop.requiredVotes || block.timestamp >= prop.deadlines.votingEndTime);
+        (prop.totalWeight >= prop.requiredVotes || block.timestamp >= prop.deadlines.votingEndTime);
         if (!ready) {
             return false;
         }
@@ -243,24 +234,16 @@ contract Governance is GovernanceSettings {
         return true;
     }
 
-    function cancelVote(uint256 proposalId) public {
-        _cancelVote(proposalId, msg.sender);
-    }
-
-    function totalVotes(uint256 propType) public view returns (uint256) {
-        return governableContract.getTotalVotes(propType);
-    }
-
-    function proceedToVoting(uint256 proposalId) internal {
-        ProposalDescription storage prop = proposals[proposalId];
+    function proceedToVoting(uint256 proposalID) internal {
+        ProposalDescription storage prop = proposals[proposalID];
         prop.deadlines.votingStartTime = block.timestamp;
         prop.deadlines.votingEndTime = block.timestamp + votingPeriod();
         prop.status = setStatusVoting(prop.status);
-        emit StartedProposalVoting(proposalId);
+        emit StartedProposalVoting(proposalID);
     }
 
-    function resolveProposal(uint256 proposalId, uint256 winnerOptionId) internal {
-        ProposalDescription storage prop = proposals[proposalId];
+    function resolveProposal(uint256 proposalID, uint256 winnerOptionId) internal {
+        ProposalDescription storage prop = proposals[proposalID];
         require(statusVoting(prop.status), "proposal is not at voting period");
 
         if (prop.propType == typeExecutable()) {
@@ -272,8 +255,8 @@ contract Governance is GovernanceSettings {
         prop.chosenOption = winnerOptionId;
     }
 
-    function calculateVotingResult(uint256 proposalId) internal returns(bool, uint256) {
-        ProposalDescription storage prop = proposals[proposalId];
+    function calculateVotingResult(uint256 proposalID) internal returns(bool, uint256) {
+        ProposalDescription storage prop = proposals[proposalID];
         uint256 leastResistance;
         uint256 winnerId;
         for (uint256 i = 0; i < prop.optionIDs.length; i++) {
@@ -301,101 +284,137 @@ contract Governance is GovernanceSettings {
         return (leastResistance != 0, winnerId);
     }
 
-    function increaseVotersPower(uint256 proposalId, address voterAddr, uint256 power) internal {
-        votes[voterAddr][proposalId].power += power;
-        // reducedVotersPower[voter][proposalId] -= power;
-        Vote storage v = votes[msg.sender][proposalId];
-        v.power += power;
-        addChoicesToProp(proposalId, v.choices, power);
+    function cancelVote(uint256 proposalID, address delegatedTo) public {
+        if (delegatedTo == address(0)) {
+            delegatedTo = msg.sender;
+        }
+        Vote memory v = votes[msg.sender][delegatedTo][proposalID];
+        require(v.weight != 0, "doesn't exist");
+        _cancelVote(proposalID, msg.sender, delegatedTo);
     }
 
-    function _cancelVote(uint256 proposalId, address voteAddr) internal {
-        Vote memory v = votes[voteAddr][proposalId];
-
-        // prop.choices[v.choice] -= v.power;
-        if (votes[voteAddr][proposalId].previousDelegation != address(0)) {
-            increaseVotersPower(proposalId, voteAddr, v.power);
+    function _cancelVote(uint256 proposalID, address voteAddr, address delegatedTo) internal {
+        Vote memory v = votes[voteAddr][delegatedTo][proposalID];
+        if (v.weight == 0) {
+            return;
         }
 
-        removeChoicesFromProp(proposalId, v.choices, v.power);
-        delete votes[voteAddr][proposalId];
+        if (voteAddr != delegatedTo) {
+            unOverrideDelegationWeight(proposalID, voteAddr, v.weight);
+        }
+
+        removeChoicesFromProp(proposalID, v.choices, v.weight);
+        delete votes[voteAddr][delegatedTo][proposalID];
     }
 
-    function makeVote(uint256 proposalId, uint256[] memory choices, uint256 power) internal {
+    function makeVote(uint256 proposalID, address voter, address delegatedTo, uint256[] memory choices, uint256 weight) internal {
 
-        Vote storage v = votes[msg.sender][proposalId];
-        v.choices = choices;
-        v.power = power;
-        addChoicesToProp(proposalId, choices, power);
+        votes[voter][delegatedTo][proposalID] = Vote(weight, choices);
+        addChoicesToProp(proposalID, choices, weight);
 
-        emit UserVoted(msg.sender, proposalId, choices, power);
+        emit Voted(voter, delegatedTo, proposalID, choices, weight);
     }
 
-    function addChoicesToProp(uint256 proposalId, uint256[] memory choices, uint256 power) internal {
-        ProposalDescription storage prop = proposals[proposalId];
+    function _processNewVote(uint256 proposalID, address voterAddr, address delegatedTo, uint256[] memory choices) internal returns (uint256) {
+        if (delegatedTo == voterAddr) {
+            // voter isn't a delegator
+            (uint256 ownVotingWeight, uint256 delegatedMeVotingWeight) = governableContract.getWeight(voterAddr);
+            uint256 weight = ownVotingWeight.add(delegatedMeVotingWeight).sub(overriddenWeight[voterAddr][proposalID]);
+            if (weight == 0) {
+                return 0;
+            }
+            makeVote(proposalID, voterAddr, voterAddr, choices, weight);
+            return weight;
+        } else {
+            // votes through one of delegations, overrides previous vote of "delegatedTo" (if any)
+            uint256 delegatedWeight = governableContract.getDelegatedWeight(voterAddr, delegatedTo);
+            if (delegatedWeight == 0) {
+                return 0;
+            }
+            // reduce weight of vote of "delegatedTo" (if any)
+            overrideDelegationWeight(proposalID, delegatedTo, delegatedWeight);
+            _recountVote(proposalID, delegatedTo, delegatedTo);
+            // make own vote
+            makeVote(proposalID, voterAddr, delegatedTo, choices, delegatedWeight);
+            return delegatedWeight;
+        }
+    }
+
+    function recountVote(uint256 proposalID, address voterAddr, address delegatedTo) public {
+        Vote memory v = votes[voterAddr][delegatedTo][proposalID];
+        require(v.weight != 0, "doesn't exist");
+        _recountVote(proposalID, voterAddr, delegatedTo);
+    }
+
+    function _recountVote(uint256 proposalID, address voterAddr, address delegatedTo) internal returns (uint256) {
+        uint256[] memory origChoices = votes[voterAddr][delegatedTo][proposalID].choices;
+        // cancel previous vote
+        _cancelVote(proposalID, voterAddr, delegatedTo);
+        // re-make vote
+        return _processNewVote(proposalID, voterAddr, delegatedTo, origChoices);
+    }
+
+    function overrideDelegationWeight(uint256 proposalID, address delegatedTo, uint256 weight) internal {
+        uint256 overridden = overriddenWeight[delegatedTo][proposalID];
+        overridden = overridden.add(weight);
+        overriddenWeight[delegatedTo][proposalID] = overridden;
+        Vote storage v = votes[delegatedTo][delegatedTo][proposalID];
+        if (v.weight != 0) {
+            v.weight = v.weight.sub(weight);
+            removeChoicesFromProp(proposalID, v.choices, weight);
+        }
+        emit VoteWeightOverridden(delegatedTo, weight);
+    }
+
+    function unOverrideDelegationWeight(uint256 proposalID, address delegatedTo, uint256 weight) internal {
+        uint256 overridden = overriddenWeight[delegatedTo][proposalID];
+        overridden = overridden.sub(weight);
+        overriddenWeight[delegatedTo][proposalID] = overridden;
+        Vote storage v = votes[delegatedTo][delegatedTo][proposalID];
+        if (v.weight != 0) {
+            v.weight = v.weight.add(weight);
+            addChoicesToProp(proposalID, v.choices, weight);
+        }
+        emit VoteWeightUnOverridden(delegatedTo, weight);
+    }
+
+    function addChoicesToProp(uint256 proposalID, uint256[] memory choices, uint256 weight) internal {
+        ProposalDescription storage prop = proposals[proposalID];
 
         require(choices.length == prop.optionIDs.length, "incorrect choices");
 
-        prop.totalVotes += power;
+        prop.totalWeight += weight;
 
         for (uint256 i = 0; i < prop.optionIDs.length; i++) {
             uint256 optionID = prop.optionIDs[i];
-            prop.options[optionID].addVote(choices[i], power);
+            prop.options[optionID].addVote(choices[i], weight);
         }
     }
 
-    function removeChoicesFromProp(uint256 proposalId, uint256[] memory choices, uint256 power) internal {
-        ProposalDescription storage prop = proposals[proposalId];
+    function removeChoicesFromProp(uint256 proposalID, uint256[] memory choices, uint256 weight) internal {
+        ProposalDescription storage prop = proposals[proposalID];
 
         require(choices.length == prop.optionIDs.length, "incorrect choices");
 
-        prop.totalVotes -= power;
+        prop.totalWeight -= weight;
 
         for (uint256 i = 0; i < prop.optionIDs.length; i++) {
             uint256 optionID = prop.optionIDs[i];
-            prop.options[optionID].removeVote(choices[i], power);
+            prop.options[optionID].removeVote(choices[i], weight);
         }
     }
 
-    function recountVote(uint256 proposalId, address voterAddr) internal {
-        Vote memory v = votes[voterAddr][proposalId];
-        ProposalDescription storage prop = proposals[proposalId];
-        _cancelVote(proposalId, voterAddr);
-
-        (uint256 ownVotingPower, uint256 delegatedMeVotingPower, uint256 delegatedVotingPower) = accountVotingPower(voterAddr, prop.id);
-        uint256 power;
-        if (ownVotingPower > 0) {
-            power = ownVotingPower + delegatedMeVotingPower - reducedVotersPower[voterAddr][proposalId];
-        }
-        if (delegatedVotingPower > 0) {
-            power = delegatedVotingPower + delegatedMeVotingPower - reducedVotersPower[voterAddr][proposalId];
-        }
-
-        makeVote(proposalId, v.choices, power);
-    }
-
-    function reduceVotersPower(uint256 proposalId, address voter, uint256 power) internal {
-        votes[voter][proposalId].power -= power;
-        reducedVotersPower[voter][proposalId] += power;
-        emit VotersPowerReduced(voter);
-    }
-
-    function accountVotingPower(address acc, uint256 proposalId) public view returns (uint256, uint256, uint256) {
-        ProposalDescription memory prop = proposals[proposalId];
-        return governableContract.getVotingPower(acc, prop.propType);
-    }
-
-    function votingDeadlines(uint256 proposalId) internal {
-        ProposalDescription storage prop = proposals[proposalId];
+    function votingDeadlines(uint256 proposalID) internal {
+        ProposalDescription storage prop = proposals[proposalID];
         prop.deadlines.votingStartTime = block.timestamp;
         prop.deadlines.votingEndTime = block.timestamp + votingPeriod();
     }
 
-    function addTasks(uint256 proposalId) internal {
-        tasks.push(Task(true, proposalId, TASK_VOTING));
+    function addTasks(uint256 proposalID) internal {
+        tasks.push(Task(true, proposalID, TASK_VOTING));
     }
 
     function burn(uint256 amount) internal {
-        address(0).send(amount);
+        address(0).transfer(amount);
     }
 }
