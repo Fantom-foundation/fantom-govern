@@ -1,10 +1,21 @@
 pragma solidity ^0.5.0;
 
-import "./SafeMath.sol";
+import "../common/SafeMath.sol";
 
-// LRC - "least resistant consesus". more detailed description can be taken from docs
+/**
+ * @dev LRC implements the "least resistant consesus" paper. More detailed description can be taken from Fantom's docs.
+ */ 
 library LRC {
     using SafeMath for uint256;
+    
+    // 
+    enum OptionValue {
+        STRONGLY_AGREE, // "strongly agree"
+        AGREE, // "agree"
+        NEUTRAL, // "neutral"
+        DISAGREE, // "disagree"
+        VETO // "veto"
+    }
 
     uint256 constant OptionsNum = 5;
     uint256 constant rebaseScale = 10000;

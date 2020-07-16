@@ -1,12 +1,15 @@
 pragma solidity ^0.5.0;
 
-import "./SafeMath.sol";
-import "./Constants.sol";
-import "./Governable.sol";
-import "./Upgradability.sol";
-import "./AbstractProposal.sol";
+import "../common/SafeMath.sol";
+import "../governance/Constants.sol";
+import "../model/Governable.sol";
+import "../upgrade/Upgradability.sol";
+import "../proposal/AbstractProposal.sol";
 
 
+/**
+ * @dev SoftwareUpgrade proposal
+ */ 
 contract SoftwareUpgradeProposal is AbstractProposal {
 
     Upgradability upgradableContract;

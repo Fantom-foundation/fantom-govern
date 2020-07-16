@@ -1,15 +1,14 @@
 pragma solidity ^0.5.0;
 
-import "./SafeMath.sol";
-import "./Constants.sol";
-import "./Governable.sol";
-// import "./Proposal.sol";
-import "./SoftwareUpgradeProposal.sol";
-import "./GovernanceSettings.sol";
-import "./AbstractProposal.sol";
-import "./LRC.sol";
-import "./IProposalFactory.sol";
+import "../common/SafeMath.sol";
 import "../common/ImplementationValidator.sol";
+import "../model/Governable.sol";
+import "../proposal/AbstractProposal.sol";
+import "../proposal/SoftwareUpgradeProposal.sol";
+import "../proposal/IProposalFactory.sol";
+import "./Constants.sol";
+import "./GovernanceSettings.sol";
+import "./LRC.sol";
 
 // TODO:
 // Add lib to prevent reentrance
