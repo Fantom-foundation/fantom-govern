@@ -14,11 +14,16 @@ contract GovernanceSettings is Constants {
     uint256 _maximumlPossibleResistance = 4000;
     uint256 _maximumlPossibleDesignation = 4000;
     uint256 _maximumOptions = 10;
+    uint256 _maximumExecutionDuration = 3 days;
 
     function proposalFee() public view returns (uint256) {
         return _proposalFee;
     }
     function maxOptions() public view returns (uint256) {
         return _maximumOptions;
+    }
+    // maxExecutionDuration is maximum time for which proposal is executable after maximum voting end date
+    function maxExecutionDuration() public view returns (uint256) {
+        return _maximumExecutionDuration;
     }
 }

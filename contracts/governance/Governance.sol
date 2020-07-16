@@ -55,6 +55,7 @@ contract Governance is GovernanceSettings {
     event ProposalResolved(uint256 proposalID);
     event ProposalRejected(uint256 proposalID);
     event ProposalCanceled(uint256 proposalID);
+    event ProposalExecutionExpired(uint256 proposalID);
     event TasksHandled(uint256 startIdx, uint256 endIdx, uint256 handled);
     event TasksErased(uint256 quantity);
     event VoteWeightOverridden(address voter, uint256 diff);
@@ -221,9 +222,14 @@ contract Governance is GovernanceSettings {
         }
         (bool proposalResolved, uint256 winnerId) = calculateVotingResult(prop);
         if (proposalResolved) {
-            resolveProposal(prop, winnerId);
-            prop.status = statusResolved();
-            emit ProposalResolved(proposalID);
+            bool expired = resolveProposal(prop, winnerId);
+            if (!expired) {
+                prop.status = statusResolved();
+                emit ProposalResolved(proposalID);
+            } else {
+                prop.status = statusExecutionExpired();
+                emit ProposalExecutionExpired(proposalID);
+            }
         } else {
             prop.status = statusFailed();
             emit ProposalRejected(proposalID);
@@ -231,15 +237,21 @@ contract Governance is GovernanceSettings {
         return true;
     }
 
-    function resolveProposal(ProposalState storage prop, uint256 winnerOptionID) internal {
+    function resolveProposal(ProposalState storage prop, uint256 winnerOptionID) internal returns (bool) {
         prop.winnerOptionID = winnerOptionID;
 
-        if (prop.params.executable) {
+        bool executionExpired = block.timestamp < prop.params.deadlines.votingMaxEndTime + maxExecutionDuration();
+        if (prop.params.executable && executionExpired) {
+            // protection against proposals which revert or consume too much gas
+            return false;
+        }
+        if (prop.params.executable && !executionExpired) {
             address propAddr = prop.params.proposalContract;
             (bool success, bytes memory result) = propAddr.delegatecall(abi.encodeWithSignature("execute(address,uint256)", propAddr, winnerOptionID));
             success; // silence unused variable warning
             result;
         }
+        return true;
     }
 
     function calculateVotingResult(ProposalState storage prop) internal returns (bool, uint256) {

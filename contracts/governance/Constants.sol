@@ -14,9 +14,14 @@ contract StatusConstants {
     uint256 constant BIT_IS_RESOLVED = 0;
     uint256 constant BIT_IS_FAILED = 1;
     uint256 constant BIT_IS_CANCELED = 2;
+    uint256 constant BIT_IS_EXECUTION_EXPIRED = 3;
 
     function statusInitial() internal pure returns (uint256) {
         return 0;
+    }
+
+    function statusExecutionExpired() internal pure returns (uint256) {
+        return 1 << BIT_IS_EXECUTION_EXPIRED;
     }
 
     function statusFailed() internal pure returns (uint256) {
