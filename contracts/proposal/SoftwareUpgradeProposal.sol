@@ -1,44 +1,47 @@
 pragma solidity ^0.5.0;
 
-import "../common/SafeMath.sol";
-import "../governance/Constants.sol";
-import "../model/Governable.sol";
+import "../proposal/ProposalTypes.sol";
+import "../proposal/BaseProposal.sol";
 import "../upgrade/Upgradability.sol";
-import "../proposal/AbstractProposal.sol";
-
 
 /**
  * @dev SoftwareUpgrade proposal
  */
-contract SoftwareUpgradeProposal is AbstractProposal {
+contract SoftwareUpgradeProposal is BaseProposal {
+    Upgradability public upgradableContract;
+    address public newContractAddress;
 
-    Upgradability upgradableContract;
-    address newContractAddress;
-    bytes32[] opts;
+    constructor(string memory __name, string memory __description,
+        uint256 __minVotes, uint256 __start, uint256 __minEnd, uint256 __maxEnd,
+        address __upgradableContract, address __newContractAddress, address verifier) public {
+        _name = __name;
+        _description = __description;
+        _options.push(bytes32("upgrade"));
+        _minVotes = __minVotes;
+        _start = __start;
+        _minEnd = __minEnd;
+        _maxEnd = __maxEnd;
+        upgradableContract = Upgradability(__upgradableContract);
+        newContractAddress = __newContractAddress;
 
-    event SoftwareUpgradeIsDone();
-
-    constructor(address upgradableAddr, address _newContractAddr) public {
-        upgradableContract = Upgradability(upgradableAddr);
-        newContractAddress = _newContractAddr;
-
-        bytes32 voteYes = "yes";
-        bytes32 voteNo = "no";
-        opts.push(voteYes);
-        opts.push(voteNo);
+        // verify the proposal right away
+        if (verifier != address(0)) {
+            require(verifyProposalParams(verifier), "failed validation");
+        }
     }
 
-    function validateProposal(bytes32) public {
-
+    function pType() public view returns (uint256) {
+        return StdProposalTypes.softwareUpgrade();
     }
 
-    function getOptions() public returns (bytes32[] memory) {
-
-        return opts;
+    function executable() public view returns (bool) {
+        return true;
     }
 
-    function execute(uint256 optionId) public {
+    event SoftwareUpgradeIsDone(address newContractAddress);
+
+    function execute(address, uint256) external {
         upgradableContract.upgradeTo(newContractAddress);
-        emit SoftwareUpgradeIsDone();
+        emit SoftwareUpgradeIsDone(newContractAddress);
     }
 }

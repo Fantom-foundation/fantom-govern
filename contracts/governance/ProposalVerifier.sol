@@ -2,6 +2,7 @@ pragma solidity ^0.5.0;
 
 import "../common/SafeMath.sol";
 import "../common/GetCode.sol";
+import "../common/Decimal.sol";
 import "./IProposalVerifier.sol";
 import "../ownership/Ownable.sol";
 
@@ -10,12 +11,11 @@ import "../ownership/Ownable.sol";
  *      Supposed to be owned by the governance contract
  */
 contract ProposalVerifier is IProposalVerifier, Ownable {
-    uint256 constant RATIO_UNIT = 1e6; // used for ratios
     struct ProposalTemplate {
         string name;
         address exampleAddress; // used as a code template
         bytes32 codeHash; // sha3 hash of code
-        bool executable; // if proposal should get executed if gets approved
+        bool executable; // true if proposal should get executed on approval
         uint256 minVotes; // min. quorum (ratio)
         uint256 minVotingDuration; // minimum duration of the voting
         uint256 maxVotingDuration; // maximum duration of the voting
@@ -24,7 +24,7 @@ contract ProposalVerifier is IProposalVerifier, Ownable {
     }
 
     // verifyProposalParams checks proposal code and parameters
-    function verifyProposalParams(uint256 pType, address addr, bool exec, uint256 minVotes, uint256 start, uint256 minEnd, uint256 maxEnd) external view returns (bool) {
+    function verifyProposalParams(uint256 pType, bool exec, uint256 minVotes, uint256 start, uint256 minEnd, uint256 maxEnd) external view returns (bool) {
         if (start < block.timestamp) {
             // start in the past
             return false;
@@ -46,10 +46,6 @@ contract ProposalVerifier is IProposalVerifier, Ownable {
             return false;
         }
         ProposalTemplate memory template = proposalTemplates[pType];
-        if (!_matchCodeWithTemplate(addr, template)) {
-            // code doesn't match the template
-            return false;
-        }
         if (exec != template.executable) {
             // inconsistent executable flag
             return false;
@@ -58,7 +54,7 @@ contract ProposalVerifier is IProposalVerifier, Ownable {
             // quorum is too small
             return false;
         }
-        if (minVotes > RATIO_UNIT) {
+        if (minVotes > Decimal.unit()) {
             // quorum is bigger than 100%
             return false;
         }
@@ -81,7 +77,12 @@ contract ProposalVerifier is IProposalVerifier, Ownable {
         return true;
     }
 
-    function _matchCodeWithTemplate(address propAddr, ProposalTemplate memory template) internal view returns (bool) {
+    function verifyProposalCode(uint256 pType, address propAddr) external view returns (bool) {
+        if (!templateExists(pType)) {
+            // non-existing template
+            return false;
+        }
+        ProposalTemplate memory template = proposalTemplates[pType];
         if (template.codeHash == bytes32(0)) {
             // template with no requirements to code
             return true;

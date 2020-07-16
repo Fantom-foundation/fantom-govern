@@ -1,39 +1,32 @@
 pragma solidity ^0.5.0;
 
-import "../common/SafeMath.sol";
-import "../governance/Constants.sol";
-import "../model/Governable.sol";
-import "../upgrade/Upgradability.sol";
-import "../proposal/AbstractProposal.sol";
-
+import "../proposal/ProposalTypes.sol";
+import "../proposal/BaseProposal.sol";
 
 /**
  * @dev PlainText proposal
  */
-contract PlainTextProposal is AbstractProposal {
-    using SafeMath for uint256;
-
-    bytes32 title;
-    bytes32 description;
-    bytes32[] options;
-
-    event ProposalAccepted(uint256 optionId);
-
-    constructor(bytes32 _title, bytes32 _description, bytes32[] memory _options) public {
-        _title = title;
-        description = _description;
-        options = _options;
+contract PlainTextProposal is BaseProposal {
+    constructor(string memory __name, string memory __description, bytes32[] memory __options,
+        uint256 __minVotes, uint256 __start, uint256 __minEnd, uint256 __maxEnd, address verifier) public {
+        _name = __name;
+        _description = __description;
+        _options = __options;
+        _minVotes = __minVotes;
+        _start = __start;
+        _minEnd = __minEnd;
+        _maxEnd = __maxEnd;
+        // verify the proposal right away
+        if (verifier != address(0)) {
+            require(verifyProposalParams(verifier), "failed validation");
+        }
     }
 
-    function validateProposal(bytes32) public {
-
+    function pType() public view returns (uint256) {
+        return StdProposalTypes.plaintext();
     }
 
-    function getOptions() public returns (bytes32[] memory) {
-        return options;
-    }
-
-    function execute(uint256 optionId) public {
-        emit ProposalAccepted(optionId);
+    function executable() public view returns (bool) {
+        return false;
     }
 }

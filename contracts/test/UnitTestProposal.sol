@@ -4,9 +4,9 @@ import "../common/SafeMath.sol";
 import "../governance/Constants.sol";
 import "../model/Governable.sol";
 import "../upgrade/Upgradability.sol";
-import "../proposal/AbstractProposal.sol";
+import "../proposal/IProposal.sol";
 
-contract UnitTestProposal is AbstractProposal {
+/*contract UnitTestProposal is IProposal {
 
     struct VersionDescription {
         string version;
@@ -43,7 +43,7 @@ contract UnitTestProposal is AbstractProposal {
 
     }
 
-    function execute(uint256 optionId) external {
+    function execute(uint256 optionID) external {
 
     }
-}
+}*/
