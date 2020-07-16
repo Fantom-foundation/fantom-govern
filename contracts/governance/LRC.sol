@@ -24,12 +24,12 @@ library LRC {
     // mapping(uint256 => uint256) scales;
 
     struct Opinion {
-        bytes32 description;
+        bytes32 name;
         uint256 totalVotes;
     }
 
     struct LrcOption {
-        bytes32 description;
+        bytes32 name;
         uint256 arc;
         uint256 dw;
         Opinion[OptionsNum] opinions;

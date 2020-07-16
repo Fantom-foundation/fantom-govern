@@ -13,8 +13,12 @@ contract GovernanceSettings is Constants {
     uint256 _proposalFee = 1500;
     uint256 _maximumlPossibleResistance = 4000;
     uint256 _maximumlPossibleDesignation = 4000;
+    uint256 _maximumOptions = 10;
 
     function proposalFee() public view returns (uint256) {
         return _proposalFee;
+    }
+    function maxOptions() public view returns (uint256) {
+        return _maximumOptions;
     }
 }
