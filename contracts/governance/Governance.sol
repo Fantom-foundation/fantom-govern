@@ -1,7 +1,6 @@
 pragma solidity ^0.5.0;
 
 import "../common/SafeMath.sol";
-import "../common/ImplementationValidator.sol";
 import "../model/Governable.sol";
 import "../proposal/AbstractProposal.sol";
 import "../proposal/SoftwareUpgradeProposal.sol";
@@ -43,7 +42,6 @@ contract Governance is GovernanceSettings {
     }
 
     Governable governableContract;
-    ImplementationValidator implementationValidator;
     IProposalVerifier proposalVerifier;
     uint256 public lastProposalID;
     Task[] public tasks;

@@ -1,6 +1,5 @@
 pragma solidity ^0.5.0;
 
-import "../common/ImplementationValidator.sol";
 import "../common/SafeMath.sol";
 import "../model/Governable.sol";
 import "../proposal/SoftwareUpgradeProposal.sol";
