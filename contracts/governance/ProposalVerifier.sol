@@ -1,8 +1,8 @@
 pragma solidity ^0.5.0;
 
 import "../common/SafeMath.sol";
+import "../common/GetCode.sol";
 import "./IProposalVerifier.sol";
-import "./GetCode.sol";
 import "../ownership/Ownable.sol";
 
 /**
