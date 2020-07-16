@@ -1,16 +1,15 @@
 pragma solidity ^0.5.0;
 
-import "./SafeMath.sol";
-import "./Constants.sol";
-import "./Governable.sol";
-// import "./Proposal.sol";
-import "./SoftwareUpgradeProposal.sol";
-import "./GovernanceSettings.sol";
-import "./AbstractProposal.sol";
-import "./LRC.sol";
-import "./IProposalVerifier.sol";
+import "../common/SafeMath.sol";
 import "../common/ImplementationValidator.sol";
+import "../model/Governable.sol";
+import "../proposal/AbstractProposal.sol";
+import "../proposal/SoftwareUpgradeProposal.sol";
+import "./IProposalVerifier.sol";
 import "./Proposal.sol";
+import "./Constants.sol";
+import "./GovernanceSettings.sol";
+import "./LRC.sol";
 
 // TODO:
 // Add lib to prevent reentrance
@@ -154,7 +153,8 @@ contract Governance is GovernanceSettings {
             if (!tasks[tasks.length - 1].active) {
                 tasks.length--;
             } else {
-                break; // stop when first active task was met
+                break;
+                // stop when first active task was met
             }
         }
         require(erased > 0, "no tasks erased");
@@ -162,7 +162,7 @@ contract Governance is GovernanceSettings {
     }
 
     // handleTask calls handleTaskAssignments and marks task as inactive if it was handled
-    function handleTask(uint256 taskIdx) internal returns(bool handled) {
+    function handleTask(uint256 taskIdx) internal returns (bool handled) {
         require(taskIdx < tasks.length, "incorrect task index");
         Task storage task = tasks[taskIdx];
         if (!task.active) {
@@ -176,7 +176,7 @@ contract Governance is GovernanceSettings {
     }
 
     // handleTaskAssignments iterates through assignment types and calls a specific handler
-    function handleTaskAssignments(uint256 proposalID, uint256 assignment) internal returns(bool handled) {
+    function handleTaskAssignments(uint256 proposalID, uint256 assignment) internal returns (bool handled) {
         ProposalState storage prop = proposals[proposalID];
         if (assignment == TASK_VOTING) {
             return handleVotingTask(proposalID, prop);
@@ -215,7 +215,7 @@ contract Governance is GovernanceSettings {
         prop.chosenOption = winnerOptionId;
     }
 
-    function calculateVotingResult(uint256 proposalID) internal returns(bool, uint256) {
+    function calculateVotingResult(uint256 proposalID) internal returns (bool, uint256) {
         ProposalState storage prop = proposals[proposalID];
         uint256 leastResistance;
         uint256 winnerId;

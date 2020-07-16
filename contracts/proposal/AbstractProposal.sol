@@ -1,11 +1,14 @@
 pragma solidity ^0.5.0;
 
-import "./SafeMath.sol";
-import "./Constants.sol";
-import "./Governable.sol";
-import "./Upgradability.sol";
+import "../common/SafeMath.sol";
+import "../governance/Constants.sol";
+import "../model/Governable.sol";
+import "../upgrade/Upgradability.sol";
 
 
+/**
+ * @dev An abstract proposal
+ */
 contract AbstractProposal {
     using SafeMath for uint256;
 
@@ -24,7 +27,7 @@ contract AbstractProposal {
     uint256 public minVotesRequired;
     uint256 public totalVotes;
     bool public executable;
-    mapping (uint256 => uint256) public choices;
+    mapping(uint256 => uint256) public choices;
 
     ProposalTimeline deadlines;
 
@@ -36,7 +39,9 @@ contract AbstractProposal {
     bool public votesCanBeCanceled;
 
     function validateProposal(bytes32) external;
+
     function execute(uint256 optionId) external;
+
     function getOptions() external returns (bytes32[] memory);
 
     function supportsInterface(bytes4 interfaceID) external view returns (bool) {

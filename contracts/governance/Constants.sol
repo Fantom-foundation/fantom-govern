@@ -1,10 +1,16 @@
-
 pragma solidity ^0.5.0;
 
-import "./SafeMath.sol";
+import "../common/SafeMath.sol";
 
 contract StatusConstants {
-    using SafeMath for uint256;
+    enum Status {
+        ACTIVE,
+        FROZEN,
+        VOTING,
+        ACCEPTED,
+        FAILED,
+        IMPLEMENTED
+    }
 
     // bit map
     uint256 constant BIT_IS_ACTIVE = 0;
@@ -16,6 +22,8 @@ contract StatusConstants {
 
     // tasks
     uint256 constant TASK_VOTING = 2;
+
+
 
     // statuses
     uint256 constant ACTIVE = 1;
@@ -59,7 +67,6 @@ contract StatusConstants {
     function statusVotingFailed(uint256 status) internal view returns (bool) {
         return status == STATUS_VOTING_FAILED;
     }
-
 }
 
 contract CommonConstants {
@@ -69,6 +76,14 @@ contract CommonConstants {
 
 contract Constants is StatusConstants {
     using SafeMath for uint256;
+
+    enum ProposalType {
+        SOFTWARE_UPGRADE /* software upgrade type */,
+        PLAIN_TEXT /* plain text */,
+        IMMEDIATE_ACTION /* immediate action */,
+        EXECUTABLE /* executable */
+    }
+
 
     // types
     // uint256 constant TYPE_SOFTWARE_UPGRADE = 0x1; // software upgrade type
@@ -95,11 +110,11 @@ contract Constants is StatusConstants {
         return CANCEL_DELEGATION_FEE;
     }
 
-    function votingPeriod() public view returns (uint256) {
+    function votingPeriod() public pure returns (uint256) {
         return VOTING_PERIOD;
     }
 
-    function minVotesRequired(uint256 totalVotersNum, uint256 proposalType) public pure returns (uint256) {
+    function minVotesRequired(uint256 totalVotersNum, uint256 proposalType) public view returns (uint256) {
         // default (temprorary?) response is that 2/3 of a voters should vote fore a quorum
         return totalVotersNum * 2 / 3;
     }
