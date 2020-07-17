@@ -1,15 +1,14 @@
 pragma solidity ^0.5.0;
 
-import "./SafeMath.sol";
+import "../common/SafeMath.sol";
+import "../model/Governable.sol";
+import "../proposal/IProposal.sol";
+import "../proposal/SoftwareUpgradeProposal.sol";
+import "./IProposalVerifier.sol";
+import "./Proposal.sol";
 import "./Constants.sol";
-import "./Governable.sol";
-// import "./Proposal.sol";
-import "./SoftwareUpgradeProposal.sol";
 import "./GovernanceSettings.sol";
-import "./AbstractProposal.sol";
 import "./LRC.sol";
-import "./IProposalFactory.sol";
-import "../common/ImplementationValidator.sol";
 
 // TODO:
 // Add lib to prevent reentrance
@@ -20,29 +19,20 @@ contract Governance is GovernanceSettings {
     using LRC for LRC.LrcOption;
 
     struct Vote {
-        uint256 power;
+        uint256 weight;
         uint256[] choices;
-        address previousDelegation;
     }
 
-    struct ProposalTimeline {
-        uint256 votingStartTime;
-        uint256 votingEndTime;
-    }
+    struct ProposalState {
+        Proposal.Parameters params;
 
-    struct ProposalDescription {
-        ProposalTimeline deadlines;
-        string description;
-        uint256 id;
-        uint256 requiredVotes;
-        uint256 status;
         mapping(uint256 => LRC.LrcOption) options;
         uint256[] optionIDs;
         uint256 lastOptionID;
-        uint256 chosenOption;
-        uint256 totalVotes;
-        uint8 propType;
-        address proposalContract;
+        uint256 winnerOptionID;
+
+        uint256 status;
+        uint256 votesWeight;
     }
 
     struct Task {
@@ -52,39 +42,34 @@ contract Governance is GovernanceSettings {
     }
 
     Governable governableContract;
-    ImplementationValidator implementationValidator;
-    IProposalFactory proposalFactory;
-    uint256 public lastProposalId;
+    IProposalVerifier proposalVerifier;
+    uint256 public lastProposalID;
     Task[] public tasks;
     bytes4 abstractProposalInterfaceId;
 
-    mapping(uint256 => ProposalDescription) proposals;
-    mapping(uint256 => ProposalTimeline) proposalDeadlines; // proposal ID to Deadline
-    mapping(address => mapping(uint256 => uint256)) public reducedVotersPower; // sender address to proposal id to power
-    mapping(address => mapping(uint256 => Vote)) public votes;
+    mapping(uint256 => ProposalState) proposals;
+    mapping(address => mapping(uint256 => uint256)) public overriddenWeight; // voter address, proposalID -> weight
+    mapping(address => mapping(address => mapping(uint256 => Vote))) public votes; // voter, delegationReceiver, proposalID -> Vote
 
-    event ProposalIsCreated(uint256 proposalId);
-    event ProposalIsResolved(uint256 proposalId);
-    event RejectedProposal(uint256 proposalId);
-    event StartedProposalVoting(uint256 proposalId);
+    event ProposalCreated(uint256 proposalID);
+    event ProposalResolved(uint256 proposalID);
+    event ProposalRejected(uint256 proposalID);
+    event ProposalCanceled(uint256 proposalID);
+    event ProposalExecutionExpired(uint256 proposalID);
     event TasksHandled(uint256 startIdx, uint256 endIdx, uint256 handled);
     event TasksErased(uint256 quantity);
-    event ResolvedProposal(uint256 proposalId);
-    event ImplementedProposal(uint256 proposalId);
-    event DeadlineRemoved(uint256 deadline);
-    event DeadlineAdded(uint256 deadline);
-    event GovernableContractSet(address addr);
-    event SoftwareVersionAdded(string version, address addr);
-    event VotersPowerReduced(address voter);
-    event UserVoted(address voter, uint256 proposalId, uint256[] choices, uint256 power);
+    event VoteWeightOverridden(address voter, uint256 diff);
+    event VoteWeightUnOverridden(address voter, uint256 diff);
+    event Voted(address voter, address delegatedTo, uint256 proposalID, uint256[] choices, uint256 weight);
+    event VoteCanceled(address voter, address delegatedTo, uint256 proposalID);
 
-    constructor (address _governableContract, address _proposalFactory) public {
+    constructor (address _governableContract, address _proposalVerifier) public {
         governableContract = Governable(_governableContract);
-        proposalFactory = IProposalFactory(_proposalFactory);
+        proposalVerifier = IProposalVerifier(_proposalVerifier);
     }
 
-    function getProposalStatus(uint256 proposalId) public view returns (uint256) {
-        ProposalDescription storage prop = proposals[proposalId];
+    function getProposalStatus(uint256 proposalID) public view returns (uint256) {
+        ProposalState storage prop = proposals[proposalID];
         return (prop.status);
     }
 
@@ -92,85 +77,83 @@ contract Governance is GovernanceSettings {
         return (tasks.length);
     }
 
-    function getProposalDescription(uint256 proposalId) public view 
-    returns (
-        string memory description,
-        uint256 requiredVotes,
-        uint256 status,
-        uint256 chosenOption,
-        uint256 totalVotes,
-        address proposalContract) {
-        ProposalDescription storage prop = proposals[proposalId];
-
-        return (
-            prop.description,
-            prop.requiredVotes,
-            prop.status,
-            prop.chosenOption,
-            prop.totalVotes,
-            prop.proposalContract
-        );
-    }
-
-    function vote(uint256 proposalId, uint256[] memory choices) public {
-        ProposalDescription storage prop = proposals[proposalId];
-
-        require(prop.id == proposalId, "proposal with a given id doesnt exist");
-        require(statusVoting(prop.status), "proposal is not at voting period");
-        require(votes[msg.sender][proposalId].power == 0, "this account has already voted. try to cancel a vote if you want to revote");
-        require(choices.length == prop.optionIDs.length, "incorrect choices");
-
-        (uint256 ownVotingPower, uint256 delegatedMeVotingPower, uint256 delegatedVotingPower) = accountVotingPower(msg.sender, prop.id);
-
-        if (ownVotingPower != 0) {
-            uint256 power = ownVotingPower + delegatedMeVotingPower - reducedVotersPower[msg.sender][proposalId];
-            makeVote(proposalId, choices, power);
+    function vote(address delegatedTo, uint256 proposalID, uint256[] memory choices) internal {
+        if (delegatedTo == address(0)) {
+            delegatedTo = msg.sender;
         }
 
-        if (delegatedVotingPower != 0) {
-            address delegatedTo = governableContract.delegatedVotesTo(msg.sender);
-            recountVote(proposalId, delegatedTo);
-            reduceVotersPower(proposalId, delegatedTo, delegatedVotingPower);
-            makeVote(proposalId, choices, delegatedVotingPower);
-            votes[msg.sender][proposalId].previousDelegation = delegatedTo;
-        }
+        ProposalState storage prop = proposals[proposalID];
+
+        require(prop.params.proposalContract != address(0), "proposal with a given ID doesnt exist");
+        require(isInitialStatus(prop.status), "proposal isn't active");
+        require(block.timestamp >= prop.params.deadlines.votingMinEndTime, "proposal voting has't begun");
+        require(votes[msg.sender][delegatedTo][proposalID].weight == 0, "vote already exists");
+        require(choices.length == prop.optionIDs.length, "wrong number of choices");
+
+        uint256 weight = _processNewVote(proposalID, msg.sender, delegatedTo, choices);
+        require(weight != 0, "zero weight");
     }
 
     function createProposal(address proposalContract) public payable {
-        validateProposalContract(proposalContract);
         require(msg.value == proposalFee(), "paid proposal fee is wrong");
-        require (proposalFactory.canVoteForProposal(proposalContract), "cannot vote for a given proposal");
 
-        AbstractProposal proposal = AbstractProposal(proposalContract);
-        bytes32[] memory options = proposal.getOptions();
-        require(options.length != 0, "proposal options is empty - nothing to vote for");
-
-        lastProposalId++;
-        ProposalDescription storage prop = proposals[lastProposalId];
-        prop.id = lastProposalId;
-        prop.status = setStatusVoting(0);
-        prop.requiredVotes = minimumVotesRequired(totalVotes(prop.propType));
-        for (uint256 i = 0; i < options.length; i++) {
-            prop.lastOptionID++;
-            LRC.LrcOption storage option = prop.options[prop.lastOptionID];
-            option.description = options[i];
-            // option.description = bytes32ToString(choices[i]);
-            prop.optionIDs.push(prop.lastOptionID);
-        }
-        prop.proposalContract = proposalContract;
-        votingDeadlines(lastProposalId);
-        addTasks(lastProposalId);
-        proposalFactory.setProposalIsConsidered(proposalContract);
+        lastProposalID++;
+        _createProposal(lastProposalID, proposalContract);
+        addTasks(lastProposalID);
 
         // burn the proposal fee
         burn(msg.value);
 
-        emit ProposalIsCreated(lastProposalId);
+        emit ProposalCreated(lastProposalID);
     }
 
-    function validateProposalContract(address proposalContract) public {
-        AbstractProposal proposal = AbstractProposal(proposalContract);
-        require(proposal.supportsInterface(abstractProposalInterfaceId), "address does not implement proposal interface");
+    function _createProposal(uint256 proposalID, address proposalContract) internal {
+        require(proposalContract != address(0), "empty proposal address");
+        IProposal p = IProposal(proposalContract);
+        // capture the parameters once to ensure that contract will not return different values
+        uint256 pType = p.pType();
+        bool executable = p.executable();
+        uint256 minVotes = p.minVotes();
+        uint256 votingStartTime = p.votingStartTime();
+        uint256 votingMinEndTime = p.votingMinEndTime();
+        uint256 votingMaxEndTime = p.votingMaxEndTime();
+        bytes32[] memory options = p.options();
+        // check the parameters and code
+        require(options.length != 0, "proposal options are empty - nothing to vote for");
+        require(options.length <= maxOptions(), "too many options");
+        bool ok;
+        ok = proposalVerifier.verifyProposalParams(pType, executable, minVotes, votingStartTime, votingMinEndTime, votingMaxEndTime);
+        require(ok, "proposal parameters failed validation");
+        ok = proposalVerifier.verifyProposalCode(pType, proposalContract);
+        require(ok, "proposal code failed validation");
+        // save the parameters
+        ProposalState storage prop = proposals[proposalID];
+        prop.params.pType = pType;
+        prop.params.executable = executable;
+        prop.params.minVotes = minVotes;
+        prop.params.proposalContract = proposalContract;
+        prop.params.deadlines.votingStartTime = votingStartTime;
+        prop.params.deadlines.votingMinEndTime = votingMinEndTime;
+        prop.params.deadlines.votingMaxEndTime = votingMaxEndTime;
+        for (uint256 i = 0; i < options.length; i++) {
+            prop.lastOptionID++;
+            LRC.LrcOption storage option = prop.options[prop.lastOptionID];
+            option.name = options[i];
+            prop.optionIDs.push(prop.lastOptionID);
+        }
+    }
+
+    // cancelProposal cancels the proposal if no one managed to vote yet
+    // must be sent from the proposal contract
+    function cancelProposal(uint256 proposalID) public {
+        ProposalState storage prop = proposals[proposalID];
+        require(prop.params.proposalContract != address(0), "proposal with a given ID doesnt exist");
+        require(isInitialStatus(prop.status), "proposal isn't active");
+        require(prop.votesWeight == 0, "voting has already begun");
+        require(msg.sender == prop.params.proposalContract, "must be sent from the proposal contract");
+
+        prop.status = statusCanceled();
+        emit ProposalCanceled(proposalID);
     }
 
     // handleTasks triggers proposal deadlines processing for a specified range of tasks
@@ -195,85 +178,83 @@ contract Governance is GovernanceSettings {
             if (!tasks[tasks.length - 1].active) {
                 tasks.length--;
             } else {
-                break; // stop when first active task was met
+                break;
+                // stop when first active task was met
             }
         }
         require(erased > 0, "no tasks erased");
         emit TasksErased(erased);
     }
 
-    // handleTask calls handleProposalTask and marks task as inactive if it was handled
-    function handleTask(uint256 taskIdx) internal returns(bool handled) {
+    // handleTask calls handleTaskAssignments and marks task as inactive if it was handled
+    function handleTask(uint256 taskIdx) internal returns (bool handled) {
         require(taskIdx < tasks.length, "incorrect task index");
         Task storage task = tasks[taskIdx];
         if (!task.active) {
             return false;
         }
-        ProposalDescription storage prop = proposals[tasks[taskIdx].proposalID];
-        handled = handleProposalTask(prop, task.assignment);
+        handled = handleTaskAssignments(tasks[taskIdx].proposalID, task.assignment);
         if (handled) {
             task.active = false;
         }
         return handled;
     }
 
-    // handleProposalTask iterates through assignment types and calls a specific handler
-    function handleProposalTask(ProposalDescription storage prop, uint256 assignment) internal returns(bool handled) {
+    // handleTaskAssignments iterates through assignment types and calls a specific handler
+    function handleTaskAssignments(uint256 proposalID, uint256 assignment) internal returns (bool handled) {
+        ProposalState storage prop = proposals[proposalID];
+        if (!isInitialStatus(prop.status)) {
+            return true;
+            // deactivate all tasks for non-active proposals
+        }
         if (assignment == TASK_VOTING) {
-            return handleVotingTask(prop);
+            return handleVotingTask(proposalID, prop);
         }
         return false;
     }
 
     // handleVotingTask handles only TASK_VOTING
-    function handleVotingTask(ProposalDescription storage prop) internal returns (bool handled) {
-        bool ready = statusVoting(prop.status) &&
-        (prop.totalVotes >= prop.requiredVotes || block.timestamp >= prop.deadlines.votingEndTime);
+    function handleVotingTask(uint256 proposalID, ProposalState storage prop) internal returns (bool handled) {
+        bool ready = block.timestamp >= prop.params.deadlines.votingMinEndTime &&
+        (prop.votesWeight >= prop.params.minVotes || block.timestamp >= prop.params.deadlines.votingMaxEndTime);
         if (!ready) {
             return false;
         }
-        (bool proposalAccepted, uint256 winnerId) = calculateVotingResult(prop.id);
-        if (proposalAccepted) {
-            resolveProposal(prop.id, winnerId);
-            emit ResolvedProposal(prop.id);
+        (bool proposalResolved, uint256 winnerId) = calculateVotingResult(prop);
+        if (proposalResolved) {
+            bool expired = resolveProposal(prop, winnerId);
+            if (!expired) {
+                prop.status = statusResolved();
+                emit ProposalResolved(proposalID);
+            } else {
+                prop.status = statusExecutionExpired();
+                emit ProposalExecutionExpired(proposalID);
+            }
         } else {
-            prop.status = failStatus(prop.status);
-            emit RejectedProposal(prop.id);
+            prop.status = statusFailed();
+            emit ProposalRejected(proposalID);
         }
         return true;
     }
 
-    function cancelVote(uint256 proposalId) public {
-        _cancelVote(proposalId, msg.sender);
-    }
+    function resolveProposal(ProposalState storage prop, uint256 winnerOptionID) internal returns (bool) {
+        prop.winnerOptionID = winnerOptionID;
 
-    function totalVotes(uint256 propType) public view returns (uint256) {
-        return governableContract.getTotalVotes(propType);
-    }
-
-    function proceedToVoting(uint256 proposalId) internal {
-        ProposalDescription storage prop = proposals[proposalId];
-        prop.deadlines.votingStartTime = block.timestamp;
-        prop.deadlines.votingEndTime = block.timestamp + votingPeriod();
-        prop.status = setStatusVoting(prop.status);
-        emit StartedProposalVoting(proposalId);
-    }
-
-    function resolveProposal(uint256 proposalId, uint256 winnerOptionId) internal {
-        ProposalDescription storage prop = proposals[proposalId];
-        require(statusVoting(prop.status), "proposal is not at voting period");
-
-        if (prop.propType == typeExecutable()) {
-            address propAddr = prop.proposalContract;
-            propAddr.delegatecall(abi.encodeWithSignature("execute(uint256)", winnerOptionId));
+        bool executionExpired = block.timestamp < prop.params.deadlines.votingMaxEndTime + maxExecutionDuration();
+        if (prop.params.executable && executionExpired) {
+            // protection against proposals which revert or consume too much gas
+            return false;
         }
-
-        prop.status = setStatusAccepted(prop.status);
-        prop.chosenOption = winnerOptionId;
+        if (prop.params.executable && !executionExpired) {
+            address propAddr = prop.params.proposalContract;
+            (bool success, bytes memory result) = propAddr.delegatecall(abi.encodeWithSignature("execute(address,uint256)", propAddr, winnerOptionID));
+            success; // silence unused variable warning
+            result;
+        }
+        return true;
     }
 
-    function calculateVotingResult(uint256 proposalId) internal returns(bool, uint256) {
-        ProposalDescription storage prop = proposals[proposalId];
+    function calculateVotingResult(ProposalState storage prop) internal returns (bool, uint256) {
         uint256 leastResistance;
         uint256 winnerId;
         for (uint256 i = 0; i < prop.optionIDs.length; i++) {
@@ -301,101 +282,132 @@ contract Governance is GovernanceSettings {
         return (leastResistance != 0, winnerId);
     }
 
-    function increaseVotersPower(uint256 proposalId, address voterAddr, uint256 power) internal {
-        votes[voterAddr][proposalId].power += power;
-        // reducedVotersPower[voter][proposalId] -= power;
-        Vote storage v = votes[msg.sender][proposalId];
-        v.power += power;
-        addChoicesToProp(proposalId, v.choices, power);
+    function cancelVote(uint256 proposalID, address delegatedTo) public {
+        if (delegatedTo == address(0)) {
+            delegatedTo = msg.sender;
+        }
+        Vote memory v = votes[msg.sender][delegatedTo][proposalID];
+        require(v.weight != 0, "doesn't exist");
+        _cancelVote(proposalID, msg.sender, delegatedTo);
     }
 
-    function _cancelVote(uint256 proposalId, address voteAddr) internal {
-        Vote memory v = votes[voteAddr][proposalId];
-
-        // prop.choices[v.choice] -= v.power;
-        if (votes[voteAddr][proposalId].previousDelegation != address(0)) {
-            increaseVotersPower(proposalId, voteAddr, v.power);
+    function _cancelVote(uint256 proposalID, address voter, address delegatedTo) internal {
+        Vote memory v = votes[voter][delegatedTo][proposalID];
+        if (v.weight == 0) {
+            return;
         }
 
-        removeChoicesFromProp(proposalId, v.choices, v.power);
-        delete votes[voteAddr][proposalId];
+        if (voter != delegatedTo) {
+            unOverrideDelegationWeight(proposalID, voter, v.weight);
+        }
+
+        removeChoicesFromProp(proposalID, v.choices, v.weight);
+        delete votes[voter][delegatedTo][proposalID];
+
+        emit VoteCanceled(voter, delegatedTo, proposalID);
     }
 
-    function makeVote(uint256 proposalId, uint256[] memory choices, uint256 power) internal {
+    function makeVote(uint256 proposalID, address voter, address delegatedTo, uint256[] memory choices, uint256 weight) internal {
+        votes[voter][delegatedTo][proposalID] = Vote(weight, choices);
+        addChoicesToProp(proposalID, choices, weight);
 
-        Vote storage v = votes[msg.sender][proposalId];
-        v.choices = choices;
-        v.power = power;
-        addChoicesToProp(proposalId, choices, power);
-
-        emit UserVoted(msg.sender, proposalId, choices, power);
+        emit Voted(voter, delegatedTo, proposalID, choices, weight);
     }
 
-    function addChoicesToProp(uint256 proposalId, uint256[] memory choices, uint256 power) internal {
-        ProposalDescription storage prop = proposals[proposalId];
+    function _processNewVote(uint256 proposalID, address voterAddr, address delegatedTo, uint256[] memory choices) internal returns (uint256) {
+        if (delegatedTo == voterAddr) {
+            // voter isn't a delegator
+            (uint256 ownVotingWeight, uint256 delegatedMeVotingWeight) = governableContract.getWeight(voterAddr);
+            uint256 weight = ownVotingWeight.add(delegatedMeVotingWeight).sub(overriddenWeight[voterAddr][proposalID]);
+            if (weight == 0) {
+                return 0;
+            }
+            makeVote(proposalID, voterAddr, voterAddr, choices, weight);
+            return weight;
+        } else {
+            // votes through one of delegations, overrides previous vote of "delegatedTo" (if any)
+            uint256 delegatedWeight = governableContract.getDelegatedWeight(voterAddr, delegatedTo);
+            if (delegatedWeight == 0) {
+                return 0;
+            }
+            // reduce weight of vote of "delegatedTo" (if any)
+            overrideDelegationWeight(proposalID, delegatedTo, delegatedWeight);
+            _recountVote(proposalID, delegatedTo, delegatedTo);
+            // make own vote
+            makeVote(proposalID, voterAddr, delegatedTo, choices, delegatedWeight);
+            return delegatedWeight;
+        }
+    }
+
+    function recountVote(uint256 proposalID, address voterAddr, address delegatedTo) public {
+        Vote memory v = votes[voterAddr][delegatedTo][proposalID];
+        require(v.weight != 0, "doesn't exist");
+        _recountVote(proposalID, voterAddr, delegatedTo);
+    }
+
+    function _recountVote(uint256 proposalID, address voterAddr, address delegatedTo) internal returns (uint256) {
+        uint256[] memory origChoices = votes[voterAddr][delegatedTo][proposalID].choices;
+        // cancel previous vote
+        _cancelVote(proposalID, voterAddr, delegatedTo);
+        // re-make vote
+        return _processNewVote(proposalID, voterAddr, delegatedTo, origChoices);
+    }
+
+    function overrideDelegationWeight(uint256 proposalID, address delegatedTo, uint256 weight) internal {
+        uint256 overridden = overriddenWeight[delegatedTo][proposalID];
+        overridden = overridden.add(weight);
+        overriddenWeight[delegatedTo][proposalID] = overridden;
+        Vote storage v = votes[delegatedTo][delegatedTo][proposalID];
+        if (v.weight != 0) {
+            v.weight = v.weight.sub(weight);
+            removeChoicesFromProp(proposalID, v.choices, weight);
+        }
+        emit VoteWeightOverridden(delegatedTo, weight);
+    }
+
+    function unOverrideDelegationWeight(uint256 proposalID, address delegatedTo, uint256 weight) internal {
+        uint256 overridden = overriddenWeight[delegatedTo][proposalID];
+        overridden = overridden.sub(weight);
+        overriddenWeight[delegatedTo][proposalID] = overridden;
+        Vote storage v = votes[delegatedTo][delegatedTo][proposalID];
+        if (v.weight != 0) {
+            v.weight = v.weight.add(weight);
+            addChoicesToProp(proposalID, v.choices, weight);
+        }
+        emit VoteWeightUnOverridden(delegatedTo, weight);
+    }
+
+    function addChoicesToProp(uint256 proposalID, uint256[] memory choices, uint256 weight) internal {
+        ProposalState storage prop = proposals[proposalID];
 
         require(choices.length == prop.optionIDs.length, "incorrect choices");
 
-        prop.totalVotes += power;
+        prop.votesWeight += weight;
 
         for (uint256 i = 0; i < prop.optionIDs.length; i++) {
             uint256 optionID = prop.optionIDs[i];
-            prop.options[optionID].addVote(choices[i], power);
+            prop.options[optionID].addVote(choices[i], weight);
         }
     }
 
-    function removeChoicesFromProp(uint256 proposalId, uint256[] memory choices, uint256 power) internal {
-        ProposalDescription storage prop = proposals[proposalId];
+    function removeChoicesFromProp(uint256 proposalID, uint256[] memory choices, uint256 weight) internal {
+        ProposalState storage prop = proposals[proposalID];
 
         require(choices.length == prop.optionIDs.length, "incorrect choices");
 
-        prop.totalVotes -= power;
+        prop.votesWeight -= weight;
 
         for (uint256 i = 0; i < prop.optionIDs.length; i++) {
             uint256 optionID = prop.optionIDs[i];
-            prop.options[optionID].removeVote(choices[i], power);
+            prop.options[optionID].removeVote(choices[i], weight);
         }
     }
 
-    function recountVote(uint256 proposalId, address voterAddr) internal {
-        Vote memory v = votes[voterAddr][proposalId];
-        ProposalDescription storage prop = proposals[proposalId];
-        _cancelVote(proposalId, voterAddr);
-
-        (uint256 ownVotingPower, uint256 delegatedMeVotingPower, uint256 delegatedVotingPower) = accountVotingPower(voterAddr, prop.id);
-        uint256 power;
-        if (ownVotingPower > 0) {
-            power = ownVotingPower + delegatedMeVotingPower - reducedVotersPower[voterAddr][proposalId];
-        }
-        if (delegatedVotingPower > 0) {
-            power = delegatedVotingPower + delegatedMeVotingPower - reducedVotersPower[voterAddr][proposalId];
-        }
-
-        makeVote(proposalId, v.choices, power);
-    }
-
-    function reduceVotersPower(uint256 proposalId, address voter, uint256 power) internal {
-        votes[voter][proposalId].power -= power;
-        reducedVotersPower[voter][proposalId] += power;
-        emit VotersPowerReduced(voter);
-    }
-
-    function accountVotingPower(address acc, uint256 proposalId) public view returns (uint256, uint256, uint256) {
-        ProposalDescription memory prop = proposals[proposalId];
-        return governableContract.getVotingPower(acc, prop.propType);
-    }
-
-    function votingDeadlines(uint256 proposalId) internal {
-        ProposalDescription storage prop = proposals[proposalId];
-        prop.deadlines.votingStartTime = block.timestamp;
-        prop.deadlines.votingEndTime = block.timestamp + votingPeriod();
-    }
-
-    function addTasks(uint256 proposalId) internal {
-        tasks.push(Task(true, proposalId, TASK_VOTING));
+    function addTasks(uint256 proposalID) internal {
+        tasks.push(Task(true, proposalID, TASK_VOTING));
     }
 
     function burn(uint256 amount) internal {
-        address(0).send(amount);
+        address(0).transfer(amount);
     }
 }

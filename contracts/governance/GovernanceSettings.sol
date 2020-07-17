@@ -1,24 +1,29 @@
 pragma solidity ^0.5.0;
 
-import "./SafeMath.sol";
+import "../common/SafeMath.sol";
+import "../model/Governable.sol";
+import "../proposal/SoftwareUpgradeProposal.sol";
 import "./Constants.sol";
-import "./Governable.sol";
-import "./SoftwareUpgradeProposal.sol";
-import "../common/ImplementationValidator.sol";
 
 
+/**
+ * @dev Various constants for governance governance settings
+ */
 contract GovernanceSettings is Constants {
     uint256 _proposalFee = 1500;
-    uint256 _minimumVotesRequiredNum = 67;
-    uint256 _minimumVotesRequiredDenum = 100;
     uint256 _maximumlPossibleResistance = 4000;
     uint256 _maximumlPossibleDesignation = 4000;
+    uint256 _maximumOptions = 10;
+    uint256 _maximumExecutionDuration = 3 days;
 
-    function proposalFee() public view returns(uint256) {
+    function proposalFee() public view returns (uint256) {
         return _proposalFee;
     }
-
-    function minimumVotesRequired(uint256 totalVotersNum) public view returns(uint256) {
-        return totalVotersNum * _minimumVotesRequiredNum / _minimumVotesRequiredDenum;
+    function maxOptions() public view returns (uint256) {
+        return _maximumOptions;
+    }
+    // maxExecutionDuration is maximum time for which proposal is executable after maximum voting end date
+    function maxExecutionDuration() public view returns (uint256) {
+        return _maximumExecutionDuration;
     }
 }
