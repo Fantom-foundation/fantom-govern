@@ -1,5 +1,6 @@
 pragma solidity ^0.5.0;
 
+import "../common/Decimal.sol";
 import "../common/SafeMath.sol";
 
 /**
@@ -18,7 +19,6 @@ library LRC {
     }
 
     uint256 constant OptionsNum = 5;
-    uint256 constant rebaseScale = 10000;
     uint256 constant levelOfDesignation = OptionsNum - 1; //
     uint256 constant maxScale = 5;
     // mapping(uint256 => uint256) scales;
@@ -54,7 +54,7 @@ library LRC {
 
     function calculateARC(LrcOption storage self) public {
         uint256 maxPossibleResistance = self.totalVotes * maxScale;
-        uint256 rebasedActualResistance = self.resistance * rebaseScale;
+        uint256 rebasedActualResistance = self.resistance * Decimal.unit();
         self.arc = rebasedActualResistance / maxPossibleResistance;
     }
 
@@ -64,7 +64,7 @@ library LRC {
             totalDesignation += self.opinions[i].totalVotes;
         }
 
-        uint256 designationRebased = totalDesignation * rebaseScale;
+        uint256 designationRebased = totalDesignation * Decimal.unit();
         self.dw = designationRebased / self.totalVotes;
     }
 

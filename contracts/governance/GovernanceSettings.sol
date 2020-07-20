@@ -1,5 +1,6 @@
 pragma solidity ^0.5.0;
 
+import "../common/Decimal.sol";
 import "../common/SafeMath.sol";
 import "../model/Governable.sol";
 import "../proposal/SoftwareUpgradeProposal.sol";
@@ -11,8 +12,8 @@ import "./Constants.sol";
  */
 contract GovernanceSettings is Constants {
     uint256 _proposalFee = 1500;
-    uint256 _maximumPossibleResistance = 4000;
-    uint256 _maximumPossibleDesignation = 4000;
+    uint256 _maximumPossibleResistance = 40 * Decimal.unit() / 100; // 40%
+    uint256 _maximumPossibleDesignation = 40 * Decimal.unit() / 100; // 40%
     uint256 _maximumOptions = 10;
     uint256 _maximumExecutionDuration = 3 days;
 
