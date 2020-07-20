@@ -220,7 +220,7 @@ contract Governance is GovernanceSettings {
         if (!ready) {
             return false;
         }
-        (bool proposalResolved, uint256 winnerId) = calculateVotingResult(proposalID);
+        (bool proposalResolved, uint256 winnerId) = _calculateVotingTally(prop);
         if (proposalResolved) {
             bool expired = resolveProposal(prop, winnerId);
             if (!expired) {
@@ -254,8 +254,7 @@ contract Governance is GovernanceSettings {
         return true;
     }
 
-    function calculateVotingResult(uint256 proposalID) public view returns (bool, uint256) {
-        ProposalState memory prop = proposals[proposalID];
+    function _calculateVotingTally(ProposalState storage prop) internal view returns (bool, uint256) {
         uint256 leastResistance;
         uint256 winnerId = prop.optionIDs.length;
         for (uint256 i = 0; i < prop.optionIDs.length; i++) {
@@ -275,6 +274,13 @@ contract Governance is GovernanceSettings {
         }
 
         return (winnerId != prop.optionIDs.length, winnerId);
+    }
+
+    // calculateVotingTally calculates the voting tally and returns {is finished, won option ID, total weight of votes}
+    function calculateVotingTally(uint256 proposalID) external view returns (bool proposalResolved, uint256 winnerId, uint256 votesWeight) {
+        ProposalState storage prop = proposals[proposalID];
+        (proposalResolved, winnerId) =  _calculateVotingTally(prop);
+        return (proposalResolved, winnerId, prop.votesWeight);
     }
 
     function cancelVote(uint256 proposalID, address delegatedTo) public {
