@@ -256,30 +256,24 @@ contract Governance is GovernanceSettings {
 
     function calculateVotingResult(ProposalState storage prop) internal returns (bool, uint256) {
         uint256 leastResistance;
-        uint256 winnerId;
+        uint256 winnerId = prop.optionIDs.length;
         for (uint256 i = 0; i < prop.optionIDs.length; i++) {
             uint256 optionID = prop.optionIDs[i];
             prop.options[optionID].recalculate();
             uint256 arc = prop.options[optionID].arc;
 
-            if (prop.options[optionID].dw > _maximumPossibleDesignation) {
+            if (prop.options[optionID].dw > _maximumPossibleDesignation || arc > _maximumPossibleResistance) {
+                // VETO or a critical resistance against this option
                 continue;
             }
 
-            if (leastResistance == 0) {
+            if (leastResistance == 0 || arc <= leastResistance) {
                 leastResistance = arc;
                 winnerId = i;
-                continue;
-            }
-
-            if (arc <= _maximumPossibleResistance && arc <= leastResistance) {
-                leastResistance = arc;
-                winnerId = i;
-                continue;
             }
         }
 
-        return (leastResistance != 0, winnerId);
+        return (winnerId != prop.optionIDs.length, winnerId);
     }
 
     function cancelVote(uint256 proposalID, address delegatedTo) public {
