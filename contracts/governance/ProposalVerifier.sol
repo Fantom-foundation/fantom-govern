@@ -107,6 +107,7 @@ contract ProposalVerifier is IProposalVerifier, Ownable {
         require(bytes(name).length != 0, "empty name");
         // empty name is a marker of non-existing template
         require(!templateExists(pType), "template already exists");
+        template.name = name;
         template.exampleAddress = exampleAddress;
         if (exampleAddress != address(0)) {
             // empty exampleAddress means "no constrains on code"
