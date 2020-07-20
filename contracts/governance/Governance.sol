@@ -1,5 +1,6 @@
 pragma solidity ^0.5.0;
 
+import "../common/ReentrancyGuard.sol";
 import "../common/SafeMath.sol";
 import "../model/Governable.sol";
 import "../proposal/IProposal.sol";
@@ -10,11 +11,7 @@ import "./Constants.sol";
 import "./GovernanceSettings.sol";
 import "./LRC.sol";
 
-// TODO:
-// Add lib to prevent reentrance
-// Add more tests
-// Add LRC voting and calculation
-contract Governance is GovernanceSettings {
+contract Governance is ReentrancyGuard, GovernanceSettings {
     using SafeMath for uint256;
     using LRC for LRC.LrcOption;
 
@@ -77,7 +74,7 @@ contract Governance is GovernanceSettings {
         return (tasks.length);
     }
 
-    function vote(address delegatedTo, uint256 proposalID, uint256[] memory choices) internal {
+    function vote(address delegatedTo, uint256 proposalID, uint256[] calldata choices) nonReentrant external {
         if (delegatedTo == address(0)) {
             delegatedTo = msg.sender;
         }
@@ -94,7 +91,7 @@ contract Governance is GovernanceSettings {
         require(weight != 0, "zero weight");
     }
 
-    function createProposal(address proposalContract) public payable {
+    function createProposal(address proposalContract) nonReentrant external payable {
         require(msg.value == proposalFee(), "paid proposal fee is wrong");
 
         lastProposalID++;
@@ -143,7 +140,7 @@ contract Governance is GovernanceSettings {
 
     // cancelProposal cancels the proposal if no one managed to vote yet
     // must be sent from the proposal contract
-    function cancelProposal(uint256 proposalID) public {
+    function cancelProposal(uint256 proposalID) nonReentrant external {
         ProposalState storage prop = proposals[proposalID];
         require(prop.params.proposalContract != address(0), "proposal with a given ID doesnt exist");
         require(isInitialStatus(prop.status), "proposal isn't active");
@@ -155,7 +152,7 @@ contract Governance is GovernanceSettings {
     }
 
     // handleTasks triggers proposal deadlines processing for a specified range of tasks
-    function handleTasks(uint256 startIdx, uint256 quantity) public {
+    function handleTasks(uint256 startIdx, uint256 quantity) nonReentrant external {
         uint256 handled = 0;
         uint256 i;
         for (i = startIdx; i < tasks.length && i < startIdx + quantity; i++) {
@@ -170,7 +167,7 @@ contract Governance is GovernanceSettings {
     }
 
     // tasksCleanup erases inactive (handled) tasks backwards until an active task is met
-    function tasksCleanup(uint256 quantity) public {
+    function tasksCleanup(uint256 quantity) nonReentrant external {
         uint256 erased;
         for (erased = 0; tasks.length > 0 && erased < quantity; erased++) {
             if (!tasks[tasks.length - 1].active) {
@@ -281,7 +278,7 @@ contract Governance is GovernanceSettings {
         return (proposalResolved, winnerId, prop.votesWeight);
     }
 
-    function cancelVote(uint256 proposalID, address delegatedTo) public {
+    function cancelVote(uint256 proposalID, address delegatedTo) nonReentrant external {
         if (delegatedTo == address(0)) {
             delegatedTo = msg.sender;
         }
@@ -338,7 +335,7 @@ contract Governance is GovernanceSettings {
         }
     }
 
-    function recountVote(uint256 proposalID, address voterAddr, address delegatedTo) public {
+    function recountVote(uint256 proposalID, address voterAddr, address delegatedTo) nonReentrant external {
         Vote memory v = votes[voterAddr][delegatedTo][proposalID];
         require(v.weight != 0, "doesn't exist");
         _recountVote(proposalID, voterAddr, delegatedTo);
