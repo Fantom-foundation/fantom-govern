@@ -9,17 +9,16 @@ import "../common/SafeMath.sol";
 library LRC {
     using SafeMath for uint256;
 
-    //
-    enum OptionValue {
-        STRONGLY_AGREE, // "strongly agree"
-        AGREE, // "agree"
-        NEUTRAL, // "neutral"
-        DISAGREE, // "disagree"
-        VETO // "veto"
+    enum OptionIDs {
+        VETO, // 0 = "veto"
+        DISAGREE, // 1 = "disagree"
+        NEUTRAL, // 2 = "neutral"
+        AGREE, // 3 = "agree"
+        STRONGLY_AGREE // 4 = "strongly agree"
     }
 
-    uint256 constant optionsNum = 5;
-    uint256 constant lowestVetoIdx = optionsNum - 1; // only last opinion is a veto
+    uint256 constant opinionsNum = 5;
+    uint256 constant highestVetoOpinionID = 0; // only opinion == 0 is a veto
     uint256 constant vetoExtraResistanceScale = 1;
 
     struct LrcOption {
@@ -40,35 +39,37 @@ library LRC {
         return self.vetoVotes.mul(Decimal.unit()).div(self.totalVotes);
     }
 
-    function getOpinionResistanceScale(uint256 opinionId) public pure returns(uint256) {
-        if (opinionId >= lowestVetoIdx) {
-            return opinionId + vetoExtraResistanceScale;
+    function getOpinionResistanceScale(uint256 opinionID) public pure returns(uint256) {
+        uint256 agree = opinionID;
+        uint256 disagree = opinionsNum - 1 - agree;
+        if (opinionID <= highestVetoOpinionID) {
+            return disagree + vetoExtraResistanceScale;
         }
-        return opinionId;
+        return disagree;
     }
 
     function maxResistanceScale() public pure returns(uint256) {
-        return getOpinionResistanceScale(optionsNum - 1);
+        return getOpinionResistanceScale(0);
     }
 
-    function addVote(LrcOption storage self, uint256 opinionId, uint256 weight) public {
-        require(opinionId < optionsNum, "wrong opinion id");
+    function addVote(LrcOption storage self, uint256 opinionID, uint256 weight) public {
+        require(opinionID < opinionsNum, "wrong opinion ID");
 
-        uint256 scale = getOpinionResistanceScale(opinionId);
+        uint256 scale = getOpinionResistanceScale(opinionID);
 
-        if (opinionId >= lowestVetoIdx) {
+        if (opinionID <= highestVetoOpinionID) {
             self.vetoVotes += weight;
         }
         self.totalVotes += weight;
         self.resistance += weight * scale;
     }
 
-    function removeVote(LrcOption storage self, uint256 opinionId, uint256 weight) public {
-        require(opinionId < optionsNum, "wrong opinion id");
+    function removeVote(LrcOption storage self, uint256 opinionID, uint256 weight) public {
+        require(opinionID < opinionsNum, "wrong opinion ID");
 
-        uint256 scale = getOpinionResistanceScale(opinionId);
+        uint256 scale = getOpinionResistanceScale(opinionID);
 
-        if (opinionId >= lowestVetoIdx) {
+        if (opinionID <= highestVetoOpinionID) {
             self.vetoVotes -= weight;
         }
         self.totalVotes -= weight;
