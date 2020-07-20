@@ -220,7 +220,7 @@ contract Governance is GovernanceSettings {
         if (!ready) {
             return false;
         }
-        (bool proposalResolved, uint256 winnerId) = calculateVotingResult(prop);
+        (bool proposalResolved, uint256 winnerId) = calculateVotingResult(proposalID);
         if (proposalResolved) {
             bool expired = resolveProposal(prop, winnerId);
             if (!expired) {
@@ -254,15 +254,16 @@ contract Governance is GovernanceSettings {
         return true;
     }
 
-    function calculateVotingResult(ProposalState storage prop) internal returns (bool, uint256) {
+    function calculateVotingResult(uint256 proposalID) public view returns (bool, uint256) {
+        ProposalState memory prop = proposals[proposalID];
         uint256 leastResistance;
         uint256 winnerId = prop.optionIDs.length;
         for (uint256 i = 0; i < prop.optionIDs.length; i++) {
             uint256 optionID = prop.optionIDs[i];
-            prop.options[optionID].recalculate();
-            uint256 arc = prop.options[optionID].arc;
+            uint256 arc = LRC.resistanceRatio(prop.options[optionID]);
+            uint256 dw = LRC.vetoRatio(prop.options[optionID]);
 
-            if (prop.options[optionID].dw > _maximumPossibleDesignation || arc > _maximumPossibleResistance) {
+            if (dw > _maximumPossibleDesignation || arc > _maximumPossibleResistance) {
                 // VETO or a critical resistance against this option
                 continue;
             }
