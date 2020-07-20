@@ -11,7 +11,7 @@ import "./Constants.sol";
  * @dev Various constants for governance governance settings
  */
 contract GovernanceSettings is Constants {
-    uint256 _proposalFee = 1500;
+    uint256 _proposalFee = 100 * 1e18;
     uint256 _maximumPossibleResistance = 40 * Decimal.unit() / 100; // 40%
     uint256 _maximumPossibleDesignation = 40 * Decimal.unit() / 100; // 40%
     uint256 _maximumOptions = 10;
