@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 
 library GetCode {
-    function at(address _addr) public view returns (bytes memory o_code) {
+    function code(address _addr) internal view returns (bytes memory o_code) {
         assembly {
             // retrieve the size of the code, this needs assembly
             let size := extcodesize(_addr)
@@ -16,11 +16,13 @@ library GetCode {
             extcodecopy(_addr, add(o_code, 0x20), 0, size)
         }
     }
-    function sizeOf(address _addr) public view returns (uint size) {
-        assembly { size := extcodesize(_addr) }
+
+    function codeSize(address _addr) internal view returns (uint size) {
+        assembly {size := extcodesize(_addr)}
         return size;
     }
-    function hashOf(address _addr) public view returns (bytes32) {
-        return keccak256(at(_addr));
+
+    function codeHash(address _addr) internal view returns (bytes32) {
+        return keccak256(code(_addr));
     }
 }

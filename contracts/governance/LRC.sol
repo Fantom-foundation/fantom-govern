@@ -29,17 +29,17 @@ library LRC {
     }
 
     // resistanceRatio is a ratio of option resistance (higher -> option is less supported)
-    function resistanceRatio(LrcOption storage self) public view returns (uint256) {
+    function resistanceRatio(LrcOption storage self) internal view returns (uint256) {
         uint256 maxPossibleResistance = self.totalVotes.mul(maxResistanceScale());
         return self.resistance.mul(Decimal.unit()).div(maxPossibleResistance);
     }
 
     // vetoRatio is a ratio of veto votes (higher -> option is less supported)
-    function vetoRatio(LrcOption storage self) public view returns (uint256)  {
+    function vetoRatio(LrcOption storage self) internal view returns (uint256)  {
         return self.vetoVotes.mul(Decimal.unit()).div(self.totalVotes);
     }
 
-    function getOpinionResistanceScale(uint256 opinionID) public pure returns (uint256) {
+    function getOpinionResistanceScale(uint256 opinionID) internal pure returns (uint256) {
         uint256 agree = opinionID;
         uint256 disagree = opinionsNum - 1 - agree;
         if (opinionID <= highestVetoOpinionID) {
@@ -48,11 +48,11 @@ library LRC {
         return disagree;
     }
 
-    function maxResistanceScale() public pure returns (uint256) {
+    function maxResistanceScale() internal pure returns (uint256) {
         return getOpinionResistanceScale(0);
     }
 
-    function addVote(LrcOption storage self, uint256 opinionID, uint256 weight) public {
+    function addVote(LrcOption storage self, uint256 opinionID, uint256 weight) internal {
         require(opinionID < opinionsNum, "wrong opinion ID");
 
         uint256 scale = getOpinionResistanceScale(opinionID);
@@ -64,7 +64,7 @@ library LRC {
         self.resistance += weight * scale;
     }
 
-    function removeVote(LrcOption storage self, uint256 opinionID, uint256 weight) public {
+    function removeVote(LrcOption storage self, uint256 opinionID, uint256 weight) internal {
         require(opinionID < opinionsNum, "wrong opinion ID");
 
         uint256 scale = getOpinionResistanceScale(opinionID);

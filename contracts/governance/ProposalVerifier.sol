@@ -11,6 +11,8 @@ import "../ownership/Ownable.sol";
  *      Supposed to be owned by the governance contract
  */
 contract ProposalVerifier is IProposalVerifier, Ownable {
+    using GetCode for address;
+
     struct ProposalTemplate {
         string name;
         address exampleAddress; // used as a code template
@@ -87,7 +89,7 @@ contract ProposalVerifier is IProposalVerifier, Ownable {
             // template with no requirements to code
             return true;
         }
-        return template.codeHash == GetCode.hashOf(propAddr);
+        return template.codeHash == propAddr.codeHash();
     }
 
     // templates library
@@ -108,7 +110,7 @@ contract ProposalVerifier is IProposalVerifier, Ownable {
         template.exampleAddress = exampleAddress;
         if (exampleAddress != address(0)) {
             // empty exampleAddress means "no constrains on code"
-            template.codeHash = GetCode.hashOf(exampleAddress);
+            template.codeHash = exampleAddress.codeHash();
         }
         template.executable = executable;
         template.minVotes = minVotes;
