@@ -26,13 +26,13 @@ contract Governance is GovernanceSettings {
     struct ProposalState {
         Proposal.Parameters params;
 
+        // voting state
         mapping(uint256 => LRC.LrcOption) options;
-        uint256[] optionIDs;
-        uint256 lastOptionID;
+        uint256 optionsNum;
         uint256 winnerOptionID;
+        uint256 votesWeight;
 
         uint256 status;
-        uint256 votesWeight;
     }
 
     struct Task {
@@ -88,7 +88,7 @@ contract Governance is GovernanceSettings {
         require(isInitialStatus(prop.status), "proposal isn't active");
         require(block.timestamp >= prop.params.deadlines.votingMinEndTime, "proposal voting has't begun");
         require(votes[msg.sender][delegatedTo][proposalID].weight == 0, "vote already exists");
-        require(choices.length == prop.optionIDs.length, "wrong number of choices");
+        require(choices.length == prop.optionsNum, "wrong number of choices");
 
         uint256 weight = _processNewVote(proposalID, msg.sender, delegatedTo, choices);
         require(weight != 0, "zero weight");
@@ -136,11 +136,9 @@ contract Governance is GovernanceSettings {
         prop.params.deadlines.votingMinEndTime = votingMinEndTime;
         prop.params.deadlines.votingMaxEndTime = votingMaxEndTime;
         for (uint256 i = 0; i < options.length; i++) {
-            prop.lastOptionID++;
-            LRC.LrcOption storage option = prop.options[prop.lastOptionID];
-            option.name = options[i];
-            prop.optionIDs.push(prop.lastOptionID);
+            prop.options[i].name = options[i];
         }
+        prop.optionsNum = options.length;
     }
 
     // cancelProposal cancels the proposal if no one managed to vote yet
@@ -256,9 +254,9 @@ contract Governance is GovernanceSettings {
 
     function _calculateVotingTally(ProposalState storage prop) internal view returns (bool, uint256) {
         uint256 leastResistance;
-        uint256 winnerId = prop.optionIDs.length;
-        for (uint256 i = 0; i < prop.optionIDs.length; i++) {
-            uint256 optionID = prop.optionIDs[i];
+        uint256 winnerId = prop.optionsNum;
+        for (uint256 i = 0; i < prop.optionsNum; i++) {
+            uint256 optionID = i;
             uint256 arc = LRC.resistanceRatio(prop.options[optionID]);
             uint256 dw = LRC.vetoRatio(prop.options[optionID]);
 
@@ -273,7 +271,7 @@ contract Governance is GovernanceSettings {
             }
         }
 
-        return (winnerId != prop.optionIDs.length, winnerId);
+        return (winnerId != prop.optionsNum, winnerId);
     }
 
     // calculateVotingTally calculates the voting tally and returns {is finished, won option ID, total weight of votes}
@@ -381,26 +379,20 @@ contract Governance is GovernanceSettings {
     function addChoicesToProp(uint256 proposalID, uint256[] memory choices, uint256 weight) internal {
         ProposalState storage prop = proposals[proposalID];
 
-        require(choices.length == prop.optionIDs.length, "incorrect choices");
-
         prop.votesWeight += weight;
 
-        for (uint256 i = 0; i < prop.optionIDs.length; i++) {
-            uint256 optionID = prop.optionIDs[i];
-            prop.options[optionID].addVote(choices[i], weight);
+        for (uint256 i = 0; i < prop.optionsNum; i++) {
+            prop.options[i].addVote(choices[i], weight);
         }
     }
 
     function removeChoicesFromProp(uint256 proposalID, uint256[] memory choices, uint256 weight) internal {
         ProposalState storage prop = proposals[proposalID];
 
-        require(choices.length == prop.optionIDs.length, "incorrect choices");
-
         prop.votesWeight -= weight;
 
-        for (uint256 i = 0; i < prop.optionIDs.length; i++) {
-            uint256 optionID = prop.optionIDs[i];
-            prop.options[optionID].removeVote(choices[i], weight);
+        for (uint256 i = 0; i < prop.optionsNum; i++) {
+            prop.options[i].removeVote(choices[i], weight);
         }
     }
 
