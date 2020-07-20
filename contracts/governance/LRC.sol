@@ -3,7 +3,7 @@ pragma solidity ^0.5.0;
 import "../common/SafeMath.sol";
 
 /**
- * @dev LRC implements the "least resistant consesus" paper. More detailed description can be taken from Fantom's docs.
+ * @dev LRC implements the "least resistant consensus" paper. More detailed description can be found in Fantom's docs.
  */
 library LRC {
     using SafeMath for uint256;
@@ -19,7 +19,7 @@ library LRC {
 
     uint256 constant OptionsNum = 5;
     uint256 constant rebaseScale = 10000;
-    uint256 constant levelOfDissagnation = OptionsNum - 1; //
+    uint256 constant levelOfDesignation = OptionsNum - 1; //
     uint256 constant maxScale = 5;
     // mapping(uint256 => uint256) scales;
 
@@ -59,13 +59,13 @@ library LRC {
     }
 
     function calculateDW(LrcOption storage self) public {
-        uint256 totalDessignation;
-        for (uint256 i = levelOfDissagnation; i < OptionsNum; i++) {
-            totalDessignation += self.opinions[i].totalVotes;
+        uint256 totalDesignation;
+        for (uint256 i = levelOfDesignation; i < OptionsNum; i++) {
+            totalDesignation += self.opinions[i].totalVotes;
         }
 
-        uint256 dessignationRebased = totalDessignation * rebaseScale;
-        self.dw = dessignationRebased / self.totalVotes;
+        uint256 designationRebased = totalDesignation * rebaseScale;
+        self.dw = designationRebased / self.totalVotes;
     }
 
     function calculateRawCount(LrcOption storage self) public {
@@ -73,7 +73,7 @@ library LRC {
     }
 
     function addVote(LrcOption storage self, uint256 opinionId, uint256 weight) public {
-        require(opinionId < OptionsNum, "inappropriate opinion id");
+        require(opinionId < OptionsNum, "wrong opinion id");
         self.opinions[opinionId].totalVotes += weight;
 
         uint256 scale;
@@ -88,7 +88,7 @@ library LRC {
     }
 
     function removeVote(LrcOption storage self, uint256 opinionId, uint256 weight) public {
-        require(opinionId < OptionsNum, "inappropriate opinion id");
+        require(opinionId < OptionsNum, "wrong opinion id");
         self.opinions[opinionId].totalVotes -= weight;
 
         uint256 scale;

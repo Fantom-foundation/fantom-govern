@@ -262,7 +262,7 @@ contract Governance is GovernanceSettings {
             prop.options[optionID].recalculate();
             uint256 arc = prop.options[optionID].arc;
 
-            if (prop.options[optionID].dw > _maximumlPossibleDesignation) {
+            if (prop.options[optionID].dw > _maximumPossibleDesignation) {
                 continue;
             }
 
@@ -272,7 +272,7 @@ contract Governance is GovernanceSettings {
                 continue;
             }
 
-            if (arc <= _maximumlPossibleResistance && arc <= leastResistance) {
+            if (arc <= _maximumPossibleResistance && arc <= leastResistance) {
                 leastResistance = arc;
                 winnerId = i;
                 continue;
