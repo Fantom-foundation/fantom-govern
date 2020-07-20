@@ -199,8 +199,8 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
     function handleTaskAssignments(uint256 proposalID, uint256 assignment) internal returns (bool handled) {
         ProposalState storage prop = proposals[proposalID];
         if (!isInitialStatus(prop.status)) {
-            return true;
             // deactivate all tasks for non-active proposals
+            return true;
         }
         if (assignment == TASK_VOTING) {
             return handleVotingTask(proposalID, prop);
@@ -243,7 +243,8 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         if (prop.params.executable && !executionExpired) {
             address propAddr = prop.params.proposalContract;
             (bool success, bytes memory result) = propAddr.delegatecall(abi.encodeWithSignature("execute(address,uint256)", propAddr, winnerOptionID));
-            success; // silence unused variable warning
+            // silence unused variable warning
+            success;
             result;
         }
         return true;
@@ -274,7 +275,7 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
     // calculateVotingTally calculates the voting tally and returns {is finished, won option ID, total weight of votes}
     function calculateVotingTally(uint256 proposalID) external view returns (bool proposalResolved, uint256 winnerId, uint256 votesWeight) {
         ProposalState storage prop = proposals[proposalID];
-        (proposalResolved, winnerId) =  _calculateVotingTally(prop);
+        (proposalResolved, winnerId) = _calculateVotingTally(prop);
         return (proposalResolved, winnerId, prop.votesWeight);
     }
 
