@@ -304,6 +304,7 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         }
         Vote memory v = _votes[msg.sender][delegatedTo][proposalID];
         require(v.weight != 0, "doesn't exist");
+        require(isInitialStatus(proposals[proposalID].status), "proposal isn't active");
         _cancelVote(msg.sender, delegatedTo, proposalID);
     }
 
@@ -358,6 +359,7 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
     function recountVote(address voterAddr, address delegatedTo, uint256 proposalID) nonReentrant external {
         Vote memory v = _votes[voterAddr][delegatedTo][proposalID];
         require(v.weight != 0, "doesn't exist");
+        require(isInitialStatus(proposals[proposalID].status), "proposal isn't active");
         _recountVote(voterAddr, delegatedTo, proposalID);
     }
 
