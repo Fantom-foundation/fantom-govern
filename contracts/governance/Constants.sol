@@ -11,33 +11,34 @@ contract StatusConstants {
     }
 
     // bit map
-    uint256 constant BIT_IS_RESOLVED = 0;
-    uint256 constant BIT_IS_FAILED = 1;
-    uint256 constant BIT_IS_CANCELED = 2;
-    uint256 constant BIT_IS_EXECUTION_EXPIRED = 3;
-
+    uint256 constant STATUS_INITIAL = 0;
+    uint256 constant STATUS_RESOLVED = 1;
+    uint256 constant STATUS_FAILED = 1 << 1;
+    uint256 constant STATUS_CANCELED = 1 << 2;
+    uint256 constant STATUS_EXECUTION_EXPIRED =  1 << 3;
+    
     function statusInitial() internal pure returns (uint256) {
-        return 0;
+        return STATUS_INITIAL;
     }
 
     function statusExecutionExpired() internal pure returns (uint256) {
-        return 1 << BIT_IS_EXECUTION_EXPIRED;
+        return STATUS_EXECUTION_EXPIRED;
     }
 
     function statusFailed() internal pure returns (uint256) {
-        return 1 << BIT_IS_FAILED;
+        return STATUS_FAILED;
     }
 
     function statusCanceled() internal pure returns (uint256) {
-        return 1 << BIT_IS_FAILED;
+        return STATUS_FAILED;
     }
 
     function statusResolved() internal pure returns (uint256) {
-        return 1 << BIT_IS_RESOLVED;
+        return STATUS_RESOLVED;
     }
 
     function isInitialStatus(uint256 status) internal pure returns (bool) {
-        return status == 0;
+        return status == STATUS_INITIAL;
     }
 
     // task assignments
