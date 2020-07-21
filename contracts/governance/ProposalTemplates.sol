@@ -3,16 +3,18 @@ pragma solidity ^0.5.0;
 import "../common/SafeMath.sol";
 import "../common/GetCode.sol";
 import "../common/Decimal.sol";
-import "./IProposalVerifier.sol";
+import "../proposal/IProposalVerifier.sol";
 import "../ownership/Ownable.sol";
 
 /**
- * @dev Verifier of proposal code and parameters
+ * @dev A storage of current proposal templates. Any new proposal will be verified against the stored template of its type. 
+ *      Verifcation checks for proposal code and parameters.
  *      Supposed to be owned by the governance contract
  */
-contract ProposalVerifier is IProposalVerifier, Ownable {
+contract ProposalTemplates is IProposalVerifier, Ownable {
     using GetCode for address;
-
+    
+    // Stored data for a proposal template
     struct ProposalTemplate {
         string name;
         address exampleAddress; // used as a code template
@@ -24,7 +26,42 @@ contract ProposalVerifier is IProposalVerifier, Ownable {
         uint256 minStartDelay; // minimum delay of the voting (i.e. must start with a delay)
         uint256 maxStartDelay; // maximum delay of the voting (i.e. must start sooner)
     }
+    
+    // templates library
+    mapping(uint256 => ProposalTemplate) proposalTemplates; // proposal type -> ProposalTemplate
 
+    // templateExists returns true if proposal template is present
+    function templateExists(uint256 pType) public view returns (bool) {
+        return bytes(proposalTemplates[pType].name).length != 0;
+    }
+
+    // addTemplate adds a template into the library
+    // template must have unique type
+    function addTemplate(uint256 pType, string calldata name, address exampleAddress, bool executable, uint256 minVotes, uint256 minVotingDuration, uint256 maxVotingDuration, uint256 minStartDelay, uint256 maxStartDelay) external onlyOwner {
+        ProposalTemplate storage template = proposalTemplates[pType];
+        require(bytes(name).length != 0, "empty name");
+        // empty name is a marker of non-existing template
+        require(!templateExists(pType), "template already exists");
+        template.name = name;
+        template.exampleAddress = exampleAddress;
+        if (exampleAddress != address(0)) {
+            // empty exampleAddress means "no constrains on code"
+            template.codeHash = exampleAddress.codeHash();
+        }
+        template.executable = executable;
+        template.minVotes = minVotes;
+        template.minVotingDuration = minVotingDuration;
+        template.maxVotingDuration = maxVotingDuration;
+        template.minStartDelay = minStartDelay;
+        template.maxStartDelay = maxStartDelay;
+    }
+
+    // eraseTemplate removes the template of specified type from the library
+    function eraseTemplate(uint256 pType) external onlyOwner {
+        require(templateExists(pType), "template doesn't exist");
+        delete (proposalTemplates[pType]);
+    }
+    
     // verifyProposalParams checks proposal code and parameters
     function verifyProposalParams(uint256 pType, bool exec, uint256 minVotes, uint256 start, uint256 minEnd, uint256 maxEnd) external view returns (bool) {
         if (start < block.timestamp) {
@@ -79,6 +116,7 @@ contract ProposalVerifier is IProposalVerifier, Ownable {
         return true;
     }
 
+    // verifyProposalCode verifies proposal code from the specified type and address
     function verifyProposalCode(uint256 pType, address propAddr) external view returns (bool) {
         if (!templateExists(pType)) {
             // non-existing template
@@ -90,40 +128,5 @@ contract ProposalVerifier is IProposalVerifier, Ownable {
             return true;
         }
         return template.codeHash == propAddr.codeHash();
-    }
-
-    // templates library
-    mapping(uint256 => ProposalTemplate) proposalTemplates; // proposal type -> ProposalTemplate
-
-    // templateExists returns true if proposal template is present
-    function templateExists(uint256 pType) public view returns (bool) {
-        return bytes(proposalTemplates[pType].name).length != 0;
-    }
-
-    // addTemplate into the library
-    // template must have unique type
-    function addTemplate(uint256 pType, string calldata name, address exampleAddress, bool executable, uint256 minVotes, uint256 minVotingDuration, uint256 maxVotingDuration, uint256 minStartDelay, uint256 maxStartDelay) external onlyOwner {
-        ProposalTemplate storage template = proposalTemplates[pType];
-        require(bytes(name).length != 0, "empty name");
-        // empty name is a marker of non-existing template
-        require(!templateExists(pType), "template already exists");
-        template.name = name;
-        template.exampleAddress = exampleAddress;
-        if (exampleAddress != address(0)) {
-            // empty exampleAddress means "no constrains on code"
-            template.codeHash = exampleAddress.codeHash();
-        }
-        template.executable = executable;
-        template.minVotes = minVotes;
-        template.minVotingDuration = minVotingDuration;
-        template.maxVotingDuration = maxVotingDuration;
-        template.minStartDelay = minStartDelay;
-        template.maxStartDelay = maxStartDelay;
-    }
-
-    // eraseTemplate from the library
-    function eraseTemplate(uint256 pType) external onlyOwner {
-        require(templateExists(pType), "template doesn't exist");
-        delete (proposalTemplates[pType]);
     }
 }

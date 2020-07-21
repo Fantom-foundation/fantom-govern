@@ -1,9 +1,12 @@
 pragma solidity ^0.5.0;
 
-import "./IProposal.sol";
 import "../common/SafeMath.sol";
-import "../governance/IProposalVerifier.sol";
+import "../proposal/IProposal.sol";
+import "../proposal/IProposalVerifier.sol";
 
+/**
+ * @dev A base for any proposal
+ */ 
 contract BaseProposal is IProposal {
     using SafeMath for uint256;
 
