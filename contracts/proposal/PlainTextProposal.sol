@@ -1,7 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "../proposal/ProposalTypes.sol";
-import "../proposal/BaseProposal.sol";
+import "./BaseProposal.sol";
 
 /**
  * @dev PlainText proposal
@@ -23,8 +22,8 @@ contract PlainTextProposal is BaseProposal {
     }
 
     // Returns proposal type as a plain text proposal
-    function pType() public view returns (uint256) {
-        return StdProposalTypes.plaintext();
+    function pType() public view returns (StdProposalTypes) {
+        return StdProposalTypes.PLAIN_TEXT;
     }
 
     // Returns false as it is not executable

@@ -1,8 +1,8 @@
 pragma solidity ^0.5.0;
 
 import "../common/SafeMath.sol";
-import "../proposal/IProposal.sol";
-import "../proposal/IProposalVerifier.sol";
+import "./IProposal.sol";
+import "./IProposalVerifier.sol";
 
 /**
  * @dev A base for any proposal
@@ -26,9 +26,9 @@ contract BaseProposal is IProposal {
         return proposalVerifier.verifyProposalParams(pType(), executable(), minVotes(), votingStartTime(), votingMinEndTime(), votingMaxEndTime());
     }
 
-    function pType() public view returns (uint256) {
+    function pType() public view returns (StdProposalTypes) {
         require(false, "must be overridden");
-        return 0;
+        return StdProposalTypes.NOT_INIT;
     }
 
     function executable() public view returns (bool) {

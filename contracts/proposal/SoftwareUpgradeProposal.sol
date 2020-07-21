@@ -1,8 +1,7 @@
 pragma solidity ^0.5.0;
 
-import "../proposal/ProposalTypes.sol";
-import "../proposal/BaseProposal.sol";
 import "../upgrade/Upgradability.sol";
+import "./BaseProposal.sol";
 
 /**
  * @dev SoftwareUpgrade proposal
@@ -30,8 +29,8 @@ contract SoftwareUpgradeProposal is BaseProposal {
         }
     }
 
-    function pType() public view returns (uint256) {
-        return StdProposalTypes.softwareUpgrade();
+    function pType() public view returns (StdProposalTypes) {
+        return StdProposalTypes.SOFTWARE_UPGRADE;
     }
 
     function executable() public view returns (bool) {

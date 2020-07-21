@@ -1,5 +1,7 @@
 pragma solidity ^0.5.0;
 
+import "../proposal/IProposal.sol";
+
 library Proposal {
     struct Timeline {
         uint256 votingStartTime; // date when the voting starts
@@ -8,7 +10,7 @@ library Proposal {
     }
 
     struct Parameters {
-        uint256 pType; // type of proposal (e.g. plaintext, software upgrade)
+        IProposal.StdProposalTypes pType; // type of proposal (e.g. plaintext, software upgrade)
         bool executable; // true if proposal should get executed on approval
         uint256 minVotes; // min. quorum (ratio)
         address proposalContract; // contract which stores the proposal data and executes its logic

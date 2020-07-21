@@ -3,6 +3,7 @@ pragma solidity ^0.5.0;
 import "../common/SafeMath.sol";
 import "../common/GetCode.sol";
 import "../common/Decimal.sol";
+import "../proposal/IProposal.sol";
 import "../proposal/IProposalVerifier.sol";
 import "../ownership/Ownable.sol";
 
