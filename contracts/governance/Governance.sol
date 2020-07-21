@@ -40,8 +40,7 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
     Governable governableContract;
     IProposalVerifier proposalVerifier;
     uint256 public lastProposalID;
-    Task[] public tasks;
-    bytes4 abstractProposalInterfaceId;
+    Task[] tasks;
 
     mapping(uint256 => ProposalState) proposals;
     mapping(address => mapping(uint256 => uint256)) public overriddenWeight; // voter address, proposalID -> weight
@@ -91,6 +90,11 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
 
     function tasksCount() public view returns (uint256) {
         return (tasks.length);
+    }
+
+    function getTask(uint256 i) public view returns (bool active, uint256 assignment, uint256 proposalID) {
+        Task memory t = tasks[i];
+        return (t.active, t.assignment, t.proposalID);
     }
 
     function vote(address delegatedTo, uint256 proposalID, uint256[] calldata choices) nonReentrant external {
@@ -234,9 +238,9 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         if (!ready) {
             return false;
         }
-        (bool proposalResolved, uint256 winnerId) = _calculateVotingTally(prop);
+        (bool proposalResolved, uint256 winnerID) = _calculateVotingTally(prop);
         if (proposalResolved) {
-            bool ok = resolveProposal(prop, winnerId);
+            bool ok = resolveProposal(prop, winnerID);
             if (ok) {
                 prop.status = statusResolved();
                 emit ProposalResolved(proposalID);
@@ -271,7 +275,10 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
 
     function _calculateVotingTally(ProposalState storage prop) internal view returns (bool, uint256) {
         uint256 leastResistance;
-        uint256 winnerId = prop.params.optionsNum;
+        uint256 winnerID = prop.params.optionsNum;
+        if (prop.votes == 0) {
+            return (false, winnerID);
+        }
         for (uint256 i = 0; i < prop.params.optionsNum; i++) {
             uint256 optionID = i;
             uint256 arc = LRC.resistanceRatio(prop.options[optionID]);
@@ -284,18 +291,18 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
 
             if (leastResistance == 0 || arc <= leastResistance) {
                 leastResistance = arc;
-                winnerId = i;
+                winnerID = i;
             }
         }
 
-        return (winnerId != prop.params.optionsNum, winnerId);
+        return (winnerID != prop.params.optionsNum, winnerID);
     }
 
     // calculateVotingTally calculates the voting tally and returns {is finished, won option ID, total weight of votes}
-    function calculateVotingTally(uint256 proposalID) external view returns (bool proposalResolved, uint256 winnerId, uint256 votes) {
+    function calculateVotingTally(uint256 proposalID) external view returns (bool proposalResolved, uint256 winnerID, uint256 votes) {
         ProposalState storage prop = proposals[proposalID];
-        (proposalResolved, winnerId) = _calculateVotingTally(prop);
-        return (proposalResolved, winnerId, prop.votes);
+        (proposalResolved, winnerID) = _calculateVotingTally(prop);
+        return (proposalResolved, winnerID, prop.votes);
     }
 
     function cancelVote(address delegatedTo, uint256 proposalID) nonReentrant external {
