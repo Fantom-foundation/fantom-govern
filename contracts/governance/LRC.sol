@@ -23,20 +23,20 @@ library LRC {
 
     struct LrcOption {
         bytes32 name;
+        uint256 votes;
         uint256 resistance;
         uint256 vetoVotes;
-        uint256 totalVotes;
     }
 
     // resistanceRatio is a ratio of option resistance (higher -> option is less supported)
     function resistanceRatio(LrcOption storage self) internal view returns (uint256) {
-        uint256 maxPossibleResistance = self.totalVotes.mul(maxResistanceScale());
+        uint256 maxPossibleResistance = self.votes.mul(maxResistanceScale());
         return self.resistance.mul(Decimal.unit()).div(maxPossibleResistance);
     }
 
     // vetoRatio is a ratio of veto votes (higher -> option is less supported)
     function vetoRatio(LrcOption storage self) internal view returns (uint256)  {
-        return self.vetoVotes.mul(Decimal.unit()).div(self.totalVotes);
+        return self.vetoVotes.mul(Decimal.unit()).div(self.votes);
     }
 
     function getOpinionResistanceScale(uint256 opinionID) internal pure returns (uint256) {
@@ -60,7 +60,7 @@ library LRC {
         if (opinionID <= highestVetoOpinionID) {
             self.vetoVotes += weight;
         }
-        self.totalVotes += weight;
+        self.votes += weight;
         self.resistance += weight * scale;
     }
 
@@ -72,7 +72,7 @@ library LRC {
         if (opinionID <= highestVetoOpinionID) {
             self.vetoVotes -= weight;
         }
-        self.totalVotes -= weight;
+        self.votes -= weight;
         self.resistance -= weight * scale;
     }
 }

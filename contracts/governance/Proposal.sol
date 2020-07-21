@@ -14,6 +14,7 @@ library Proposal {
         bool executable; // true if proposal should get executed on approval
         uint256 minVotes; // min. quorum (ratio)
         address proposalContract; // contract which stores the proposal data and executes its logic
+        uint256 optionsNum;
         Timeline deadlines;
     }
 }
