@@ -30,12 +30,18 @@ library LRC {
 
     // resistanceRatio is a ratio of option resistance (higher -> option is less supported)
     function resistanceRatio(LrcOption storage self) internal view returns (uint256) {
+        if (self.votes == 0) {
+            return 0; // avoid division by zero
+        }
         uint256 maxPossibleResistance = self.votes.mul(maxResistanceScale());
         return self.resistance.mul(Decimal.unit()).div(maxPossibleResistance);
     }
 
     // vetoRatio is a ratio of veto votes (higher -> option is less supported)
     function vetoRatio(LrcOption storage self) internal view returns (uint256)  {
+        if (self.votes == 0) {
+            return 0; // avoid division by zero
+        }
         return self.vetoVotes.mul(Decimal.unit()).div(self.votes);
     }
 
