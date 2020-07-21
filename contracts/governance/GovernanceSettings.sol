@@ -20,12 +20,12 @@ contract GovernanceSettings is Constants {
     function proposalFee() public view returns (uint256) {
         return _proposalFee;
     }
-    
+
     // @dev maxOptions maximum number of options to choose
     function maxOptions() public view returns (uint256) {
         return _maximumOptions;
     }
-    
+
     // maxExecutionDuration is maximum time for which proposal is executable after maximum voting end date
     function maxExecutionDuration() public view returns (uint256) {
         return _maximumExecutionDuration;

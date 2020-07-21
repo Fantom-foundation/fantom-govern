@@ -15,8 +15,8 @@ contract StatusConstants {
     uint256 constant STATUS_RESOLVED = 1;
     uint256 constant STATUS_FAILED = 1 << 1;
     uint256 constant STATUS_CANCELED = 1 << 2;
-    uint256 constant STATUS_EXECUTION_EXPIRED =  1 << 3;
-    
+    uint256 constant STATUS_EXECUTION_EXPIRED = 1 << 3;
+
     function statusInitial() internal pure returns (uint256) {
         return STATUS_INITIAL;
     }

@@ -9,12 +9,12 @@ import "../ownership/Ownable.sol";
 
 /**
  * @dev A storage of current proposal templates. Any new proposal will be verified against the stored template of its type. 
- *      Verifcation checks for proposal code and parameters.
+ *      Verification checks for proposal code and parameters.
  *      Supposed to be owned by the governance contract
  */
 contract ProposalTemplates is IProposalVerifier, Ownable {
     using GetCode for address;
-    
+
     // Stored data for a proposal template
     struct ProposalTemplate {
         string name;
@@ -27,7 +27,7 @@ contract ProposalTemplates is IProposalVerifier, Ownable {
         uint256 minStartDelay; // minimum delay of the voting (i.e. must start with a delay)
         uint256 maxStartDelay; // maximum delay of the voting (i.e. must start sooner)
     }
-    
+
     // templates library
     mapping(uint256 => ProposalTemplate) proposalTemplates; // proposal type -> ProposalTemplate
 
@@ -40,8 +40,8 @@ contract ProposalTemplates is IProposalVerifier, Ownable {
     // template must have unique type
     function addTemplate(uint256 pType, string calldata name, address exampleAddress, bool executable, uint256 minVotes, uint256 minVotingDuration, uint256 maxVotingDuration, uint256 minStartDelay, uint256 maxStartDelay) external onlyOwner {
         ProposalTemplate storage template = proposalTemplates[pType];
-        require(bytes(name).length != 0, "empty name");
         // empty name is a marker of non-existing template
+        require(bytes(name).length != 0, "empty name");
         require(!templateExists(pType), "template already exists");
         template.name = name;
         template.exampleAddress = exampleAddress;
@@ -62,7 +62,7 @@ contract ProposalTemplates is IProposalVerifier, Ownable {
         require(templateExists(pType), "template doesn't exist");
         delete (proposalTemplates[pType]);
     }
-    
+
     // verifyProposalParams checks proposal code and parameters
     function verifyProposalParams(uint256 pType, bool exec, uint256 minVotes, uint256 start, uint256 minEnd, uint256 maxEnd) external view returns (bool) {
         if (start < block.timestamp) {

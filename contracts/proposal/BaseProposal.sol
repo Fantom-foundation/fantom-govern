@@ -6,7 +6,7 @@ import "./IProposalVerifier.sol";
 
 /**
  * @dev A base for any proposal
- */ 
+ */
 contract BaseProposal is IProposal {
     using SafeMath for uint256;
 
