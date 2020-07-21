@@ -27,10 +27,11 @@ contract IProposal {
     function name() external view returns (string memory);
     // Get human-readable description
     function description() external view returns (string memory);
-    
+
+    // Standard proposal types. The standard may be outdated, actual proposal templates may differ
     enum StdProposalTypes {
         NOT_INIT,
-        NON_EXECUTABLE,
+        UNKNOWN_NON_EXECUTABLE,
         UNKNOWN_EXECUTABLE,
         PLAIN_TEXT,
         SOFTWARE_UPGRADE
