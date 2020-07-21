@@ -298,23 +298,23 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         return (proposalResolved, winnerId, prop.votes);
     }
 
-    function cancelVote(uint256 proposalID, address delegatedTo) nonReentrant external {
+    function cancelVote(address delegatedTo, uint256 proposalID) nonReentrant external {
         if (delegatedTo == address(0)) {
             delegatedTo = msg.sender;
         }
         Vote memory v = _votes[msg.sender][delegatedTo][proposalID];
         require(v.weight != 0, "doesn't exist");
-        _cancelVote(proposalID, msg.sender, delegatedTo);
+        _cancelVote(msg.sender, delegatedTo, proposalID);
     }
 
-    function _cancelVote(uint256 proposalID, address voter, address delegatedTo) internal {
+    function _cancelVote(address voter, address delegatedTo, uint256 proposalID) internal {
         Vote memory v = _votes[voter][delegatedTo][proposalID];
         if (v.weight == 0) {
             return;
         }
 
         if (voter != delegatedTo) {
-            unOverrideDelegationWeight(proposalID, voter, v.weight);
+            unOverrideDelegationWeight(voter, proposalID, v.weight);
         }
 
         removeChoicesFromProp(proposalID, v.choices, v.weight);
@@ -347,29 +347,29 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
                 return 0;
             }
             // reduce weight of vote of "delegatedTo" (if any)
-            overrideDelegationWeight(proposalID, delegatedTo, delegatedWeight);
-            _recountVote(proposalID, delegatedTo, delegatedTo);
+            overrideDelegationWeight(delegatedTo, proposalID, delegatedWeight);
+            _recountVote(delegatedTo, delegatedTo, proposalID);
             // make own vote
             makeVote(proposalID, voterAddr, delegatedTo, choices, delegatedWeight);
             return delegatedWeight;
         }
     }
 
-    function recountVote(uint256 proposalID, address voterAddr, address delegatedTo) nonReentrant external {
+    function recountVote(address voterAddr, address delegatedTo, uint256 proposalID) nonReentrant external {
         Vote memory v = _votes[voterAddr][delegatedTo][proposalID];
         require(v.weight != 0, "doesn't exist");
-        _recountVote(proposalID, voterAddr, delegatedTo);
+        _recountVote(voterAddr, delegatedTo, proposalID);
     }
 
-    function _recountVote(uint256 proposalID, address voterAddr, address delegatedTo) internal returns (uint256) {
+    function _recountVote(address voterAddr, address delegatedTo, uint256 proposalID) internal returns (uint256) {
         uint256[] memory origChoices = _votes[voterAddr][delegatedTo][proposalID].choices;
         // cancel previous vote
-        _cancelVote(proposalID, voterAddr, delegatedTo);
+        _cancelVote(voterAddr, delegatedTo, proposalID);
         // re-make vote
         return _processNewVote(proposalID, voterAddr, delegatedTo, origChoices);
     }
 
-    function overrideDelegationWeight(uint256 proposalID, address delegatedTo, uint256 weight) internal {
+    function overrideDelegationWeight(address delegatedTo, uint256 proposalID, uint256 weight) internal {
         uint256 overridden = overriddenWeight[delegatedTo][proposalID];
         overridden = overridden.add(weight);
         overriddenWeight[delegatedTo][proposalID] = overridden;
@@ -381,7 +381,7 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         emit VoteWeightOverridden(delegatedTo, weight);
     }
 
-    function unOverrideDelegationWeight(uint256 proposalID, address delegatedTo, uint256 weight) internal {
+    function unOverrideDelegationWeight(address delegatedTo, uint256 proposalID, uint256 weight) internal {
         uint256 overridden = overriddenWeight[delegatedTo][proposalID];
         overridden = overridden.sub(weight);
         overriddenWeight[delegatedTo][proposalID] = overridden;
