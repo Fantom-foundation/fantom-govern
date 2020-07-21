@@ -29,8 +29,8 @@ contract SoftwareUpgradeProposal is BaseProposal {
         }
     }
 
-    function pType() public view returns (StdProposalTypes) {
-        return StdProposalTypes.SOFTWARE_UPGRADE;
+    function pType() public view returns (uint256) {
+        return uint256(StdProposalTypes.SOFTWARE_UPGRADE);
     }
 
     function executable() public view returns (bool) {

@@ -22,8 +22,8 @@ contract PlainTextProposal is BaseProposal {
     }
 
     // Returns proposal type as a plain text proposal
-    function pType() public view returns (StdProposalTypes) {
-        return StdProposalTypes.PLAIN_TEXT;
+    function pType() public view returns (uint256) {
+        return uint256(StdProposalTypes.PLAIN_TEXT);
     }
 
     // Returns false as it is not executable

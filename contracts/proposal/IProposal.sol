@@ -5,7 +5,7 @@ pragma solidity ^0.5.0;
  */
 contract IProposal {
     // Get type of proposal (e.g. plaintext, software upgrade)
-    function pType() external view returns (StdProposalTypes);
+    function pType() external view returns (uint256);
     // True if proposal should get executed on approval
     function executable() external view returns (bool);
     // Get min. quorum (ratio)

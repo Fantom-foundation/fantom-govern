@@ -108,7 +108,7 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         require(proposalContract != address(0), "empty proposal address");
         IProposal p = IProposal(proposalContract);
         // capture the parameters once to ensure that contract will not return different values
-        IProposal.StdProposalTypes pType = p.pType();
+        uint256 pType = p.pType();
         bool executable = p.executable();
         uint256 minVotes = p.minVotes();
         uint256 votingStartTime = p.votingStartTime();

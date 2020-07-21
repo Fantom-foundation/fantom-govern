@@ -26,9 +26,9 @@ contract BaseProposal is IProposal {
         return proposalVerifier.verifyProposalParams(pType(), executable(), minVotes(), votingStartTime(), votingMinEndTime(), votingMaxEndTime());
     }
 
-    function pType() public view returns (StdProposalTypes) {
+    function pType() public view returns (uint256) {
         require(false, "must be overridden");
-        return StdProposalTypes.NOT_INIT;
+        return uint256(StdProposalTypes.NOT_INIT);
     }
 
     function executable() public view returns (bool) {
