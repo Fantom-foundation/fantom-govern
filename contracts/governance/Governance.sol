@@ -102,7 +102,7 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
 
         require(prop.params.proposalContract != address(0), "proposal with a given ID doesnt exist");
         require(isInitialStatus(prop.status), "proposal isn't active");
-        require(block.timestamp >= prop.params.deadlines.votingMinEndTime, "proposal voting has't begun");
+        require(block.timestamp >= prop.params.deadlines.votingStartTime, "proposal voting has't begun");
         require(_votes[msg.sender][delegatedTo][proposalID].weight == 0, "vote already exists");
         require(choices.length == prop.params.optionsNum, "wrong number of choices");
 
