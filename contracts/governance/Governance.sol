@@ -236,8 +236,8 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         }
         (bool proposalResolved, uint256 winnerId) = _calculateVotingTally(prop);
         if (proposalResolved) {
-            bool expired = resolveProposal(prop, winnerId);
-            if (!expired) {
+            bool ok = resolveProposal(prop, winnerId);
+            if (ok) {
                 prop.status = statusResolved();
                 emit ProposalResolved(proposalID);
             } else {
@@ -254,7 +254,7 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
     function resolveProposal(ProposalState storage prop, uint256 winnerOptionID) internal returns (bool) {
         prop.winnerOptionID = winnerOptionID;
 
-        bool executionExpired = block.timestamp < prop.params.deadlines.votingMaxEndTime + maxExecutionDuration();
+        bool executionExpired = block.timestamp > prop.params.deadlines.votingMaxEndTime + maxExecutionDuration();
         if (prop.params.executable && executionExpired) {
             // protection against proposals which revert or consume too much gas
             return false;
