@@ -258,7 +258,7 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
     function resolveProposal(ProposalState storage prop, uint256 winnerOptionID) internal returns (bool) {
         prop.winnerOptionID = winnerOptionID;
 
-        bool executionExpired = block.timestamp > prop.params.deadlines.votingMaxEndTime + maxExecutionDuration();
+        bool executionExpired = block.timestamp > prop.params.deadlines.votingMaxEndTime + maxExecutionPeriod();
         if (prop.params.executable && executionExpired) {
             // protection against proposals which revert or consume too much gas
             return false;
@@ -284,7 +284,7 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
             uint256 arc = LRC.resistanceRatio(prop.options[optionID]);
             uint256 dw = LRC.vetoRatio(prop.options[optionID]);
 
-            if (dw > _maximumPossibleDesignation || arc > _maximumPossibleResistance) {
+            if (dw > maxOptionDesignation() || arc > maxOptionResistance()) {
                 // VETO or a critical resistance against this option
                 continue;
             }

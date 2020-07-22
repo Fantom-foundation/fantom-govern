@@ -10,24 +10,36 @@ import "./Constants.sol";
  * @dev Various constants for governance governance settings
  */
 contract GovernanceSettings is Constants {
-    uint256 _proposalFee = 100 * 1e18;
-    uint256 _maximumPossibleResistance = 40 * Decimal.unit() / 100; // 40%
-    uint256 _maximumPossibleDesignation = 40 * Decimal.unit() / 100; // 40%
-    uint256 _maximumOptions = 10;
-    uint256 _maximumExecutionDuration = 3 days;
+    uint256 constant _proposalFee = 100 * 1e18;
+    uint256 constant _maxOptions = 10;
+    uint256 constant _maxExecutionPeriod = 3 days;
+
+    // @dev maxOptionResistance is the maximum acceptable ratio of veto votes for an option.
+    //      It's guaranteed not to win otherwise.
+    //      Equal to 40%.
+    function maxOptionDesignation() public pure returns (uint256) {
+        return 40 * Decimal.unit() / 100;
+    }
+
+    // @dev maxOptionResistance is the maximum acceptable ratio of resistance for an option.
+    //      It's guaranteed not to win otherwise.
+    //      Equal to 40%.
+    function maxOptionResistance() public pure returns (uint256) {
+        return 40 * Decimal.unit() / 100;
+    }
 
     // @dev proposalFee is the fee for a proposal
-    function proposalFee() public view returns (uint256) {
+    function proposalFee() public pure returns (uint256) {
         return _proposalFee;
     }
 
     // @dev maxOptions maximum number of options to choose
-    function maxOptions() public view returns (uint256) {
-        return _maximumOptions;
+    function maxOptions() public pure returns (uint256) {
+        return _maxOptions;
     }
 
-    // maxExecutionDuration is maximum time for which proposal is executable after maximum voting end date
-    function maxExecutionDuration() public view returns (uint256) {
-        return _maximumExecutionDuration;
+    // maxExecutionPeriod is maximum time for which proposal is executable after maximum voting end date
+    function maxExecutionPeriod() public pure returns (uint256) {
+        return _maxExecutionPeriod;
     }
 }

@@ -30,7 +30,7 @@ contract StatusConstants {
     }
 
     function statusCanceled() internal pure returns (uint256) {
-        return STATUS_FAILED;
+        return STATUS_CANCELED;
     }
 
     function statusResolved() internal pure returns (uint256) {
