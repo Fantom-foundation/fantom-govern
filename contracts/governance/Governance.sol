@@ -364,10 +364,17 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
     }
 
     function recountVote(address voterAddr, address delegatedTo, uint256 proposalID) nonReentrant external {
-        Vote memory v = _votes[voterAddr][delegatedTo][proposalID];
+        Vote storage v = _votes[voterAddr][delegatedTo][proposalID];
+        Vote storage vSuper = _votes[delegatedTo][delegatedTo][proposalID];
         require(v.weight != 0, "doesn't exist");
         require(isInitialStatus(proposals[proposalID].status), "proposal isn't active");
+        uint256 beforeSelf = v.weight;
+        uint256 beforeSuper = vSuper.weight;
         _recountVote(voterAddr, delegatedTo, proposalID);
+        uint256 afterSelf = v.weight;
+        uint256 afterSuper = vSuper.weight;
+        // check that some weight has changed due to recounting
+        require(beforeSelf != afterSelf || beforeSuper != afterSuper, "nothing changed");
     }
 
     function _recountVote(address voterAddr, address delegatedTo, uint256 proposalID) internal returns (uint256) {
