@@ -22,9 +22,9 @@ contract ProposalTemplates is IProposalVerifier, Ownable, Version {
         address exampleAddress; // used as a code template
         bytes32 codeHash; // sha3 hash of code
         bool executable; // true if proposal should get executed on approval
-        uint256 minVotes; // min. quorum (ratio)
+        uint256 minVotes; // minimum voting turnout (ratio)
         uint256 minAgreement; // minimum allowed minAgreement
-        uint256[] opinionScales;
+        uint256[] opinionScales; // Each opinion scale defines an exact measure of agreement which voter may choose
         uint256 minVotingDuration; // minimum duration of the voting
         uint256 maxVotingDuration; // maximum duration of the voting
         uint256 minStartDelay; // minimum delay of the voting (i.e. must start with a delay)
