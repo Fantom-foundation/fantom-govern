@@ -339,7 +339,13 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         if (delegatedTo == voterAddr) {
             // voter isn't a delegator
             (uint256 ownVotingWeight, uint256 delegatedMeVotingWeight) = governableContract.getWeight(voterAddr);
-            uint256 weight = ownVotingWeight.add(delegatedMeVotingWeight).sub(overriddenWeight[voterAddr][proposalID]);
+            uint256 weight = ownVotingWeight.add(delegatedMeVotingWeight);
+            uint256 overridden = overriddenWeight[voterAddr][proposalID];
+            if (weight > overridden) {
+                weight -= overridden;
+            } else {
+                weight = 0;
+            }
             if (weight == 0) {
                 return 0;
             }
