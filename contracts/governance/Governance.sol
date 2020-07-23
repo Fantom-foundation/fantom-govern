@@ -426,7 +426,7 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
     }
 
     function addTasks(uint256 proposalID) internal {
-        tasks.push(Task(true, proposalID, TASK_VOTING));
+        tasks.push(Task(true, TASK_VOTING, proposalID));
     }
 
     function burn(uint256 amount) internal {
