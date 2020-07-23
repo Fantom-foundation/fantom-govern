@@ -51,6 +51,11 @@ contract ProposalTemplates is IProposalVerifier, Ownable {
         // empty name is a marker of non-existing template
         require(bytes(name).length != 0, "empty name");
         require(!exists(pType), "template already exists");
+        require(opinionScales.length != 0, "empty opinions");
+        require(checkNonDecreasing(opinionScales), "wrong order of opinions");
+        require(opinionScales[opinionScales.length - 1] != 0, "all opinions are zero");
+        require(minVotes <= Decimal.unit(), "minVotes > 1.0");
+        require(minAgreement <= Decimal.unit(), "minAgreement > 1.0");
         template.exampleAddress = exampleAddress;
         if (exampleAddress != address(0)) {
             // empty exampleAddress means "no constrains on code"
@@ -161,5 +166,15 @@ contract ProposalTemplates is IProposalVerifier, Ownable {
             return true;
         }
         return template.codeHash == propAddr.codeHash();
+    }
+
+    // checkNonDecreasing returns true if array values are monotonically nondecreasing
+    function checkNonDecreasing(uint256[] memory arr) internal pure returns (bool) {
+        for (uint256 i = 1; i < arr.length; i++) {
+            if (arr[i - 1] > arr[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 }
