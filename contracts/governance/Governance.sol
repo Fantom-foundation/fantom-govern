@@ -10,8 +10,9 @@ import "./Proposal.sol";
 import "./Constants.sol";
 import "./GovernanceSettings.sol";
 import "./LRC.sol";
+import "../version/Version.sol";
 
-contract Governance is ReentrancyGuard, GovernanceSettings {
+contract Governance is ReentrancyGuard, GovernanceSettings, Version {
     using SafeMath for uint256;
     using LRC for LRC.Option;
 

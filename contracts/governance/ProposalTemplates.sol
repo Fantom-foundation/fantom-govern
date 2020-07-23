@@ -6,13 +6,14 @@ import "../common/Decimal.sol";
 import "../proposal/IProposal.sol";
 import "../proposal/IProposalVerifier.sol";
 import "../ownership/Ownable.sol";
+import "../version/Version.sol";
 
 /**
  * @dev A storage of current proposal templates. Any new proposal will be verified against the stored template of its type. 
  *      Verification checks for proposal code and parameters.
  *      Supposed to be owned by the governance contract
  */
-contract ProposalTemplates is IProposalVerifier, Ownable {
+contract ProposalTemplates is IProposalVerifier, Ownable, Version {
     using GetCode for address;
 
     // Stored data for a proposal template
