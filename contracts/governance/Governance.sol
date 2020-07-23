@@ -403,7 +403,11 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
     function unOverrideDelegationWeight(address delegatedTo, uint256 proposalID, uint256 weight) internal {
         uint256 overridden = overriddenWeight[delegatedTo][proposalID];
         overridden = overridden.sub(weight);
-        overriddenWeight[delegatedTo][proposalID] = overridden;
+        if (overridden != 0) {
+            overriddenWeight[delegatedTo][proposalID] = overridden;
+        } else {
+            delete overriddenWeight[delegatedTo][proposalID];
+        }
         Vote storage v = _votes[delegatedTo][delegatedTo][proposalID];
         if (v.weight != 0) {
             v.weight = v.weight.add(weight);
@@ -415,7 +419,7 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
     function addChoicesToProp(uint256 proposalID, uint256[] memory choices, uint256 weight) internal {
         ProposalState storage prop = proposals[proposalID];
 
-        prop.votes += weight;
+        prop.votes = prop.votes.add(weight);
 
         for (uint256 i = 0; i < prop.params.options.length; i++) {
             prop.options[i].addVote(choices[i], weight, prop.params.opinionScales);
@@ -425,7 +429,7 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
     function removeChoicesFromProp(uint256 proposalID, uint256[] memory choices, uint256 weight) internal {
         ProposalState storage prop = proposals[proposalID];
 
-        prop.votes -= weight;
+        prop.votes = prop.votes.sub(weight);
 
         for (uint256 i = 0; i < prop.params.options.length; i++) {
             prop.options[i].removeVote(choices[i], weight, prop.params.opinionScales);
