@@ -230,8 +230,9 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
 
     // handleVotingTask handles only TASK_VOTING
     function handleVotingTask(uint256 proposalID, ProposalState storage prop) internal returns (bool handled) {
+        uint256 minVotesAbs = minVotesAbsolute(governableContract.getTotalWeight(), prop.params.minVotes);
         bool ready = block.timestamp >= prop.params.deadlines.votingMinEndTime &&
-        (prop.votes >= prop.params.minVotes || block.timestamp >= prop.params.deadlines.votingMaxEndTime);
+        (prop.votes >= minVotesAbs || block.timestamp >= prop.params.deadlines.votingMaxEndTime);
         if (!ready) {
             return false;
         }
