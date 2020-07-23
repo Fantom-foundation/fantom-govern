@@ -17,7 +17,8 @@ library LRC {
     // agreementRatio is a ratio of option agreement (higher -> option is less supported)
     function agreementRatio(Option storage self) internal view returns (uint256) {
         if (self.votes == 0) {
-            return 0; // avoid division by zero
+            // avoid division by zero
+            return 0;
         }
         return self.agreement.mul(Decimal.unit()).div(self.votes);
     }

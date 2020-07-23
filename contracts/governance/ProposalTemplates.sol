@@ -72,7 +72,7 @@ contract ProposalTemplates is IProposalVerifier, Ownable {
         template.maxStartDelay = maxStartDelay;
     }
 
-    function calcCodeHash(address addr) public view returns(bytes32) {
+    function calcCodeHash(address addr) public view returns (bytes32) {
         return addr.codeHash();
     }
 
