@@ -13,7 +13,7 @@ import "./LRC.sol";
 
 contract Governance is ReentrancyGuard, GovernanceSettings {
     using SafeMath for uint256;
-    using LRC for LRC.LrcOption;
+    using LRC for LRC.Option;
 
     struct Vote {
         uint256 weight;
@@ -24,7 +24,7 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         Proposal.Parameters params;
 
         // voting state
-        mapping(uint256 => LRC.LrcOption) options;
+        mapping(uint256 => LRC.Option) options;
         uint256 winnerOptionID;
         uint256 votes; // total weight of votes
 
@@ -63,19 +63,15 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         proposalVerifier = IProposalVerifier(_proposalVerifier);
     }
 
-    function proposalParams(uint256 proposalID) public view returns (uint256 pType, bool executable, uint256 minVotes, address proposalContract, uint256 optionsNum, uint256 votingStartTime, uint256 votingMinEndTime, uint256 votingMaxEndTime) {
+    function proposalParams(uint256 proposalID) public view returns (uint256 pType, bool executable, uint256 minVotes, uint256 minAgreement, uint256[] memory opinionScales, bytes32[] memory options, address proposalContract, uint256 votingStartTime, uint256 votingMinEndTime, uint256 votingMaxEndTime) {
         Proposal.Parameters memory p = proposals[proposalID].params;
-        return (p.pType, p.executable, p.minVotes, p.proposalContract, p.optionsNum, p.deadlines.votingStartTime, p.deadlines.votingMinEndTime, p.deadlines.votingMaxEndTime);
+        return (p.pType, p.executable, p.minVotes, p.minAgreement, p.opinionScales, p.options, p.proposalContract, p.deadlines.votingStartTime, p.deadlines.votingMinEndTime, p.deadlines.votingMaxEndTime);
     }
 
-    function proposalOptionName(uint256 proposalID, uint256 optionID) public view returns (string memory name) {
-        LRC.LrcOption memory o = proposals[proposalID].options[optionID];
-        return (bytes32ToString(o.name));
-    }
-
-    function proposalOptionState(uint256 proposalID, uint256 optionID) public view returns (uint256 votes, uint256 resistanceRatio, uint256 vetoRatio, uint256 resistance, uint256 vetoVotes) {
-        LRC.LrcOption storage o = proposals[proposalID].options[optionID];
-        return (o.votes, LRC.resistanceRatio(o), LRC.vetoRatio(o), o.resistance, o.vetoVotes);
+    function proposalOptionState(uint256 proposalID, uint256 optionID) public view returns (uint256 votes, uint256 agreementRatio, uint256 agreement) {
+        ProposalState storage prop = proposals[proposalID];
+        LRC.Option storage opt = prop.options[optionID];
+        return (opt.votes, LRC.agreementRatio(opt), opt.agreement);
     }
 
     function proposalState(uint256 proposalID) public view returns (uint256 winnerOptionID, uint256 votes, uint256 status) {
@@ -108,7 +104,7 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         require(isInitialStatus(prop.status), "proposal isn't active");
         require(block.timestamp >= prop.params.deadlines.votingStartTime, "proposal voting has't begun");
         require(_votes[msg.sender][delegatedTo][proposalID].weight == 0, "vote already exists");
-        require(choices.length == prop.params.optionsNum, "wrong number of choices");
+        require(choices.length == prop.params.options.length, "wrong number of choices");
 
         uint256 weight = _processNewVote(proposalID, msg.sender, delegatedTo, choices);
         require(weight != 0, "zero weight");
@@ -134,6 +130,8 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         uint256 pType = p.pType();
         bool executable = p.executable();
         uint256 minVotes = p.minVotes();
+        uint256 minAgreement = p.minAgreement();
+        uint256[] memory opinionScales = p.opinionScales();
         uint256 votingStartTime = p.votingStartTime();
         uint256 votingMinEndTime = p.votingMinEndTime();
         uint256 votingMaxEndTime = p.votingMaxEndTime();
@@ -142,7 +140,7 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         require(options.length != 0, "proposal options are empty - nothing to vote for");
         require(options.length <= maxOptions(), "too many options");
         bool ok;
-        ok = proposalVerifier.verifyProposalParams(pType, executable, minVotes, votingStartTime, votingMinEndTime, votingMaxEndTime);
+        ok = proposalVerifier.verifyProposalParams(pType, executable, minVotes, minAgreement, opinionScales, votingStartTime, votingMinEndTime, votingMaxEndTime);
         require(ok, "proposal parameters failed validation");
         ok = proposalVerifier.verifyProposalCode(pType, proposalContract);
         require(ok, "proposal code failed validation");
@@ -151,14 +149,13 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         prop.params.pType = pType;
         prop.params.executable = executable;
         prop.params.minVotes = minVotes;
+        prop.params.minAgreement = minAgreement;
+        prop.params.opinionScales = opinionScales;
         prop.params.proposalContract = proposalContract;
         prop.params.deadlines.votingStartTime = votingStartTime;
         prop.params.deadlines.votingMinEndTime = votingMinEndTime;
         prop.params.deadlines.votingMaxEndTime = votingMaxEndTime;
-        for (uint256 i = 0; i < options.length; i++) {
-            prop.options[i].name = options[i];
-        }
-        prop.params.optionsNum = options.length;
+        prop.params.options = options;
     }
 
     // cancelProposal cancels the proposal if no one managed to vote yet
@@ -274,28 +271,27 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
     }
 
     function _calculateVotingTally(ProposalState storage prop) internal view returns (bool, uint256) {
-        uint256 leastResistance;
-        uint256 winnerID = prop.params.optionsNum;
+        uint256 mostAgreement = 0;
+        uint256 winnerID = prop.params.options.length;
         if (prop.votes == 0) {
             return (false, winnerID);
         }
-        for (uint256 i = 0; i < prop.params.optionsNum; i++) {
+        for (uint256 i = 0; i < prop.params.options.length; i++) {
             uint256 optionID = i;
-            uint256 arc = LRC.resistanceRatio(prop.options[optionID]);
-            uint256 dw = LRC.vetoRatio(prop.options[optionID]);
+            uint256 agreement = LRC.agreementRatio(prop.options[optionID]);
 
-            if (dw > maxOptionDesignation() || arc > maxOptionResistance()) {
-                // VETO or a critical resistance against this option
+            if (agreement < prop.params.minAgreement) {
+                // critical resistance against this option
                 continue;
             }
 
-            if (leastResistance == 0 || arc <= leastResistance) {
-                leastResistance = arc;
+            if (mostAgreement == 0 || agreement > mostAgreement) {
+                mostAgreement = agreement;
                 winnerID = i;
             }
         }
 
-        return (winnerID != prop.params.optionsNum, winnerID);
+        return (winnerID != prop.params.options.length, winnerID);
     }
 
     // calculateVotingTally calculates the voting tally and returns {is finished, won option ID, total weight of votes}
@@ -414,8 +410,8 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
 
         prop.votes += weight;
 
-        for (uint256 i = 0; i < prop.params.optionsNum; i++) {
-            prop.options[i].addVote(choices[i], weight);
+        for (uint256 i = 0; i < prop.params.options.length; i++) {
+            prop.options[i].addVote(choices[i], weight, prop.params.opinionScales);
         }
     }
 
@@ -424,8 +420,8 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
 
         prop.votes -= weight;
 
-        for (uint256 i = 0; i < prop.params.optionsNum; i++) {
-            prop.options[i].removeVote(choices[i], weight);
+        for (uint256 i = 0; i < prop.params.options.length; i++) {
+            prop.options[i].removeVote(choices[i], weight, prop.params.opinionScales);
         }
     }
 

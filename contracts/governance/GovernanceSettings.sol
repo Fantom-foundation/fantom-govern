@@ -14,20 +14,6 @@ contract GovernanceSettings is Constants {
     uint256 constant _maxOptions = 10;
     uint256 constant _maxExecutionPeriod = 3 days;
 
-    // @dev maxOptionResistance is the maximum acceptable ratio of veto votes for an option.
-    //      It's guaranteed not to win otherwise.
-    //      Equal to 40%.
-    function maxOptionDesignation() public pure returns (uint256) {
-        return 40 * Decimal.unit() / 100;
-    }
-
-    // @dev maxOptionResistance is the maximum acceptable ratio of resistance for an option.
-    //      It's guaranteed not to win otherwise.
-    //      Equal to 40%.
-    function maxOptionResistance() public pure returns (uint256) {
-        return 40 * Decimal.unit() / 100;
-    }
-
     // @dev proposalFee is the fee for a proposal
     function proposalFee() public pure returns (uint256) {
         return _proposalFee;

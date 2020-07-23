@@ -13,8 +13,12 @@ library Proposal {
         uint256 pType; // type of proposal (e.g. plaintext, software upgrade)
         bool executable; // true if proposal should get executed on approval
         uint256 minVotes; // min. quorum (ratio)
+        // minAgreement is the minimum acceptable ratio of agreement for an option.
+        // It's guaranteed not to win otherwise.
+        uint256 minAgreement; // min. agreement threshold for options (ratio)
+        uint256[] opinionScales;
         address proposalContract; // contract which stores the proposal data and executes its logic
-        uint256 optionsNum;
+        bytes32[] options;
         Timeline deadlines;
     }
 }
