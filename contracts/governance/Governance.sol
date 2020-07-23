@@ -354,12 +354,12 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         } else {
             // votes through one of delegations, overrides previous vote of "delegatedTo" (if any)
             uint256 delegatedWeight = governableContract.getDelegatedWeight(voterAddr, delegatedTo);
-            if (delegatedWeight == 0) {
-                return 0;
-            }
             // reduce weight of vote of "delegatedTo" (if any)
             overrideDelegationWeight(delegatedTo, proposalID, delegatedWeight);
             _recountVote(delegatedTo, delegatedTo, proposalID);
+            if (delegatedWeight == 0) {
+                return 0;
+            }
             // make own vote
             makeVote(proposalID, voterAddr, delegatedTo, choices, delegatedWeight);
             return delegatedWeight;
