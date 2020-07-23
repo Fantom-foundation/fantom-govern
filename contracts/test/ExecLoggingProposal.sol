@@ -1,6 +1,7 @@
 pragma solidity ^0.5.0;
 
 import "../proposal/PlainTextProposal.sol";
+import "../governance/Governance.sol";
 
 contract ExecLoggingProposal is PlainTextProposal {
     constructor(string memory v1, string memory v2, bytes32[] memory v3,
@@ -16,6 +17,11 @@ contract ExecLoggingProposal is PlainTextProposal {
 
     function executable() public view returns (bool) {
         return true;
+    }
+
+    function cancel(uint256 myID, address govAddress) public {
+        Governance gov = Governance(govAddress);
+        gov.cancelProposal(myID);
     }
 
     uint256 public executedCounter;
