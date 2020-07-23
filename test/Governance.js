@@ -626,7 +626,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
             await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
         });
 
-        it('cancel votes in reverse order', async () => {
+        it('cancel votes in reversed order', async () => {
             await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
             await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
             await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
