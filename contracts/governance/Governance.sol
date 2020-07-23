@@ -313,13 +313,13 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
     }
 
     function _cancelVote(address voter, address delegatedTo, uint256 proposalID) internal {
-        Vote memory v = _votes[voter][delegatedTo][proposalID];
+        Vote storage v = _votes[voter][delegatedTo][proposalID];
         if (v.weight == 0) {
             return;
         }
 
         if (voter != delegatedTo) {
-            unOverrideDelegationWeight(voter, proposalID, v.weight);
+            unOverrideDelegationWeight(delegatedTo, proposalID, v.weight);
         }
 
         removeChoicesFromProp(proposalID, v.choices, v.weight);
