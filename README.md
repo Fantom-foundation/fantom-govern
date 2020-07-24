@@ -1,57 +1,55 @@
 # Governance contract
 
-Governance contract manages the on-chain votings on arbitrary topics. The voting topics are called "proposals".
+Governance contract supports on-chain voting by Fantom token holders on arbitrary topics. Each voting topic is called called a "proposal".
 
-The contract is remarkably universal:
+The contract is designed to be universal and flexible:
 - The governance isn't coupled to any specific staking contract, but relies on an interface to get voter weights.
-- The governance supports multi-delegations between voters.
-- The governance supports on-chain execution of the proposals. On approval, each proposal may perform arbitrary actions on behalf of the governance contract.
-- The governence supports multiple options for proposals, and multiple degrees of an agreement for each vote.
-- The governence supports an arbiterary proposal templates. Each proposal can specify its parameters (such as voting turnout or deadlines) within the boundaries of a template.
-- The governence supports an arbiterary number of active proposals simultaneously.
-- The governence supports an arbiterary number of active voters simultaneously.
+- It supports multi-delegations between voters. A voter can delegate their vote to another voter.
+- It supports on-chain execution of the proposals. On approval, each proposal may perform arbitrary actions on behalf of the governance contract.
+- The contract permits multiple options for proposals, and multiple degrees of an agreement for each vote.
+- An arbitrary number of proposal templates are permitted. Each proposal can specify its parameters (such as voting turnout or deadlines) within the boundaries of a template.
+- It can handle an arbitrary number of active proposals simultaneously.
+- The contract can also support an arbitrary number of active voters simultaneously.
 
 ## Integration interface
 
-Governance relies on the Governable interface to get voter weights.
+A Governance relies on the Governable interface to get voter weights.
 
 A naive example of a governable contract may be found in UnitTestGovernable.
 
 ## Submitting a proposal
 
-Proposal submition costs a fee (contract constant), which will get burnt during the operation.
-
-Anyone is allowed to submit a proposal.
+Any FTM token holder is allowed to submit a proposal. Each proposal submission will require a cost (called fee), which is a contract instant. Proposal fee will get burnt during the operation.
 
 ## Delegations
 
-Within a governable contract, voters can receive delegations from other voters.
+Within a governable contract, voters can get delegations from other voters.
 
-When voter create a vote, the contract assumes that all his delegators agree with it, effectively increasing vote's weight. If a delegator doesn't agree with the opinions of a voter he delegated to, then he can specifically override it with his own vote.
+When voter makes a vote, the contract assumes that all his delegators agree with it, effectively increasing vote's weight. If a delegator doesn't agree with the opinions of a voter he delegated to, then he can override it with his own vote.
 
 ## Proposal templates
 
-Each proposal is defined by its proposal contract. Proposal contracts hold proposal parameters and defines an execution logic (if proposal is executable).
+Each proposal is defined by its proposal contract. A proposal contract holds proposal parameters and it may define an execution logic, if the proposal is executable.
 
-Since proposals are defined by contracts, it wouldn't be wise to let them work without any constrains.
+Proposals are defined by contracts, and there are some constraints imposed on them.
 
-To define such proposal constrains, proposal templates are used. Each proposal templates defines the following boundaries:
-- Contract bytecode. If defined, then proposal's code must match to this example.
-- Executable (bool). True if proposal should get executed on approval.
-- MinVotes (ratio). Minimum voting turnout.
-- minAgreement (ratio). Minimum allowed `Minimum voting agreement`.
-- opinionScales (uint[]). Each opinion scale defines an exact measure of agreement which voter may choose.
-- minVotingDuration (seconds). Minimum duration of the voting.
-- maxVotingDuration (seconds). Maximum duration of the voting.
-- minStartDelay (seconds). Minimum delay of the voting (i.e. must start with a delay).
-- maxStartDelay (seconds). Maximum delay of the voting (i.e. must start sooner).
+To define such proposal constraints, proposal templates are used. Each proposal template defines the following conditions:
+- Contract bytecode: If defined, then proposal's code must match to this example.
+- Executable (bool): True if proposal should get executed on approval.
+- MinVotes (ratio): Minimum voting turnout.
+- minAgreement (ratio): Minimum allowed `Minimum voting agreement`.
+- opinionScales (uint[]): Each opinion scale defines an exact measure of agreement which voter may choose.
+- minVotingDuration (seconds): Minimum duration of the voting.
+- maxVotingDuration (seconds): Maximum duration of the voting.
+- minStartDelay (seconds): Minimum delay of the voting (i.e. must start with a delay).
+- maxStartDelay (seconds): Maximum delay of the voting (i.e. must start sooner).
 
 Some examples of proposal templates:
-1. Unknown non-executable. Since proposals aren't executable and cannot break anything, then the requirements above are not very strict.
-2. Unknown executable. Proposal are executable and their bytecode isn't limited, then the equirements above are as strict as possible.
-3. Depositing proposal. Such proposals gather funds and allow to transfer them to a specific address after proposal approval. Proposals are executable but have a verified bytecode, then the requirements above are moderately strict.
+1. Unknown non-executable: These proposals aren't executable and are unlikely to break anything. Thus, the requirements above are not very strict.
+2. Unknown executable: Proposals of this kind are executable and their bytecode can be arbitrary. The requirements above must be specified as strict as possible.
+3. Depositing proposal: Such proposals gather funds and allow to transfer them to a specific address after proposal approval. These proposals are executable but have a verified bytecode, and thus the requirements above are moderately strict.
 
-Addition of new templates also may be done within an executable proposal.
+Addition to the new templates may be done within an executable proposal.
 
 ## What proposals can do
 
@@ -63,11 +61,13 @@ Some proposal templates require a specific bytecode, which may limit the freedom
 
 #### Options and opinions
 
-Each proposal defines a list of options. Voter must provide an opinion for each option during voting for a proposal.
+Each proposal defines a list of options. Voter must provide a single opinion for each option during the voting for a proposal.
 
-Opinion is a number within [0, number of opinions).
+Opinion is recorded as a number within [0, number of opinions).
 
-Assuming that proposal has 3 options and the following opinion scales {0, 2, 3, 4, 5}, then vote {0, 2, 4} has a meaning: `I stongly disagree (scale=0) with option 0, I'm neutral (scale=3) about option 1, I strongly agree (scale=5) with option 2`.
+For example, let's consider an example proposal that has 3 options and the following opinion scales {0, 2, 3, 4, 5} to represent {strongly disagree, disagree, neutral, agree and strongly agree}.
+
+A vote {0, 2, 4} from a voter has the following meaning: `I strongly disagree (scale=0) with option 0, I'm neutral (scale=3) about option 1, I strongly agree (scale=5) with option 2`.
 
 If we also assume that voter had a weight=100.0, then he added the following agreement to a counter of each option: `0 * 100.0 / 5 = 0` for option 0, `3 * 100.0 / 5 = 60` for option 1, `5 * 100.0 / 5 = 100` for option 2.
 
@@ -75,7 +75,7 @@ That being said, the opinion scale defines an exact measure of agreement which v
 
 #### Voting tally
 
-Each proposal has the following parameters which define requirements for the proposal to get approved:
+Each proposal has the following parameters, which define requirements for the proposal to get approved:
 - Minimum voting turnout (min. votes)
 - Minimum voting agreement
 - Minimum voting end time
