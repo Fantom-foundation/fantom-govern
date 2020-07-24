@@ -1,9 +1,12 @@
 pragma solidity ^0.5.0;
 
-import "./IProposal.sol";
 import "../common/SafeMath.sol";
-import "../governance/IProposalVerifier.sol";
+import "./IProposal.sol";
+import "./IProposalVerifier.sol";
 
+/**
+ * @dev A base for any proposal
+ */
 contract BaseProposal is IProposal {
     using SafeMath for uint256;
 
@@ -12,6 +15,8 @@ contract BaseProposal is IProposal {
     bytes32[] _options;
 
     uint256 _minVotes;
+    uint256 _minAgreement;
+    uint256[] _opinionScales;
 
     uint256 _start;
     uint256 _minEnd;
@@ -20,12 +25,12 @@ contract BaseProposal is IProposal {
     // verifyProposalParams passes proposal parameters to a given verifier
     function verifyProposalParams(address verifier) public view returns (bool) {
         IProposalVerifier proposalVerifier = IProposalVerifier(verifier);
-        return proposalVerifier.verifyProposalParams(pType(), executable(), minVotes(), votingStartTime(), votingMinEndTime(), votingMaxEndTime());
+        return proposalVerifier.verifyProposalParams(pType(), executable(), minVotes(), minAgreement(), opinionScales(), votingStartTime(), votingMinEndTime(), votingMaxEndTime());
     }
 
     function pType() public view returns (uint256) {
         require(false, "must be overridden");
-        return 0;
+        return uint256(StdProposalTypes.NOT_INIT);
     }
 
     function executable() public view returns (bool) {
@@ -35,6 +40,18 @@ contract BaseProposal is IProposal {
 
     function minVotes() public view returns (uint256) {
         return _minVotes;
+    }
+
+    function minAgreement() public view returns (uint256) {
+        return _minAgreement;
+    }
+
+    function opinionScales() public view returns (uint256[] memory) {
+        return _opinionScales;
+    }
+
+    function options() public view returns (bytes32[] memory) {
+        return _options;
     }
 
     function votingStartTime() public view returns (uint256) {
@@ -47,10 +64,6 @@ contract BaseProposal is IProposal {
 
     function votingMaxEndTime() public view returns (uint256) {
         return votingStartTime() + _maxEnd;
-    }
-
-    function options() public view returns (bytes32[] memory) {
-        return _options;
     }
 
     function name() public view returns (string memory) {

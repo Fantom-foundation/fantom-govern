@@ -4,16 +4,17 @@ import "../common/ReentrancyGuard.sol";
 import "../common/SafeMath.sol";
 import "../model/Governable.sol";
 import "../proposal/IProposal.sol";
+import "../proposal/IProposalVerifier.sol";
 import "../proposal/SoftwareUpgradeProposal.sol";
-import "./IProposalVerifier.sol";
 import "./Proposal.sol";
 import "./Constants.sol";
 import "./GovernanceSettings.sol";
 import "./LRC.sol";
+import "../version/Version.sol";
 
-contract Governance is ReentrancyGuard, GovernanceSettings {
+contract Governance is ReentrancyGuard, GovernanceSettings, Version {
     using SafeMath for uint256;
-    using LRC for LRC.LrcOption;
+    using LRC for LRC.Option;
 
     struct Vote {
         uint256 weight;
@@ -24,10 +25,9 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         Proposal.Parameters params;
 
         // voting state
-        mapping(uint256 => LRC.LrcOption) options;
-        uint256 optionsNum;
+        mapping(uint256 => LRC.Option) options;
         uint256 winnerOptionID;
-        uint256 votesWeight;
+        uint256 votes; // total weight of votes
 
         uint256 status;
     }
@@ -41,12 +41,11 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
     Governable governableContract;
     IProposalVerifier proposalVerifier;
     uint256 public lastProposalID;
-    Task[] public tasks;
-    bytes4 abstractProposalInterfaceId;
+    Task[] tasks;
 
     mapping(uint256 => ProposalState) proposals;
     mapping(address => mapping(uint256 => uint256)) public overriddenWeight; // voter address, proposalID -> weight
-    mapping(address => mapping(address => mapping(uint256 => Vote))) public votes; // voter, delegationReceiver, proposalID -> Vote
+    mapping(address => mapping(address => mapping(uint256 => Vote))) _votes; // voter, delegationReceiver, proposalID -> Vote
 
     event ProposalCreated(uint256 proposalID);
     event ProposalResolved(uint256 proposalID);
@@ -65,13 +64,34 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         proposalVerifier = IProposalVerifier(_proposalVerifier);
     }
 
-    function getProposalStatus(uint256 proposalID) public view returns (uint256) {
-        ProposalState storage prop = proposals[proposalID];
-        return (prop.status);
+    function proposalParams(uint256 proposalID) public view returns (uint256 pType, bool executable, uint256 minVotes, uint256 minAgreement, uint256[] memory opinionScales, bytes32[] memory options, address proposalContract, uint256 votingStartTime, uint256 votingMinEndTime, uint256 votingMaxEndTime) {
+        Proposal.Parameters memory p = proposals[proposalID].params;
+        return (p.pType, p.executable, p.minVotes, p.minAgreement, p.opinionScales, p.options, p.proposalContract, p.deadlines.votingStartTime, p.deadlines.votingMinEndTime, p.deadlines.votingMaxEndTime);
     }
 
-    function getTasksCount() public view returns (uint256) {
+    function proposalOptionState(uint256 proposalID, uint256 optionID) public view returns (uint256 votes, uint256 agreementRatio, uint256 agreement) {
+        ProposalState storage prop = proposals[proposalID];
+        LRC.Option storage opt = prop.options[optionID];
+        return (opt.votes, LRC.agreementRatio(opt), opt.agreement);
+    }
+
+    function proposalState(uint256 proposalID) public view returns (uint256 winnerOptionID, uint256 votes, uint256 status) {
+        ProposalState memory p = proposals[proposalID];
+        return (p.winnerOptionID, p.votes, p.status);
+    }
+
+    function getVote(address from, address delegatedTo, uint256 proposalID) public view returns (uint256 weight, uint256[] memory choices) {
+        Vote memory v = _votes[from][delegatedTo][proposalID];
+        return (v.weight, v.choices);
+    }
+
+    function tasksCount() public view returns (uint256) {
         return (tasks.length);
+    }
+
+    function getTask(uint256 i) public view returns (bool active, uint256 assignment, uint256 proposalID) {
+        Task memory t = tasks[i];
+        return (t.active, t.assignment, t.proposalID);
     }
 
     function vote(address delegatedTo, uint256 proposalID, uint256[] calldata choices) nonReentrant external {
@@ -83,9 +103,9 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
 
         require(prop.params.proposalContract != address(0), "proposal with a given ID doesnt exist");
         require(isInitialStatus(prop.status), "proposal isn't active");
-        require(block.timestamp >= prop.params.deadlines.votingMinEndTime, "proposal voting has't begun");
-        require(votes[msg.sender][delegatedTo][proposalID].weight == 0, "vote already exists");
-        require(choices.length == prop.optionsNum, "wrong number of choices");
+        require(block.timestamp >= prop.params.deadlines.votingStartTime, "proposal voting has't begun");
+        require(_votes[msg.sender][delegatedTo][proposalID].weight == 0, "vote already exists");
+        require(choices.length == prop.params.options.length, "wrong number of choices");
 
         uint256 weight = _processNewVote(proposalID, msg.sender, delegatedTo, choices);
         require(weight != 0, "zero weight");
@@ -111,6 +131,8 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         uint256 pType = p.pType();
         bool executable = p.executable();
         uint256 minVotes = p.minVotes();
+        uint256 minAgreement = p.minAgreement();
+        uint256[] memory opinionScales = p.opinionScales();
         uint256 votingStartTime = p.votingStartTime();
         uint256 votingMinEndTime = p.votingMinEndTime();
         uint256 votingMaxEndTime = p.votingMaxEndTime();
@@ -119,7 +141,7 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         require(options.length != 0, "proposal options are empty - nothing to vote for");
         require(options.length <= maxOptions(), "too many options");
         bool ok;
-        ok = proposalVerifier.verifyProposalParams(pType, executable, minVotes, votingStartTime, votingMinEndTime, votingMaxEndTime);
+        ok = proposalVerifier.verifyProposalParams(pType, executable, minVotes, minAgreement, opinionScales, votingStartTime, votingMinEndTime, votingMaxEndTime);
         require(ok, "proposal parameters failed validation");
         ok = proposalVerifier.verifyProposalCode(pType, proposalContract);
         require(ok, "proposal code failed validation");
@@ -128,14 +150,13 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         prop.params.pType = pType;
         prop.params.executable = executable;
         prop.params.minVotes = minVotes;
+        prop.params.minAgreement = minAgreement;
+        prop.params.opinionScales = opinionScales;
         prop.params.proposalContract = proposalContract;
         prop.params.deadlines.votingStartTime = votingStartTime;
         prop.params.deadlines.votingMinEndTime = votingMinEndTime;
         prop.params.deadlines.votingMaxEndTime = votingMaxEndTime;
-        for (uint256 i = 0; i < options.length; i++) {
-            prop.options[i].name = options[i];
-        }
-        prop.optionsNum = options.length;
+        prop.params.options = options;
     }
 
     // cancelProposal cancels the proposal if no one managed to vote yet
@@ -144,7 +165,7 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         ProposalState storage prop = proposals[proposalID];
         require(prop.params.proposalContract != address(0), "proposal with a given ID doesnt exist");
         require(isInitialStatus(prop.status), "proposal isn't active");
-        require(prop.votesWeight == 0, "voting has already begun");
+        require(prop.votes == 0, "voting has already begun");
         require(msg.sender == prop.params.proposalContract, "must be sent from the proposal contract");
 
         prop.status = statusCanceled();
@@ -210,15 +231,16 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
 
     // handleVotingTask handles only TASK_VOTING
     function handleVotingTask(uint256 proposalID, ProposalState storage prop) internal returns (bool handled) {
+        uint256 minVotesAbs = minVotesAbsolute(governableContract.getTotalWeight(), prop.params.minVotes);
         bool ready = block.timestamp >= prop.params.deadlines.votingMinEndTime &&
-        (prop.votesWeight >= prop.params.minVotes || block.timestamp >= prop.params.deadlines.votingMaxEndTime);
+        (prop.votes >= minVotesAbs || block.timestamp >= prop.params.deadlines.votingMaxEndTime);
         if (!ready) {
             return false;
         }
-        (bool proposalResolved, uint256 winnerId) = _calculateVotingTally(prop);
+        (bool proposalResolved, uint256 winnerID) = _calculateVotingTally(prop);
         if (proposalResolved) {
-            bool expired = resolveProposal(prop, winnerId);
-            if (!expired) {
+            bool ok = resolveProposal(prop, winnerID);
+            if (ok) {
                 prop.status = statusResolved();
                 emit ProposalResolved(proposalID);
             } else {
@@ -235,7 +257,7 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
     function resolveProposal(ProposalState storage prop, uint256 winnerOptionID) internal returns (bool) {
         prop.winnerOptionID = winnerOptionID;
 
-        bool executionExpired = block.timestamp < prop.params.deadlines.votingMaxEndTime + maxExecutionDuration();
+        bool executionExpired = block.timestamp > prop.params.deadlines.votingMaxEndTime + maxExecutionPeriod();
         if (prop.params.executable && executionExpired) {
             // protection against proposals which revert or consume too much gas
             return false;
@@ -251,61 +273,64 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
     }
 
     function _calculateVotingTally(ProposalState storage prop) internal view returns (bool, uint256) {
-        uint256 leastResistance;
-        uint256 winnerId = prop.optionsNum;
-        for (uint256 i = 0; i < prop.optionsNum; i++) {
+        uint256 mostAgreement = 0;
+        uint256 winnerID = prop.params.options.length;
+        if (prop.votes == 0) {
+            return (false, winnerID);
+        }
+        for (uint256 i = 0; i < prop.params.options.length; i++) {
             uint256 optionID = i;
-            uint256 arc = LRC.resistanceRatio(prop.options[optionID]);
-            uint256 dw = LRC.vetoRatio(prop.options[optionID]);
+            uint256 agreement = LRC.agreementRatio(prop.options[optionID]);
 
-            if (dw > _maximumPossibleDesignation || arc > _maximumPossibleResistance) {
-                // VETO or a critical resistance against this option
+            if (agreement < prop.params.minAgreement) {
+                // critical resistance against this option
                 continue;
             }
 
-            if (leastResistance == 0 || arc <= leastResistance) {
-                leastResistance = arc;
-                winnerId = i;
+            if (mostAgreement == 0 || agreement > mostAgreement) {
+                mostAgreement = agreement;
+                winnerID = i;
             }
         }
 
-        return (winnerId != prop.optionsNum, winnerId);
+        return (winnerID != prop.params.options.length, winnerID);
     }
 
     // calculateVotingTally calculates the voting tally and returns {is finished, won option ID, total weight of votes}
-    function calculateVotingTally(uint256 proposalID) external view returns (bool proposalResolved, uint256 winnerId, uint256 votesWeight) {
+    function calculateVotingTally(uint256 proposalID) external view returns (bool proposalResolved, uint256 winnerID, uint256 votes) {
         ProposalState storage prop = proposals[proposalID];
-        (proposalResolved, winnerId) = _calculateVotingTally(prop);
-        return (proposalResolved, winnerId, prop.votesWeight);
+        (proposalResolved, winnerID) = _calculateVotingTally(prop);
+        return (proposalResolved, winnerID, prop.votes);
     }
 
-    function cancelVote(uint256 proposalID, address delegatedTo) nonReentrant external {
+    function cancelVote(address delegatedTo, uint256 proposalID) nonReentrant external {
         if (delegatedTo == address(0)) {
             delegatedTo = msg.sender;
         }
-        Vote memory v = votes[msg.sender][delegatedTo][proposalID];
+        Vote memory v = _votes[msg.sender][delegatedTo][proposalID];
         require(v.weight != 0, "doesn't exist");
-        _cancelVote(proposalID, msg.sender, delegatedTo);
+        require(isInitialStatus(proposals[proposalID].status), "proposal isn't active");
+        _cancelVote(msg.sender, delegatedTo, proposalID);
     }
 
-    function _cancelVote(uint256 proposalID, address voter, address delegatedTo) internal {
-        Vote memory v = votes[voter][delegatedTo][proposalID];
+    function _cancelVote(address voter, address delegatedTo, uint256 proposalID) internal {
+        Vote storage v = _votes[voter][delegatedTo][proposalID];
         if (v.weight == 0) {
             return;
         }
 
         if (voter != delegatedTo) {
-            unOverrideDelegationWeight(proposalID, voter, v.weight);
+            unOverrideDelegationWeight(delegatedTo, proposalID, v.weight);
         }
 
         removeChoicesFromProp(proposalID, v.choices, v.weight);
-        delete votes[voter][delegatedTo][proposalID];
+        delete _votes[voter][delegatedTo][proposalID];
 
         emit VoteCanceled(voter, delegatedTo, proposalID);
     }
 
     function makeVote(uint256 proposalID, address voter, address delegatedTo, uint256[] memory choices, uint256 weight) internal {
-        votes[voter][delegatedTo][proposalID] = Vote(weight, choices);
+        _votes[voter][delegatedTo][proposalID] = Vote(weight, choices);
         addChoicesToProp(proposalID, choices, weight);
 
         emit Voted(voter, delegatedTo, proposalID, choices, weight);
@@ -315,7 +340,13 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         if (delegatedTo == voterAddr) {
             // voter isn't a delegator
             (uint256 ownVotingWeight, uint256 delegatedMeVotingWeight) = governableContract.getWeight(voterAddr);
-            uint256 weight = ownVotingWeight.add(delegatedMeVotingWeight).sub(overriddenWeight[voterAddr][proposalID]);
+            uint256 weight = ownVotingWeight.add(delegatedMeVotingWeight);
+            uint256 overridden = overriddenWeight[voterAddr][proposalID];
+            if (weight > overridden) {
+                weight -= overridden;
+            } else {
+                weight = 0;
+            }
             if (weight == 0) {
                 return 0;
             }
@@ -324,37 +355,45 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         } else {
             // votes through one of delegations, overrides previous vote of "delegatedTo" (if any)
             uint256 delegatedWeight = governableContract.getDelegatedWeight(voterAddr, delegatedTo);
+            // reduce weight of vote of "delegatedTo" (if any)
+            overrideDelegationWeight(delegatedTo, proposalID, delegatedWeight);
+            _recountVote(delegatedTo, delegatedTo, proposalID);
             if (delegatedWeight == 0) {
                 return 0;
             }
-            // reduce weight of vote of "delegatedTo" (if any)
-            overrideDelegationWeight(proposalID, delegatedTo, delegatedWeight);
-            _recountVote(proposalID, delegatedTo, delegatedTo);
             // make own vote
             makeVote(proposalID, voterAddr, delegatedTo, choices, delegatedWeight);
             return delegatedWeight;
         }
     }
 
-    function recountVote(uint256 proposalID, address voterAddr, address delegatedTo) nonReentrant external {
-        Vote memory v = votes[voterAddr][delegatedTo][proposalID];
+    function recountVote(address voterAddr, address delegatedTo, uint256 proposalID) nonReentrant external {
+        Vote storage v = _votes[voterAddr][delegatedTo][proposalID];
+        Vote storage vSuper = _votes[delegatedTo][delegatedTo][proposalID];
         require(v.weight != 0, "doesn't exist");
-        _recountVote(proposalID, voterAddr, delegatedTo);
+        require(isInitialStatus(proposals[proposalID].status), "proposal isn't active");
+        uint256 beforeSelf = v.weight;
+        uint256 beforeSuper = vSuper.weight;
+        _recountVote(voterAddr, delegatedTo, proposalID);
+        uint256 afterSelf = v.weight;
+        uint256 afterSuper = vSuper.weight;
+        // check that some weight has changed due to recounting
+        require(beforeSelf != afterSelf || beforeSuper != afterSuper, "nothing changed");
     }
 
-    function _recountVote(uint256 proposalID, address voterAddr, address delegatedTo) internal returns (uint256) {
-        uint256[] memory origChoices = votes[voterAddr][delegatedTo][proposalID].choices;
+    function _recountVote(address voterAddr, address delegatedTo, uint256 proposalID) internal returns (uint256) {
+        uint256[] memory origChoices = _votes[voterAddr][delegatedTo][proposalID].choices;
         // cancel previous vote
-        _cancelVote(proposalID, voterAddr, delegatedTo);
+        _cancelVote(voterAddr, delegatedTo, proposalID);
         // re-make vote
         return _processNewVote(proposalID, voterAddr, delegatedTo, origChoices);
     }
 
-    function overrideDelegationWeight(uint256 proposalID, address delegatedTo, uint256 weight) internal {
+    function overrideDelegationWeight(address delegatedTo, uint256 proposalID, uint256 weight) internal {
         uint256 overridden = overriddenWeight[delegatedTo][proposalID];
         overridden = overridden.add(weight);
         overriddenWeight[delegatedTo][proposalID] = overridden;
-        Vote storage v = votes[delegatedTo][delegatedTo][proposalID];
+        Vote storage v = _votes[delegatedTo][delegatedTo][proposalID];
         if (v.weight != 0) {
             v.weight = v.weight.sub(weight);
             removeChoicesFromProp(proposalID, v.choices, weight);
@@ -362,11 +401,15 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
         emit VoteWeightOverridden(delegatedTo, weight);
     }
 
-    function unOverrideDelegationWeight(uint256 proposalID, address delegatedTo, uint256 weight) internal {
+    function unOverrideDelegationWeight(address delegatedTo, uint256 proposalID, uint256 weight) internal {
         uint256 overridden = overriddenWeight[delegatedTo][proposalID];
         overridden = overridden.sub(weight);
-        overriddenWeight[delegatedTo][proposalID] = overridden;
-        Vote storage v = votes[delegatedTo][delegatedTo][proposalID];
+        if (overridden != 0) {
+            overriddenWeight[delegatedTo][proposalID] = overridden;
+        } else {
+            delete overriddenWeight[delegatedTo][proposalID];
+        }
+        Vote storage v = _votes[delegatedTo][delegatedTo][proposalID];
         if (v.weight != 0) {
             v.weight = v.weight.add(weight);
             addChoicesToProp(proposalID, v.choices, weight);
@@ -377,25 +420,25 @@ contract Governance is ReentrancyGuard, GovernanceSettings {
     function addChoicesToProp(uint256 proposalID, uint256[] memory choices, uint256 weight) internal {
         ProposalState storage prop = proposals[proposalID];
 
-        prop.votesWeight += weight;
+        prop.votes = prop.votes.add(weight);
 
-        for (uint256 i = 0; i < prop.optionsNum; i++) {
-            prop.options[i].addVote(choices[i], weight);
+        for (uint256 i = 0; i < prop.params.options.length; i++) {
+            prop.options[i].addVote(choices[i], weight, prop.params.opinionScales);
         }
     }
 
     function removeChoicesFromProp(uint256 proposalID, uint256[] memory choices, uint256 weight) internal {
         ProposalState storage prop = proposals[proposalID];
 
-        prop.votesWeight -= weight;
+        prop.votes = prop.votes.sub(weight);
 
-        for (uint256 i = 0; i < prop.optionsNum; i++) {
-            prop.options[i].removeVote(choices[i], weight);
+        for (uint256 i = 0; i < prop.params.options.length; i++) {
+            prop.options[i].removeVote(choices[i], weight, prop.params.opinionScales);
         }
     }
 
     function addTasks(uint256 proposalID) internal {
-        tasks.push(Task(true, proposalID, TASK_VOTING));
+        tasks.push(Task(true, TASK_VOTING, proposalID));
     }
 
     function burn(uint256 amount) internal {
