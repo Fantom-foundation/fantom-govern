@@ -8,12 +8,12 @@ import "./Cancelable.sol";
  * @dev SoftwareUpgrade proposal
  */
 contract SoftwareUpgradeProposal is BaseProposal, Cancelable {
-    Upgradability public upgradableContract;
-    address public newContractAddress;
+    address public upgradableContract;
+    address public newImplementation;
 
     constructor(string memory __name, string memory __description,
         uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd,
-        address __upgradableContract, address __newContractAddress, address verifier) public {
+        address __upgradableContract, address __newImplementation, address verifier) public {
         _name = __name;
         _description = __description;
         _options.push(bytes32("upgrade"));
@@ -23,8 +23,8 @@ contract SoftwareUpgradeProposal is BaseProposal, Cancelable {
         _start = __start;
         _minEnd = __minEnd;
         _maxEnd = __maxEnd;
-        upgradableContract = Upgradability(__upgradableContract);
-        newContractAddress = __newContractAddress;
+        upgradableContract = __upgradableContract;
+        newImplementation = __newImplementation;
         // verify the proposal right away to avoid deploying a wrong proposal
         if (verifier != address(0)) {
             require(verifyProposalParams(verifier), "failed validation");
@@ -39,10 +39,11 @@ contract SoftwareUpgradeProposal is BaseProposal, Cancelable {
         return true;
     }
 
-    event SoftwareUpgradeIsDone(address newContractAddress);
+    event SoftwareUpgradeIsDone(address newImplementation);
 
-    function execute(address, uint256) external {
-        upgradableContract.upgradeTo(newContractAddress);
-        emit SoftwareUpgradeIsDone(newContractAddress);
+    function execute(address selfAddr, uint256) external {
+        SoftwareUpgradeProposal self = SoftwareUpgradeProposal(selfAddr);
+        Upgradability(self.upgradableContract()).upgradeTo(self.newImplementation());
+        emit SoftwareUpgradeIsDone(self.newImplementation());
     }
 }
