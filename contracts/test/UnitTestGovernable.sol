@@ -24,13 +24,11 @@ contract UnitTestGovernable is Governable {
         return totalStake;
     }
 
-    function getWeight(address addr) external view returns (uint256, uint256) {
-        uint256 self = delegations[addr][addr];
-        uint256 all = rcvDelegations[addr];
-        return (self, all - self);
+    function getReceivedWeight(address addr) external view returns (uint256) {
+        return rcvDelegations[addr];
     }
 
-    function getDelegatedWeight(address from, address to) external view returns (uint256) {
+    function getWeight(address from, address to) external view returns (uint256) {
         return delegations[from][to];
     }
 }

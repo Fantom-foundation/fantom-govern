@@ -339,8 +339,7 @@ contract Governance is ReentrancyGuard, GovernanceSettings, Version {
     function _processNewVote(uint256 proposalID, address voterAddr, address delegatedTo, uint256[] memory choices) internal returns (uint256) {
         if (delegatedTo == voterAddr) {
             // voter isn't a delegator
-            (uint256 ownVotingWeight, uint256 delegatedMeVotingWeight) = governableContract.getWeight(voterAddr);
-            uint256 weight = ownVotingWeight.add(delegatedMeVotingWeight);
+            uint256 weight = governableContract.getReceivedWeight(voterAddr);
             uint256 overridden = overriddenWeight[voterAddr][proposalID];
             if (weight > overridden) {
                 weight -= overridden;
@@ -354,7 +353,7 @@ contract Governance is ReentrancyGuard, GovernanceSettings, Version {
             return weight;
         } else {
             // votes through one of delegations, overrides previous vote of "delegatedTo" (if any)
-            uint256 delegatedWeight = governableContract.getDelegatedWeight(voterAddr, delegatedTo);
+            uint256 delegatedWeight = governableContract.getWeight(voterAddr, delegatedTo);
             // reduce weight of vote of "delegatedTo" (if any)
             overrideDelegationWeight(delegatedTo, proposalID, delegatedWeight);
             _recountVote(delegatedTo, delegatedTo, proposalID);
