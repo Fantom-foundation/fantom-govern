@@ -2,11 +2,12 @@ pragma solidity ^0.5.0;
 
 import "../upgrade/Upgradability.sol";
 import "./BaseProposal.sol";
+import "./Cancelable.sol";
 
 /**
  * @dev SoftwareUpgrade proposal
  */
-contract SoftwareUpgradeProposal is BaseProposal {
+contract SoftwareUpgradeProposal is BaseProposal, Cancelable {
     Upgradability public upgradableContract;
     address public newContractAddress;
 
