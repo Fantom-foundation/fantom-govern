@@ -19,7 +19,7 @@ contract Ownable is Initializable {
     /**
      * @dev Initializes the contract setting the deployer as the initial owner.
      */
-    function initialize(address sender) public initializer {
+    function initialize(address sender) internal initializer {
         _owner = sender;
         emit OwnershipTransferred(address(0), _owner);
     }
