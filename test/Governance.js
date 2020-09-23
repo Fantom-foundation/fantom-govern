@@ -25,7 +25,9 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
     beforeEach(async () => {
         this.govable = await UnitTestGovernable.new();
         this.verifier = await ProposalTemplates.new();
-        this.gov = await Governance.new(this.govable.address, this.verifier.address);
+        this.verifier.initialize();
+        this.gov = await Governance.new();
+        this.gov.initialize(this.govable.address, this.verifier.address);
         this.proposalFee = await this.gov.proposalFee();
     });
 
