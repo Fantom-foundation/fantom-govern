@@ -13,8 +13,12 @@ import "../version/Version.sol";
  *      Verification checks for proposal code and parameters.
  *      Supposed to be owned by the governance contract
  */
-contract ProposalTemplates is IProposalVerifier, Ownable, Version {
+contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version {
     using GetCode for address;
+
+    function initialize() public initializer {
+        Ownable.initialize(msg.sender);
+    }
 
     // Stored data for a proposal template
     struct ProposalTemplate {

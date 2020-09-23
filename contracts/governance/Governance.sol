@@ -12,7 +12,7 @@ import "./GovernanceSettings.sol";
 import "./LRC.sol";
 import "../version/Version.sol";
 
-contract Governance is ReentrancyGuard, GovernanceSettings, Version {
+contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Version {
     using SafeMath for uint256;
     using LRC for LRC.Option;
 
@@ -59,7 +59,8 @@ contract Governance is ReentrancyGuard, GovernanceSettings, Version {
     event Voted(address voter, address delegatedTo, uint256 proposalID, uint256[] choices, uint256 weight);
     event VoteCanceled(address voter, address delegatedTo, uint256 proposalID);
 
-    constructor (address _governableContract, address _proposalVerifier) public {
+    function initialize(address _governableContract, address _proposalVerifier) public initializer {
+        ReentrancyGuard.initialize();
         governableContract = Governable(_governableContract);
         proposalVerifier = IProposalVerifier(_proposalVerifier);
     }
