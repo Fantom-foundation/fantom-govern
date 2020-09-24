@@ -36,8 +36,8 @@ Proposals are defined by contracts, and there are some constraints imposed on th
 To define such proposal constraints, proposal templates are used. Each proposal template defines the following conditions:
 - Contract bytecode: If defined, then proposal's code must match to this example.
 - Executable (bool): True if proposal should get executed on approval.
-- MinVotes (ratio): Minimum voting turnout.
-- minAgreement (ratio): Minimum allowed `Minimum voting agreement`.
+- MinVotes (ratio): Minimum allowed `Minimum voting turnout`. The ratio has 18 decimals.
+- minAgreement (ratio): Minimum allowed `Minimum voting agreement`. The ratio has 18 decimals.
 - opinionScales (uint[]): Each opinion scale defines an exact measure of agreement which voter may choose.
 - minVotingDuration (seconds): Minimum duration of the voting.
 - maxVotingDuration (seconds): Maximum duration of the voting.
@@ -88,6 +88,100 @@ Maximum voting end time is the the latest possible time to perform the voting ta
 
 If no option received an agreement ratio higher than `Minimum voting agreement`, then proposal gets rejected.
 Otherwise, an option with maximum agreement wins the election.
+
+# Deployment
+
+1. Deploy ProposalTemplates contract
+```javascript
+proposalTemplatesAbi = JSON.parse('ABI_HERE');
+proposalTemplatesBin = '0xBYTECODE_HERE';
+
+// create new contract
+proposalTemplates = web3.ftm.contract(proposalTemplatesAbi).new({ from: account, data: proposalTemplatesBin });
+// wait until transaction has confirmed and contract receives its address
+proposalTemplates.address;    
+// initialize the conctract
+proposalTemplates.initialize({ from: account })
+// account is an owner of the proposalTemplates.
+// Transfer ownership to the governance conctract later!
+```
+2. Fill ProposalTemplates with proposal templates
+
+```javascript
+proposalTemplates.addTemplate(proposalType, "template name", exampleBytecodeAddress, executable, minVotes, minAgreement, [0,2,3,4,5], minVotingDuration, maxVotingDuration, minStartDelay, maxStartDelay, {from: account})
+```
+See [propsal templates parameters](#proposal-templates)
+Only proposalTemplates owner address is allowed to add templates
+
+3. Deploy governable contract
+The governance contract will work with any governable contract which implements the Governable interface.
+In a case you're using governance with the Fantom SFC 2.0.2 contract, then deploy this adapter from SFC to Governable interface:
+```javascript
+sfc2govAdapterAbi = JSON.parse('ABI_HERE');
+sfc2govAdapterBin = '0xBYTECODE_HERE';
+// create new contract
+governable = web3.ftm.contract(sfc2govAdapterAbi).new({ from: account, data: sfc2govAdapterBin });
+// wait until transaction has confirmed and contract receives its address
+governable.address;
+// sanity check, should return non-zero value
+governable.getTotalWeight()
+```
+
+4. Deploy Governance contract
+```javascript
+govAbi = JSON.parse('ABI_HERE');
+govBin = '0xBYTECODE_HERE';
+// Create new contract
+gov = web3.ftm.contract(govAbi).new({ from: account, data: govBin });
+// wait until transaction has confirmed and contract receives its address
+gov.address;
+// Initialize the contract
+gov.initialize(governable.address, proposalTemplates.address, {from: account})
+```
+
+5. Create a first proposal
+
+Here's an example of creation of a SoftwareUpgradeProposal. The proposalTemplates should have a template for porposal type `4`:
+
+```javascript
+// Sanity check. Should return non-zero values.
+proposalTemplates.get(4);
+// Artifacts of SoftwareUpgradeProposal
+upgProposalAbi = JSON.parse('ABI_HERE');
+upgProposalBin = '0xBYTECODE_HERE';
+// Create new contract
+// proposalTemplates.address is optional, replace with zero address if proposal verification during deployment isn't needed.
+// The deployment will revert if verification in proposalTemplates fails. If proposalTemplates isn't specified, then verification will no be done.
+// proposalTemplates will not verify conctract bytecode in this call.
+// Note that governance contract must be a proxy admin of the upgradable contract.
+upgProposal = web3.ftm.contract(upgProposalAbi).new("proposal name", "proposal description", minVotes, minAgreement, startDelay, minVotingDuration, maxVotingDuration, upgradableContractAddress, newImplementation, proposalTemplates.address, { from: account, data: upgProposalBin });
+// wait until transaction has confirmed and contract receives its address
+upgProposal.address;
+// Create proposal, burning 100 FTM during this operation
+// The call will revert if proposal verification fails
+gov.createProposal(upgProposal.address, {from: account, value: web3.toWei("100", "ftm")});
+// Find your proposal ID
+id = gov.lastProposalID();
+// Ensure that id points to your proposal
+gov.proposalParams(id);
+```
+
+If you have to use 2 different addresses for calling UpgradeabilityProxy methods and underlying contract methods, then you archive it by wrapping the governance contract with a relay proxy:
+
+```javascript
+// Artifacts of RelayProxy
+relayAbi = JSON.parse('ABI_HERE');
+relayBin = '0xBYTECODE_HERE';
+// Create new contract
+relay = web3.ftm.contract(relayAbi).new(gov.address, upgradableContractAddress, { from: account, data: relayBin });
+// wait until transaction has confirmed and contract receives its address
+relay.address;
+// transfer ownership to the relay address
+upgradable.changeAdmin(relay.address, {from: admin})
+// use relay.address as upgradableContractAddress during SoftwareUpgradeProposal deployment
+````
+
+Only governance contract will be able to make calls to upgradable though the relay contract
 
 # Test
 
