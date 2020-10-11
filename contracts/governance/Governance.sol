@@ -240,8 +240,11 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         }
         (bool proposalResolved, uint256 winnerID) = _calculateVotingTally(prop);
         if (proposalResolved) {
-            bool ok = resolveProposal(prop, winnerID);
-            if (ok) {
+            (bool ok, bool expired) = executeProposal(prop, winnerID);
+            if (!ok) {
+                return false;
+            }
+            if (!expired) {
                 prop.status = statusResolved();
                 emit ProposalResolved(proposalID);
             } else {
@@ -255,28 +258,28 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         return true;
     }
 
-    function resolveProposal(ProposalState storage prop, uint256 winnerOptionID) internal returns (bool) {
+    function executeProposal(ProposalState storage prop, uint256 winnerOptionID) internal returns (bool, bool) {
+        bool executable = prop.params.executable == Proposal.ExecType.CALL || prop.params.executable == Proposal.ExecType.DELEGATECALL;
+        if (!executable) {
+            return (true, false);
+        }
         prop.winnerOptionID = winnerOptionID;
 
         bool executionExpired = block.timestamp > prop.params.deadlines.votingMaxEndTime + maxExecutionPeriod();
-        bool executable = prop.params.executable == Proposal.ExecType.CALL || prop.params.executable == Proposal.ExecType.DELEGATECALL;
-        if (executable && executionExpired) {
+        if (executionExpired) {
             // protection against proposals which revert or consume too much gas
-            return false;
+            return (true, true);
         }
-        if (executable && !executionExpired) {
-            address propAddr = prop.params.proposalContract;
-            bool success;
-            bytes memory result;
-            if (prop.params.executable == Proposal.ExecType.CALL) {
-                (success, result) = propAddr.call(abi.encodeWithSignature("execute_call(uint256)", winnerOptionID));
-            } else if (prop.params.executable == Proposal.ExecType.DELEGATECALL) {
-                (success, result) = propAddr.delegatecall(abi.encodeWithSignature("execute_delegatecall(address,uint256)", propAddr, winnerOptionID));
-            }
-            result;
-            return success;
+        address propAddr = prop.params.proposalContract;
+        bool success;
+        bytes memory result;
+        if (prop.params.executable == Proposal.ExecType.CALL) {
+            (success, result) = propAddr.call(abi.encodeWithSignature("execute_call(uint256)", winnerOptionID));
+        } else {
+            (success, result) = propAddr.delegatecall(abi.encodeWithSignature("execute_delegatecall(address,uint256)", propAddr, winnerOptionID));
         }
-        return true;
+        result;
+        return (success, false);
     }
 
     function _calculateVotingTally(ProposalState storage prop) internal view returns (bool, uint256) {
