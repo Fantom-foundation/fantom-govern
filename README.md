@@ -1,6 +1,6 @@
 # Governance contract
 
-Governance contract supports on-chain voting by Fantom token holders on arbitrary topics. Each voting topic is called called a "proposal".
+Governance contract supports on-chain voting by arbitrary members on arbitrary topics. Each voting topic is called a "proposal".
 
 The contract is designed to be universal and flexible:
 - The governance isn't coupled to any specific staking contract, but relies on an interface to get voter weights.
@@ -11,83 +11,9 @@ The contract is designed to be universal and flexible:
 - It can handle an arbitrary number of active proposals simultaneously.
 - The contract can also support an arbitrary number of active voters simultaneously.
 
-## Integration interface
+## Wiki
 
-A Governance relies on the Governable interface to get voter weights.
-
-A naive example of a governable contract may be found in UnitTestGovernable.
-
-## Submitting a proposal
-
-Any FTM token holder is allowed to submit a proposal. Each proposal submission will require a cost (called fee), which is a contract instant. Proposal fee will get burnt during the operation.
-
-## Delegations
-
-Within a governable contract, voters can get delegations from other voters.
-
-When voter makes a vote, the contract assumes that all his delegators agree with it, effectively increasing vote's weight. If a delegator doesn't agree with the opinions of a voter he delegated to, then he can override it with his own vote.
-
-## Proposal templates
-
-Each proposal is defined by its proposal contract. A proposal contract holds proposal parameters and it may define an execution logic, if the proposal is executable.
-
-Proposals are defined by contracts, and there are some constraints imposed on them.
-
-To define such proposal constraints, proposal templates are used. Each proposal template defines the following conditions:
-- Contract bytecode: If defined, then proposal's code must match to this example.
-- Executable (bool): True if proposal should get executed on approval.
-- MinVotes (ratio): Minimum voting turnout.
-- minAgreement (ratio): Minimum allowed `Minimum voting agreement`.
-- opinionScales (uint[]): Each opinion scale defines an exact measure of agreement which voter may choose.
-- minVotingDuration (seconds): Minimum duration of the voting.
-- maxVotingDuration (seconds): Maximum duration of the voting.
-- minStartDelay (seconds): Minimum delay of the voting (i.e. must start with a delay).
-- maxStartDelay (seconds): Maximum delay of the voting (i.e. must start sooner).
-
-Some examples of proposal templates:
-1. Unknown non-executable: These proposals aren't executable and are unlikely to break anything. Thus, the requirements above are not very strict.
-2. Unknown executable: Proposals of this kind are executable and their bytecode can be arbitrary. The requirements above must be specified as strict as possible.
-3. Depositing proposal: Such proposals gather funds and allow to transfer them to a specific address after proposal approval. These proposals are executable but have a verified bytecode, and thus the requirements above are moderately strict.
-
-Addition to the new templates may be done within an executable proposal.
-
-## What proposals can do
-
-If proposal is executable, then it may perform arbitrary actions on behalf of the governance contract.
-
-Some proposal templates require a specific bytecode, which may limit the freedom of possible actions.
-
-## Voting model
-
-#### Options and opinions
-
-Each proposal defines a list of options. Voter must provide a single opinion for each option during the voting for a proposal.
-
-Opinion is recorded as a number within [0, number of opinions).
-
-For example, let's consider an example proposal that has 3 options and the following opinion scales {0, 2, 3, 4, 5} to represent {strongly disagree, disagree, neutral, agree and strongly agree}.
-
-A vote {0, 2, 4} from a voter has the following meaning: `I strongly disagree (scale=0) with option 0, I'm neutral (scale=3) about option 1, I strongly agree (scale=5) with option 2`.
-
-If we also assume that voter had a weight=100.0, then he added the following agreement to a counter of each option: `0 * 100.0 / 5 = 0` for option 0, `3 * 100.0 / 5 = 60` for option 1, `5 * 100.0 / 5 = 100` for option 2.
-
-That being said, the opinion scale defines an exact measure of agreement which voter may choose.
-
-#### Voting tally
-
-Each proposal has the following parameters, which define requirements for the proposal to get approved:
-- Minimum voting turnout (min. votes)
-- Minimum voting agreement
-- Minimum voting end time
-- Maximum voting end time
-
-Minimum voting turnout is minimum ratio of `voted voters weight`/`total voters weight` to perform the voting tally.
-Maximum voting end time is the earliest possible time to perform the voting tally.
-Minimum voting agreement is the minimum value of `agreement counter`/`voted voters weight` for an option to possibly win.
-Maximum voting end time is the the latest possible time to perform the voting tally. If proposal wasn't accepted and this period has passed, then it'll get rejected during the task handling.
-
-If no option received an agreement ratio higher than `Minimum voting agreement`, then proposal gets rejected.
-Otherwise, an option with maximum agreement wins the election.
+Check out the wiki to get more details.
 
 # Test
 
