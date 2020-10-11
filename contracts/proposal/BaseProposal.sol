@@ -33,9 +33,9 @@ contract BaseProposal is IProposal {
         return uint256(StdProposalTypes.NOT_INIT);
     }
 
-    function executable() public view returns (bool) {
+    function executable() public view returns (Proposal.ExecType) {
         require(false, "must be overridden");
-        return false;
+        return Proposal.ExecType.NONE;
     }
 
     function minVotes() public view returns (uint256) {
@@ -74,7 +74,11 @@ contract BaseProposal is IProposal {
         return _description;
     }
 
-    function execute(address, uint256) external {
-        require(false, "not executable");
+    function execute_delegatecall(address, uint256) external {
+        require(false, "not delegatecall-executable");
+    }
+
+    function execute_call(uint256) external {
+        require(false, "not call-executable");
     }
 }

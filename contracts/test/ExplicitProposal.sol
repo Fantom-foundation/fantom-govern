@@ -6,7 +6,7 @@ contract ExplicitProposal is BaseProposal {
     using SafeMath for uint256;
 
     uint256 _pType;
-    bool _executable;
+    Proposal.ExecType _exec;
 
     function setType(uint256 v) public {
         _pType = v;
@@ -36,8 +36,8 @@ contract ExplicitProposal is BaseProposal {
         _maxEnd = v;
     }
 
-    function setExecutable(bool v) public {
-        _executable = v;
+    function setExecutable(Proposal.ExecType v) public {
+        _exec = v;
     }
 
     function setOptions(bytes32[] memory v) public {
@@ -56,8 +56,8 @@ contract ExplicitProposal is BaseProposal {
         return _pType;
     }
 
-    function executable() public view returns (bool) {
-        return _executable;
+    function executable() public view returns (Proposal.ExecType) {
+        return _exec;
     }
 
     function votingStartTime() public view returns (uint256) {
@@ -72,5 +72,6 @@ contract ExplicitProposal is BaseProposal {
         return _maxEnd;
     }
 
-    function execute(address, uint256) external {}
+    function execute_delegatecall(address, uint256) external {}
+    function execute_call(uint256) external {}
 }

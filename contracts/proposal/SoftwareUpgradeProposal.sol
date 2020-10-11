@@ -35,13 +35,13 @@ contract SoftwareUpgradeProposal is BaseProposal, Cancelable {
         return uint256(StdProposalTypes.SOFTWARE_UPGRADE);
     }
 
-    function executable() public view returns (bool) {
-        return true;
+    function executable() public view returns (Proposal.ExecType) {
+        return Proposal.ExecType.DELEGATECALL;
     }
 
     event SoftwareUpgradeIsDone(address newImplementation);
 
-    function execute(address selfAddr, uint256) external {
+    function execute_delegatecall(address selfAddr, uint256) external {
         SoftwareUpgradeProposal self = SoftwareUpgradeProposal(selfAddr);
         Upgradability(self.upgradableContract()).upgradeTo(self.newImplementation());
         emit SoftwareUpgradeIsDone(self.newImplementation());
