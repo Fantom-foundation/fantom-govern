@@ -269,6 +269,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
             // silence unused variable warning
             success;
             result;
+            return success;
         }
         return true;
     }
