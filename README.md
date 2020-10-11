@@ -138,6 +138,9 @@ Compiling your contracts...
     ✓ checking proposal verification with explicit timestamps and opinions (1046ms)
     ✓ checking self-vote creation (580ms)
     ✓ checking voting tally for a self-voter (949ms)
+    ✓ checking proposal execution via call (443ms)
+    ✓ checking proposal execution via delegatecall (407ms)
+    ✓ checking proposal rejecting before max voting end is reached (413ms)
     ✓ checking voting tally with low turnout (486ms)
     ✓ checking execution expiration (419ms)
     ✓ checking proposal is discarded if low enough agreement after expiration period (401ms)
@@ -169,5 +172,5 @@ Compiling your contracts...
       ✓ cancel votes via recounting gradually in reversed order (294ms)
 
 
-  32 passing (39s)
+  35 passing (39s)
 ```
