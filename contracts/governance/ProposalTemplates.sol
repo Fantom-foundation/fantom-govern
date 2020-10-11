@@ -25,7 +25,7 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
         string name;
         address exampleAddress; // used as a code template
         bytes32 codeHash; // sha3 hash of code
-        bool executable; // true if proposal should get executed on approval
+        Proposal.ExecType executable; // proposal execution type when proposal gets resolved
         uint256 minVotes; // minimum voting turnout (ratio)
         uint256 minAgreement; // minimum allowed minAgreement
         uint256[] opinionScales; // Each opinion scale defines an exact measure of agreement which voter may choose
@@ -44,14 +44,14 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
     }
 
     // get returns proposal template
-    function get(uint256 pType) public view returns (string memory name, address exampleAddress, bool executable, uint256 minVotes, uint256 minAgreement, uint256[] memory opinionScales, uint256 minVotingDuration, uint256 maxVotingDuration, uint256 minStartDelay, uint256 maxStartDelay) {
+    function get(uint256 pType) public view returns (string memory name, address exampleAddress, Proposal.ExecType executable, uint256 minVotes, uint256 minAgreement, uint256[] memory opinionScales, uint256 minVotingDuration, uint256 maxVotingDuration, uint256 minStartDelay, uint256 maxStartDelay) {
         ProposalTemplate storage t = proposalTemplates[pType];
         return (t.name, t.exampleAddress, t.executable, t.minVotes, t.minAgreement, t.opinionScales, t.minVotingDuration, t.maxVotingDuration, t.minStartDelay, t.maxStartDelay);
     }
 
     // addTemplate adds a template into the library
     // template must have unique type
-    function addTemplate(uint256 pType, string calldata name, address exampleAddress, bool executable, uint256 minVotes, uint256 minAgreement, uint256[] calldata opinionScales, uint256 minVotingDuration, uint256 maxVotingDuration, uint256 minStartDelay, uint256 maxStartDelay) external onlyOwner {
+    function addTemplate(uint256 pType, string calldata name, address exampleAddress, Proposal.ExecType executable, uint256 minVotes, uint256 minAgreement, uint256[] calldata opinionScales, uint256 minVotingDuration, uint256 maxVotingDuration, uint256 minStartDelay, uint256 maxStartDelay) external onlyOwner {
         ProposalTemplate storage template = proposalTemplates[pType];
         // empty name is a marker of non-existing template
         require(bytes(name).length != 0, "empty name");
@@ -88,7 +88,7 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
     }
 
     // verifyProposalParams checks proposal code and parameters
-    function verifyProposalParams(uint256 pType, bool exec, uint256 minVotes, uint256 minAgreement, uint256[] calldata opinionScales, uint256 start, uint256 minEnd, uint256 maxEnd) external view returns (bool) {
+    function verifyProposalParams(uint256 pType, Proposal.ExecType executable, uint256 minVotes, uint256 minAgreement, uint256[] calldata opinionScales, uint256 start, uint256 minEnd, uint256 maxEnd) external view returns (bool) {
         if (start < block.timestamp) {
             // start in the past
             return false;
@@ -110,7 +110,7 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
             return false;
         }
         ProposalTemplate memory template = proposalTemplates[pType];
-        if (exec != template.executable) {
+        if (executable != template.executable) {
             // inconsistent executable flag
             return false;
         }

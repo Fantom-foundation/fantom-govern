@@ -2,8 +2,11 @@ pragma solidity ^0.5.0;
 
 import "../proposal/PlainTextProposal.sol";
 import "../governance/Governance.sol";
+import "../governance/Proposal.sol";
 
 contract ExecLoggingProposal is PlainTextProposal {
+    Proposal.ExecType _exec;
+
     constructor(string memory v1, string memory v2, bytes32[] memory v3,
         uint256 v4, uint256 v5, uint256 v6, uint256 v7, uint256 v8, address v9) PlainTextProposal(v1, v2, v3, v4, v5, v6, v7, v8, v9) public {}
 
@@ -12,11 +15,15 @@ contract ExecLoggingProposal is PlainTextProposal {
     }
 
     function pType() public view returns (uint256) {
-        return uint256(StdProposalTypes.UNKNOWN_EXECUTABLE);
+        return 15;
     }
 
-    function executable() public view returns (bool) {
-        return true;
+    function executable() public view returns (Proposal.ExecType) {
+        return _exec;
+    }
+
+    function setExecutable(Proposal.ExecType __exec) public {
+        _exec = __exec;
     }
 
     function cancel(uint256 myID, address govAddress) public {
@@ -36,8 +43,12 @@ contract ExecLoggingProposal is PlainTextProposal {
         executedOption = optionID;
     }
 
-    function execute(address selfAddr, uint256 optionID) external {
+    function execute_delegatecall(address selfAddr, uint256 optionID) external {
         ExecLoggingProposal self = ExecLoggingProposal(selfAddr);
         self.executeNonDelegateCall(address(this), msg.sender, optionID);
+    }
+
+    function execute_call(uint256 optionID) external {
+        executeNonDelegateCall(address(this), msg.sender, optionID);
     }
 }

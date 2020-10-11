@@ -9,9 +9,15 @@ library Proposal {
         uint256 votingMaxEndTime; // date of latest possible voting end
     }
 
+    enum ExecType {
+        NONE,
+        CALL,
+        DELEGATECALL
+    }
+
     struct Parameters {
         uint256 pType; // type of proposal (e.g. plaintext, software upgrade)
-        bool executable; // true if proposal should get executed on approval
+        ExecType executable; // proposal execution type when proposal gets resolved
         uint256 minVotes; // min. quorum (ratio)
         // minAgreement is the minimum acceptable ratio of agreement for an option.
         // It's guaranteed not to win otherwise.

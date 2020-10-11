@@ -15,6 +15,10 @@ const ExplicitProposal = artifacts.require('ExplicitProposal');
 const ExecLoggingProposal = artifacts.require('ExecLoggingProposal');
 const AlteredPlainTextProposal = artifacts.require('AlteredPlainTextProposal');
 
+const NonExecutableType = new BN('0');
+const CallType = new BN('1');
+const DelegatecallType = new BN('2');
+
 function ratio(n) {
     return ether(n);
 }
@@ -35,7 +39,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
 
     it('checking deployment of a plaintext proposal contract', async () => {
         const examplePlaintext = await PlainTextProposal.new('example', 'example-descr', [], 0, 0, 0, 0, 0, emptyAddr);
-        this.verifier.addTemplate(3, 'plaintext', examplePlaintext.address, false, ratio('0.4'), ratio('0.6'), scales, 120, 1200, 0, 60);
+        this.verifier.addTemplate(10, 'plaintext', examplePlaintext.address, NonExecutableType, ratio('0.4'), ratio('0.6'), scales, 120, 1200, 0, 60);
         const option = web3.utils.fromAscii('option');
         await expectRevert(PlainTextProposal.new('plaintext', 'plaintext-descr', [option], ratio('0.4'), ratio('0.6'), 0, 120, 1201, this.verifier.address), 'failed validation');
         await expectRevert(PlainTextProposal.new('plaintext', 'plaintext-descr', [option], ratio('0.4'), ratio('0.6'), 0, 119, 1201, this.verifier.address), 'failed validation');
@@ -55,10 +59,10 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
     });
 
     it('checking creation of a plaintext proposal', async () => {
-        const pType = new BN(3);
+        const pType = new BN(10);
         const now = await time.latest();
         const examplePlaintext = await PlainTextProposal.new('example', 'example-descr', [], 0, 0, 0, 0, 0, emptyAddr);
-        this.verifier.addTemplate(pType, 'plaintext', examplePlaintext.address, false, ratio('0.4'), ratio('0.6'), scales, 120, 1200, 0, 60);
+        this.verifier.addTemplate(pType, 'plaintext', examplePlaintext.address, NonExecutableType, ratio('0.4'), ratio('0.6'), scales, 120, 1200, 0, 60);
         const option = web3.utils.fromAscii('option');
         const emptyOptions = await PlainTextProposal.new('plaintext', 'plaintext-descr', [], ratio('0.5'), ratio('0.6'), 30, 121, 1199, this.verifier.address);
         const tooManyOptions = await PlainTextProposal.new('plaintext', 'plaintext-descr', [option, option, option, option, option, option, option, option, option, option, option], ratio('0.5'), ratio('0.6'), 30, 121, 1199, this.verifier.address);
@@ -78,7 +82,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
 
         const infoManyOptions = await this.gov.proposalParams(1);
         expect(infoManyOptions.pType).to.be.bignumber.equal(pType);
-        expect(infoManyOptions.executable).to.equal(false);
+        expect(infoManyOptions.executable).to.be.bignumber.equal(NonExecutableType);
         expect(infoManyOptions.minVotes).to.be.bignumber.equal(ratio('0.5'));
         expect(infoManyOptions.proposalContract).to.equal(manyOptions.address);
         expect(infoManyOptions.options.length).to.equal(10);
@@ -88,7 +92,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         expect(infoManyOptions.votingMaxEndTime).to.be.bignumber.equal(infoManyOptions.votingStartTime.add(new BN(1199)));
         const infoOneOption = await this.gov.proposalParams(2);
         expect(infoOneOption.pType).to.be.bignumber.equal(pType);
-        expect(infoOneOption.executable).to.equal(false);
+        expect(infoOneOption.executable).to.be.bignumber.equal(NonExecutableType);
         expect(infoOneOption.minVotes).to.be.bignumber.equal(ratio('0.51'));
         expect(infoOneOption.proposalContract).to.equal(oneOption.address);
         expect(infoOneOption.options.length).to.equal(1);
@@ -100,7 +104,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
     it('checking proposal verification with explicit timestamps and opinions', async () => {
         // check code which can be checked only by explicitly setting timestamps and opinions
         const pType = 999; // non-standard proposal type
-        this.verifier.addTemplate(pType, 'custom', emptyAddr, true, ratio('0.4'), ratio('0.6'), scales, 1000, 10000, 400, 2000);
+        this.verifier.addTemplate(pType, 'custom', emptyAddr, DelegatecallType, ratio('0.4'), ratio('0.6'), scales, 1000, 10000, 400, 2000);
         const now = await time.latest();
         const start = now.add(new BN(500));
         const minEnd = start.add(new BN(1000));
@@ -114,7 +118,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         await proposal.setVotingStartTime(start);
         await proposal.setVotingMinEndTime(minEnd);
         await proposal.setVotingMaxEndTime(maxEnd);
-        await proposal.setExecutable(true);
+        await proposal.setExecutable(DelegatecallType);
         expect(await proposal.verifyProposalParams.call(this.verifier.address)).to.equal(true);
 
         await proposal.setVotingStartTime(now.sub(new BN(10))); // starts in past
@@ -148,9 +152,9 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         expect(await proposal.verifyProposalParams.call(this.verifier.address)).to.equal(true);
     });
 
-    const createProposal = async (optionsNum, minVotes, minAgreement, startDelay = 0, minEnd = 120, maxEnd = 1200, _scales = scales) => {
-        if (await this.verifier.exists(2) === false) {
-            await this.verifier.addTemplate(2, 'unknown-executable', emptyAddr, true, ratio('0.0'), ratio('0.0'), _scales, 0, 100000000, 0, 100000000);
+    const createProposal = async (_exec, optionsNum, minVotes, minAgreement, startDelay = 0, minEnd = 120, maxEnd = 1200, _scales = scales) => {
+        if (await this.verifier.exists(15) === false) {
+            await this.verifier.addTemplate(15, 'ExecLoggingProposal', emptyAddr, _exec, ratio('0.0'), ratio('0.0'), _scales, 0, 100000000, 0, 100000000);
         }
         const option = web3.utils.fromAscii('option');
         const options = [];
@@ -159,6 +163,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         }
         const contract = await ExecLoggingProposal.new('logger', 'logger-descr', options, minVotes, minAgreement, startDelay, minEnd, maxEnd, emptyAddr);
         await contract.setOpinionScales(_scales);
+        await contract.setExecutable(_exec);
 
         await this.gov.createProposal(contract.address, {value: this.proposalFee});
 
@@ -168,7 +173,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
     it('checking self-vote creation', async () => {
         const optionsNum = 3;
         const choices = [new BN(0), new BN(3), new BN(4)];
-        const proposalInfo = await createProposal(optionsNum, ratio('0.5'), ratio('0.6'), 60);
+        const proposalInfo = await createProposal(NonExecutableType, optionsNum, ratio('0.5'), ratio('0.6'), 60);
         const proposalID = proposalInfo.proposalID;
         // make new vote
         await expectRevert(this.gov.vote(defaultAcc, proposalID, choices), "proposal voting has't begun");
@@ -187,7 +192,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         const choices = [new BN(0), new BN(3), new BN(4)];
         let proposalID = 0;
         beforeEach('create vote', async () => {
-            const proposalInfo = await createProposal(optionsNum, ratio('0.5'), ratio('0.6'), 60);
+            const proposalInfo = await createProposal(NonExecutableType, optionsNum, ratio('0.5'), ratio('0.6'), 60);
             proposalID = proposalInfo.proposalID;
             // make new vote
             time.increase(60);
@@ -295,7 +300,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
     it('checking voting tally for a self-voter', async () => {
         const optionsNum = 10; // use maximum number of options to test gas usage
         const choices = [new BN(2), new BN(2), new BN(3), new BN(2), new BN(2), new BN(2), new BN(2), new BN(2), new BN(2), new BN(2)];
-        const proposalInfo = await createProposal(optionsNum, ratio('0.5'), ratio('0.6'), 60, 120);
+        const proposalInfo = await createProposal(DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 60, 120);
         const proposalID = proposalInfo.proposalID;
         const proposalContract = proposalInfo.proposal;
         // make new vote
@@ -355,9 +360,73 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         expect(await this.gov.tasksCount()).to.be.bignumber.equal(new BN(0));
     });
 
+    it('checking proposal execution via call', async () => {
+        const optionsNum = 1; // use maximum number of options to test gas usage
+        const choices = [new BN(4)];
+        const proposalInfo = await createProposal(CallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120);
+        const proposalID = proposalInfo.proposalID;
+        const proposalContract = proposalInfo.proposal;
+        // make new vote
+        await this.govable.stake(defaultAcc, ether('10.0'));
+        await this.gov.vote(defaultAcc, proposalID, choices);
+
+        // finalize voting by handling its task
+        time.increase(120); // wait until min voting end time
+        await this.gov.handleTasks(0, 1);
+
+        // check proposal execution via call
+        expect(await proposalContract.executedCounter()).to.be.bignumber.equal(new BN(1));
+        expect(await proposalContract.executedMsgSender()).to.equal(this.gov.address);
+        expect(await proposalContract.executedAs()).to.equal(proposalContract.address);
+        expect(await proposalContract.executedOption()).to.be.bignumber.equal(new BN(0));
+    });
+
+    it('checking proposal execution via delegatecall', async () => {
+        const optionsNum = 1; // use maximum number of options to test gas usage
+        const choices = [new BN(4)];
+        const proposalInfo = await createProposal(DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120);
+        const proposalID = proposalInfo.proposalID;
+        const proposalContract = proposalInfo.proposal;
+        // make new vote
+        await this.govable.stake(defaultAcc, ether('10.0'));
+        await this.gov.vote(defaultAcc, proposalID, choices);
+
+        // finalize voting by handling its task
+        time.increase(120); // wait until min voting end time
+        await this.gov.handleTasks(0, 1);
+
+        // check proposal execution via delegatecall
+        expect(await proposalContract.executedCounter()).to.be.bignumber.equal(new BN(1));
+        expect(await proposalContract.executedMsgSender()).to.equal(defaultAcc);
+        expect(await proposalContract.executedAs()).to.equal(this.gov.address);
+        expect(await proposalContract.executedOption()).to.be.bignumber.equal(new BN(0));
+    });
+
+    it('checking proposal rejecting before max voting end is reached', async () => {
+        const optionsNum = 1; // use maximum number of options to test gas usage
+        const choices = [new BN(0)];
+        const proposalInfo = await createProposal(CallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, 240);
+        const proposalID = proposalInfo.proposalID;
+        const proposalContract = proposalInfo.proposal;
+        // make new vote
+        await this.govable.stake(defaultAcc, ether('10.0'));
+        await this.gov.vote(defaultAcc, proposalID, choices);
+
+        // finalize voting by handling its task
+        time.increase(120); // wait until min voting end time
+        await this.gov.handleTasks(0, 1);
+
+        // check proposal is rejected
+        expect(await proposalContract.executedCounter()).to.be.bignumber.equal(new BN(0));
+        const proposalStateInfo = await this.gov.proposalState(proposalID);
+        expect(proposalStateInfo.winnerOptionID).to.be.bignumber.equal(new BN(0));
+        expect(proposalStateInfo.votes).to.be.bignumber.equal(ether('10.0'));
+        expect(proposalStateInfo.status).to.be.bignumber.equal(new BN(2));
+    });
+
     it('checking voting tally with low turnout', async () => {
         const choices = [new BN(2)];
-        const proposalInfo = await createProposal(1, ratio('0.5'), ratio('0.6'), 60, 500, 1000);
+        const proposalInfo = await createProposal(NonExecutableType, 1, ratio('0.5'), ratio('0.6'), 60, 500, 1000);
         const proposalID = proposalInfo.proposalID;
         // make new vote
         time.increase(60 + 500 + 10);
@@ -379,7 +448,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
 
     it('checking execution expiration', async () => {
         const choices = [new BN(2)];
-        const proposalInfo = await createProposal(1, ratio('0.5'), ratio('0.6'), 60, 500, 1000);
+        const proposalInfo = await createProposal(DelegatecallType, 1, ratio('0.5'), ratio('0.6'), 60, 500, 1000);
         const proposalID = proposalInfo.proposalID;
         const proposalContract = proposalInfo.proposal;
         const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
@@ -403,7 +472,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
 
     it('checking proposal is discarded if low enough agreement after expiration period', async () => {
         const choices = [new BN(1)];
-        const proposalInfo = await createProposal(1, ratio('0.5'), ratio('0.6'), 60, 500, 1000);
+        const proposalInfo = await createProposal(NonExecutableType, 1, ratio('0.5'), ratio('0.6'), 60, 500, 1000);
         const proposalID = proposalInfo.proposalID;
         const proposalContract = proposalInfo.proposal;
         const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
@@ -427,7 +496,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
 
     it("checking execution doesn't expire earlier than needed", async () => {
         const choices = [new BN(2)];
-        const proposalInfo = await createProposal(1, ratio('0.5'), ratio('0.6'), 60, 500, 1000);
+        const proposalInfo = await createProposal(DelegatecallType, 1, ratio('0.5'), ratio('0.6'), 60, 500, 1000);
         const proposalID = proposalInfo.proposalID;
         const proposalContract = proposalInfo.proposal;
         const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
@@ -451,7 +520,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
 
     it("checking proposal cancellation", async () => {
         const choices = [new BN(2)];
-        const proposalInfo = await createProposal(1, ratio('0.5'), ratio('0.6'), 60, 500, 1000);
+        const proposalInfo = await createProposal(NonExecutableType, 1, ratio('0.5'), ratio('0.6'), 60, 500, 1000);
         const proposalID = proposalInfo.proposalID;
         const proposalContract = proposalInfo.proposal;
         const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
@@ -494,7 +563,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         // make 5 proposals which are ready for a finalization
         for (const i of [0, 1, 2, 3, 4]) {
             const choices = [new BN(2)];
-            const proposalInfo = await createProposal(1, ratio('0.5'), ratio('0.6'), 0, 500, 1000);
+            const proposalInfo = await createProposal(NonExecutableType, 1, ratio('0.5'), ratio('0.6'), 0, 500, 1000);
             const proposalID = proposalInfo.proposalID;
             // make a vote
             await this.gov.vote(defaultAcc, proposalID, choices);
@@ -544,7 +613,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         const optionsNum = 3;
         const choices0 = [new BN(0), new BN(3), new BN(4)];
         const choices1 = [new BN(1), new BN(2), new BN(3)];
-        const proposalInfo = await createProposal(optionsNum, ratio('0.5'), ratio('0.6'), 60);
+        const proposalInfo = await createProposal(NonExecutableType, optionsNum, ratio('0.5'), ratio('0.6'), 60);
         const proposalID = proposalInfo.proposalID;
         // make new vote
         time.increase(60);
@@ -566,8 +635,8 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         const optionsNum = 3;
         let proposalID = 0;
         beforeEach('create vote', async () => {
-            await createProposal(optionsNum, ratio('0.5'), ratio('0.6'), 60);
-            const proposalInfo = await createProposal(optionsNum, ratio('0.5'), ratio('0.6'), 60);
+            await createProposal(NonExecutableType, optionsNum, ratio('0.5'), ratio('0.6'), 60);
+            const proposalInfo = await createProposal(NonExecutableType, optionsNum, ratio('0.5'), ratio('0.6'), 60);
             proposalID = proposalInfo.proposalID;
             // make the new votes
             time.increase(60 + 10);
@@ -918,14 +987,14 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
     });
 
     it('checking voting with custom parameters', async () => {
-        await expectRevert(this.verifier.addTemplate(99, 'custom', emptyAddr, false, ratio('1.1'), ratio('0.6'), scales, 120, 1200, 0, 60), 'minVotes > 1.0');
-        await expectRevert(this.verifier.addTemplate(99, 'custom', emptyAddr, false, ratio('0.4'), ratio('1.1'), scales, 120, 1200, 0, 60), 'minAgreement > 1.0');
-        await expectRevert(this.verifier.addTemplate(99, 'custom', emptyAddr, false, ratio('0.4'), ratio('0.6'), [], 120, 1200, 0, 60), 'empty opinions');
-        await expectRevert(this.verifier.addTemplate(99, 'custom', emptyAddr, false, ratio('0.4'), ratio('0.6'), [1, 2, 3, 0], 120, 1200, 0, 60), 'wrong order of opinions');
-        await expectRevert(this.verifier.addTemplate(99, 'custom', emptyAddr, false, ratio('0.4'), ratio('0.6'), [0, 0, 0, 0], 120, 1200, 0, 60), 'all opinions are zero');
-        await expectRevert(this.verifier.addTemplate(99, 'custom', emptyAddr, false, ratio('0.4'), ratio('0.6'), [0], 120, 1200, 0, 60), 'all opinions are zero');
+        await expectRevert(this.verifier.addTemplate(99, 'custom', emptyAddr, NonExecutableType, ratio('1.1'), ratio('0.6'), scales, 120, 1200, 0, 60), 'minVotes > 1.0');
+        await expectRevert(this.verifier.addTemplate(99, 'custom', emptyAddr, NonExecutableType, ratio('0.4'), ratio('1.1'), scales, 120, 1200, 0, 60), 'minAgreement > 1.0');
+        await expectRevert(this.verifier.addTemplate(99, 'custom', emptyAddr, NonExecutableType, ratio('0.4'), ratio('0.6'), [], 120, 1200, 0, 60), 'empty opinions');
+        await expectRevert(this.verifier.addTemplate(99, 'custom', emptyAddr, NonExecutableType, ratio('0.4'), ratio('0.6'), [1, 2, 3, 0], 120, 1200, 0, 60), 'wrong order of opinions');
+        await expectRevert(this.verifier.addTemplate(99, 'custom', emptyAddr, NonExecutableType, ratio('0.4'), ratio('0.6'), [0, 0, 0, 0], 120, 1200, 0, 60), 'all opinions are zero');
+        await expectRevert(this.verifier.addTemplate(99, 'custom', emptyAddr, NonExecutableType, ratio('0.4'), ratio('0.6'), [0], 120, 1200, 0, 60), 'all opinions are zero');
         const optionsNum = 1;
-        const proposalInfo = await createProposal(optionsNum, ratio('0.01'), ratio('1.0'), 10000, 100000, 1000000, [1000000000000]);
+        const proposalInfo = await createProposal(NonExecutableType, optionsNum, ratio('0.01'), ratio('1.0'), 10000, 100000, 1000000, [1000000000000]);
         const proposalID = proposalInfo.proposalID;
         // make new vote
         time.increase(10000 + 10);

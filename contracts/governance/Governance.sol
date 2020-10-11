@@ -65,7 +65,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         proposalVerifier = IProposalVerifier(_proposalVerifier);
     }
 
-    function proposalParams(uint256 proposalID) public view returns (uint256 pType, bool executable, uint256 minVotes, uint256 minAgreement, uint256[] memory opinionScales, bytes32[] memory options, address proposalContract, uint256 votingStartTime, uint256 votingMinEndTime, uint256 votingMaxEndTime) {
+    function proposalParams(uint256 proposalID) public view returns (uint256 pType, Proposal.ExecType executable, uint256 minVotes, uint256 minAgreement, uint256[] memory opinionScales, bytes32[] memory options, address proposalContract, uint256 votingStartTime, uint256 votingMinEndTime, uint256 votingMaxEndTime) {
         Proposal.Parameters memory p = proposals[proposalID].params;
         return (p.pType, p.executable, p.minVotes, p.minAgreement, p.opinionScales, p.options, p.proposalContract, p.deadlines.votingStartTime, p.deadlines.votingMinEndTime, p.deadlines.votingMaxEndTime);
     }
@@ -130,7 +130,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         IProposal p = IProposal(proposalContract);
         // capture the parameters once to ensure that contract will not return different values
         uint256 pType = p.pType();
-        bool executable = p.executable();
+        Proposal.ExecType executable = p.executable();
         uint256 minVotes = p.minVotes();
         uint256 minAgreement = p.minAgreement();
         uint256[] memory opinionScales = p.opinionScales();
@@ -233,9 +233,9 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     // handleVotingTask handles only TASK_VOTING
     function handleVotingTask(uint256 proposalID, ProposalState storage prop) internal returns (bool handled) {
         uint256 minVotesAbs = minVotesAbsolute(governableContract.getTotalWeight(), prop.params.minVotes);
-        bool ready = block.timestamp >= prop.params.deadlines.votingMinEndTime &&
-        (prop.votes >= minVotesAbs || block.timestamp >= prop.params.deadlines.votingMaxEndTime);
-        if (!ready) {
+        bool must = block.timestamp >= prop.params.deadlines.votingMaxEndTime;
+        bool may = block.timestamp >= prop.params.deadlines.votingMinEndTime && prop.votes >= minVotesAbs;
+        if (!must && !may) {
             return false;
         }
         (bool proposalResolved, uint256 winnerID) = _calculateVotingTally(prop);
@@ -259,15 +259,20 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         prop.winnerOptionID = winnerOptionID;
 
         bool executionExpired = block.timestamp > prop.params.deadlines.votingMaxEndTime + maxExecutionPeriod();
-        if (prop.params.executable && executionExpired) {
+        bool executable = prop.params.executable == Proposal.ExecType.CALL || prop.params.executable == Proposal.ExecType.DELEGATECALL;
+        if (executable && executionExpired) {
             // protection against proposals which revert or consume too much gas
             return false;
         }
-        if (prop.params.executable && !executionExpired) {
+        if (executable && !executionExpired) {
             address propAddr = prop.params.proposalContract;
-            (bool success, bytes memory result) = propAddr.delegatecall(abi.encodeWithSignature("execute(address,uint256)", propAddr, winnerOptionID));
-            // silence unused variable warning
-            success;
+            bool success;
+            bytes memory result;
+            if (prop.params.executable == Proposal.ExecType.CALL) {
+                (success, result) = propAddr.call(abi.encodeWithSignature("execute_call(uint256)", winnerOptionID));
+            } else if (prop.params.executable == Proposal.ExecType.DELEGATECALL) {
+                (success, result) = propAddr.delegatecall(abi.encodeWithSignature("execute_delegatecall(address,uint256)", propAddr, winnerOptionID));
+            }
             result;
             return success;
         }

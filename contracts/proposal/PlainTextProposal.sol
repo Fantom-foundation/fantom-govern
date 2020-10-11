@@ -29,8 +29,8 @@ contract PlainTextProposal is BaseProposal, Cancelable {
         return uint256(StdProposalTypes.PLAIN_TEXT);
     }
 
-    // Returns false as it is not executable
-    function executable() public view returns (bool) {
-        return false;
+    // Returns execution type
+    function executable() public view returns (Proposal.ExecType) {
+        return Proposal.ExecType.NONE;
     }
 }

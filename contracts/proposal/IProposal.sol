@@ -1,13 +1,15 @@
 pragma solidity ^0.5.0;
 
+import "../governance/Proposal.sol";
+
 /**
  * @dev An abstract proposal
  */
 contract IProposal {
     // Get type of proposal (e.g. plaintext, software upgrade)
     function pType() external view returns (uint256);
-    // True if proposal should get executed on approval
-    function executable() external view returns (bool);
+    // Proposal execution type when proposal gets resolved
+    function executable() external view returns (Proposal.ExecType);
     // Get min. turnout (ratio)
     function minVotes() external view returns (uint256);
     // Get min. agreement for options (ratio)
@@ -23,9 +25,13 @@ contract IProposal {
     // Get date of latest possible voting end
     function votingMaxEndTime() external view returns (uint256);
 
-    // execute proposal logic on approval (if executable)
-    // Called via delegatecall from governance contract, hence selfAddress is provided
-    function execute(address selfAddress, uint256 optionID) external;
+    // execute proposal logic on approval (if executable == call)
+    // Called via call opcode from governance contract
+    function execute_call(uint256 optionID) external;
+
+    // execute proposal logic on approval (if executable == delegatecall)
+    // Called via delegatecall opcode from governance contract, hence selfAddress is provided
+    function execute_delegatecall(address selfAddress, uint256 optionID) external;
 
     // Get human-readable name
     function name() external view returns (string memory);
@@ -36,7 +42,14 @@ contract IProposal {
     enum StdProposalTypes {
         NOT_INIT,
         UNKNOWN_NON_EXECUTABLE,
-        UNKNOWN_EXECUTABLE,
+        UNKNOWN_CALL_EXECUTABLE,
+        UNKNOWN_DELEGATECALL_EXECUTABLE,
+        GAP4,
+        GAP5,
+        GAP6,
+        GAP7,
+        GAP8,
+        GAP9,
         PLAIN_TEXT,
         SOFTWARE_UPGRADE
     }
