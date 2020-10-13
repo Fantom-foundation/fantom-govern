@@ -1,8 +1,9 @@
 pragma solidity ^0.5.0;
 
-import "../common/SafeMath.sol";
+import "../../common/SafeMath.sol";
 import "./IProposal.sol";
-import "../verifiers/IProposalVerifier.sol";
+import "../../verifiers/IProposalVerifier.sol";
+import "../../governance/Proposal.sol";
 
 /**
  * @dev A base for any proposal

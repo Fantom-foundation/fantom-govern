@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "../proposal/IProposal.sol";
+import "../proposal/base/IProposal.sol";
 
 library Proposal {
     struct Timeline {

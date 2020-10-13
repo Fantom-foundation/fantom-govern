@@ -1,8 +1,8 @@
 pragma solidity ^0.5.0;
 
-import "../proposal/PlainTextProposal.sol";
-import "../governance/Governance.sol";
-import "../governance/Proposal.sol";
+import "../PlainTextProposal.sol";
+import "../../governance/Governance.sol";
+import "../../governance/Proposal.sol";
 
 contract ExecLoggingProposal is PlainTextProposal {
     Proposal.ExecType _exec;

@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "../governance/Proposal.sol";
+import "../../governance/Proposal.sol";
 
 /**
  * @dev An abstract proposal
@@ -43,14 +43,6 @@ contract IProposal {
         NOT_INIT,
         UNKNOWN_NON_EXECUTABLE,
         UNKNOWN_CALL_EXECUTABLE,
-        UNKNOWN_DELEGATECALL_EXECUTABLE,
-        GAP4,
-        GAP5,
-        GAP6,
-        GAP7,
-        GAP8,
-        GAP9,
-        PLAIN_TEXT,
-        SOFTWARE_UPGRADE
+        UNKNOWN_DELEGATECALL_EXECUTABLE
     }
 }

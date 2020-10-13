@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "../proposal/BaseProposal.sol";
+import "../base/BaseProposal.sol";
 
 contract ExplicitProposal is BaseProposal {
     using SafeMath for uint256;

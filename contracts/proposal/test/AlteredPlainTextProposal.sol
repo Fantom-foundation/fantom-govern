@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "../proposal/PlainTextProposal.sol";
+import "../PlainTextProposal.sol";
 
 contract AlteredPlainTextProposal is PlainTextProposal {
     constructor(string memory v1, string memory v2, bytes32[] memory v3,

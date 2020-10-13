@@ -43,7 +43,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         const examplePlaintext = await PlainTextProposal.new('example', 'example-descr', [], 0, 0, 0, 0, 0, emptyAddr);
         const plaintextBytecodeVerifier = await BytecodeMatcher.new();
         await plaintextBytecodeVerifier.initialize(examplePlaintext.address);
-        this.verifier.addTemplate(10, 'plaintext', plaintextBytecodeVerifier.address, NonExecutableType, ratio('0.4'), ratio('0.6'), [0, 1, 2, 3, 4], 120, 1200, 0, 60);
+        this.verifier.addTemplate(1, 'plaintext', plaintextBytecodeVerifier.address, NonExecutableType, ratio('0.4'), ratio('0.6'), [0, 1, 2, 3, 4], 120, 1200, 0, 60);
         const option = web3.utils.fromAscii('option');
         await expectRevert(PlainTextProposal.new('plaintext', 'plaintext-descr', [option], ratio('0.4'), ratio('0.6'), 0, 120, 1201, this.verifier.address), 'failed validation');
         await expectRevert(PlainTextProposal.new('plaintext', 'plaintext-descr', [option], ratio('0.4'), ratio('0.6'), 0, 119, 1201, this.verifier.address), 'failed validation');
@@ -63,7 +63,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
     });
 
     it('checking creation of a plaintext proposal', async () => {
-        const pType = new BN(10);
+        const pType = new BN(1);
         const now = await time.latest();
         const examplePlaintext = await PlainTextProposal.new('example', 'example-descr', [], 0, 0, 0, 0, 0, emptyAddr);
         const plaintextBytecodeVerifier = await BytecodeMatcher.new();
@@ -1021,7 +1021,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
 
     it('checking OwnableVerifier', async () => {
         const ownableVerifier = await OwnableVerifier.new(this.gov.address, {from: otherAcc});
-        this.verifier.addTemplate(10, 'plaintext', ownableVerifier.address, NonExecutableType, ratio('0.4'), ratio('0.6'), [0, 1, 2, 3, 4], 120, 1200, 0, 60);
+        this.verifier.addTemplate(1, 'plaintext', ownableVerifier.address, NonExecutableType, ratio('0.4'), ratio('0.6'), [0, 1, 2, 3, 4], 120, 1200, 0, 60);
         const option = web3.utils.fromAscii('option');
         const proposal = await PlainTextProposal.new('plaintext', 'plaintext-descr', [option], ratio('0.5'), ratio('0.8'), 30, 121, 1199, this.verifier.address);
 

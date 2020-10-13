@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 
 import "../common/Decimal.sol";
-import "../proposal/IProposal.sol";
+import "../proposal/base/IProposal.sol";
 import "./IProposalVerifier.sol";
 import "../ownership/Ownable.sol";
 import "../version/Version.sol";
