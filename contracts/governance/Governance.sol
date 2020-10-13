@@ -143,9 +143,9 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         require(options.length <= maxOptions(), "too many options");
         bool ok;
         ok = proposalVerifier.verifyProposalParams(pType, executable, minVotes, minAgreement, opinionScales, votingStartTime, votingMinEndTime, votingMaxEndTime);
-        require(ok, "proposal parameters failed validation");
+        require(ok, "proposal parameters failed verification");
         ok = proposalVerifier.verifyProposalContract(pType, proposalContract);
-        require(ok, "proposal contract failed validation");
+        require(ok, "proposal contract failed verification");
         // save the parameters
         ProposalState storage prop = proposals[proposalID];
         prop.params.pType = pType;
