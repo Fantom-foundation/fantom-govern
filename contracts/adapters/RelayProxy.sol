@@ -19,13 +19,13 @@ contract RelayProxy {
      * Can only be called by the current owner.
      */
     function __transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        require(newOwner != address(0), "Relay: new owner is the zero address");
         emit OwnershipTransferred(__owner, newOwner);
         __owner = newOwner;
     }
 
     function __setDestination(address newDestination) public onlyOwner {
-        require(newDestination != address(0), "new relay address is the zero address");
+        require(newDestination != address(0), "new owner address is the zero address");
         emit OwnershipTransferred(__destination, newDestination);
         __destination = newDestination;
     }
@@ -41,12 +41,12 @@ contract RelayProxy {
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(isOwner(), "Ownable: caller is not the owner");
+        require(isOwner(), "Relay: caller is not the owner");
         _;
     }
 
     function() payable external {
-        require(isOwner(), "Ownable: caller is not the owner");
+        require(isOwner(), "Relay: caller is not the owner");
         _relay(__destination);
     }
 
