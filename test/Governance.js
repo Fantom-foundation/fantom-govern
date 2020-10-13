@@ -15,6 +15,7 @@ const ExplicitProposal = artifacts.require('ExplicitProposal');
 const ExecLoggingProposal = artifacts.require('ExecLoggingProposal');
 const AlteredPlainTextProposal = artifacts.require('AlteredPlainTextProposal');
 const BytecodeMatcher = artifacts.require('BytecodeMatcher');
+const OwnableVerifier = artifacts.require('OwnableVerifier');
 
 const NonExecutableType = new BN('0');
 const CallType = new BN('1');
@@ -1016,5 +1017,27 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         expect(option0.votes).to.be.bignumber.equal(ether('10.0'));
         expect(option0.agreement).to.be.bignumber.equal(ether('10'));
         expect(option0.agreementRatio).to.be.bignumber.equal(ratio('1.0'));
+    });
+
+    it('checking OwnableVerifier', async () => {
+        const ownableVerifier = await OwnableVerifier.new(this.gov.address, {from: otherAcc});
+        this.verifier.addTemplate(10, 'plaintext', ownableVerifier.address, NonExecutableType, ratio('0.4'), ratio('0.6'), [0, 1, 2, 3, 4], 120, 1200, 0, 60);
+        const option = web3.utils.fromAscii('option');
+        const proposal = await PlainTextProposal.new('plaintext', 'plaintext-descr', [option], ratio('0.5'), ratio('0.8'), 30, 121, 1199, this.verifier.address);
+
+        await expectRevert(this.gov.createProposal(proposal.address, {value: this.proposalFee, from: defaultAcc}), 'proposal contract failed validation');
+        await expectRevert(this.gov.createProposal(proposal.address, {value: this.proposalFee, from: otherAcc}), 'proposal contract failed validation');
+        await expectRevert(ownableVerifier.createProposal(proposal.address, {value: this.proposalFee, from: defaultAcc}), 'Ownable: caller is not the owner');
+        await ownableVerifier.createProposal(proposal.address, {value: this.proposalFee, from: otherAcc});
+        await expectRevert(this.gov.createProposal(proposal.address, {value: this.proposalFee, from: defaultAcc}), 'proposal contract failed validation');
+        await expectRevert(this.gov.createProposal(proposal.address, {value: this.proposalFee, from: otherAcc}), 'proposal contract failed validation');
+        await expectRevert(ownableVerifier.createProposal(proposal.address, {value: this.proposalFee, from: defaultAcc}), 'Ownable: caller is not the owner');
+
+        await ownableVerifier.transferOwnership(defaultAcc, {from: otherAcc});
+
+        await expectRevert(this.gov.createProposal(proposal.address, {value: this.proposalFee, from: otherAcc}), 'proposal contract failed validation');
+        await expectRevert(this.gov.createProposal(proposal.address, {value: this.proposalFee, from: defaultAcc}), 'proposal contract failed validation');
+        await expectRevert(ownableVerifier.createProposal(proposal.address, {value: this.proposalFee, from: otherAcc}), 'Ownable: caller is not the owner');
+        await ownableVerifier.createProposal(proposal.address, {value: this.proposalFee, from: defaultAcc});
     });
 });
