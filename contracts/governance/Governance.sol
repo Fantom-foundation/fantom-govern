@@ -119,8 +119,8 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         _createProposal(lastProposalID, proposalContract);
         addTasks(lastProposalID);
 
-        // burn the proposal fee
-        burn(msg.value);
+        // burn a non-reward part of the proposal fee
+        burn(proposalBurntFee());
 
         emit ProposalCreated(lastProposalID);
     }
@@ -186,6 +186,8 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         require(handled != 0, "no tasks handled");
 
         emit TasksHandled(startIdx, i, handled);
+        // reward the sender
+        msg.sender.transfer(handled.mul(taskHandlingReward()));
     }
 
     // tasksCleanup erases inactive (handled) tasks backwards until an active task is met
@@ -201,6 +203,8 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         }
         require(erased > 0, "no tasks erased");
         emit TasksErased(erased);
+        // reward the sender
+        msg.sender.transfer(erased.mul(taskErasingReward()));
     }
 
     // handleTask calls handleTaskAssignments and marks task as inactive if it was handled
