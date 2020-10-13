@@ -17,6 +17,9 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
         Ownable.initialize(msg.sender);
     }
 
+    event AddedTemplate(uint256 pType);
+    event ErasedTemplate(uint256 pType);
+
     // Stored data for a proposal template
     struct ProposalTemplate {
         string name;
@@ -67,12 +70,16 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
         template.maxVotingDuration = maxVotingDuration;
         template.minStartDelay = minStartDelay;
         template.maxStartDelay = maxStartDelay;
+
+        emit AddedTemplate(pType);
     }
 
     // eraseTemplate removes the template of specified type from the library
     function eraseTemplate(uint256 pType) external onlyOwner {
         require(exists(pType), "template doesn't exist");
         delete (proposalTemplates[pType]);
+
+        emit ErasedTemplate(pType);
     }
 
     // verifyProposalParams checks proposal parameters
