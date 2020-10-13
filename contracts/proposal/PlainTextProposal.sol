@@ -14,7 +14,7 @@ contract PlainTextProposal is BaseProposal, Cancelable {
         _options = __options;
         _minVotes = __minVotes;
         _minAgreement = __minAgreement;
-        _opinionScales = [0, 2, 3, 4, 5];
+        _opinionScales = [0, 1, 2, 3, 4];
         _start = __start;
         _minEnd = __minEnd;
         _maxEnd = __maxEnd;

@@ -1,21 +1,18 @@
 pragma solidity ^0.5.0;
 
-import "../common/SafeMath.sol";
-import "../common/GetCode.sol";
 import "../common/Decimal.sol";
 import "../proposal/IProposal.sol";
-import "../proposal/IProposalVerifier.sol";
+import "./IProposalVerifier.sol";
 import "../ownership/Ownable.sol";
 import "../version/Version.sol";
+import "../common/Initializable.sol";
 
 /**
  * @dev A storage of current proposal templates. Any new proposal will be verified against the stored template of its type. 
- *      Verification checks for proposal code and parameters.
+ *      Verification checks for parameters and calls additional verifier (if any).
  *      Supposed to be owned by the governance contract
  */
 contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version {
-    using GetCode for address;
-
     function initialize() public initializer {
         Ownable.initialize(msg.sender);
     }
@@ -23,8 +20,7 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
     // Stored data for a proposal template
     struct ProposalTemplate {
         string name;
-        address exampleAddress; // used as a code template
-        bytes32 codeHash; // sha3 hash of code
+        address verifier; // used as additional verifier
         Proposal.ExecType executable; // proposal execution type when proposal gets resolved
         uint256 minVotes; // minimum voting turnout (ratio)
         uint256 minAgreement; // minimum allowed minAgreement
@@ -44,14 +40,14 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
     }
 
     // get returns proposal template
-    function get(uint256 pType) public view returns (string memory name, address exampleAddress, Proposal.ExecType executable, uint256 minVotes, uint256 minAgreement, uint256[] memory opinionScales, uint256 minVotingDuration, uint256 maxVotingDuration, uint256 minStartDelay, uint256 maxStartDelay) {
+    function get(uint256 pType) public view returns (string memory name, address verifier, Proposal.ExecType executable, uint256 minVotes, uint256 minAgreement, uint256[] memory opinionScales, uint256 minVotingDuration, uint256 maxVotingDuration, uint256 minStartDelay, uint256 maxStartDelay) {
         ProposalTemplate storage t = proposalTemplates[pType];
-        return (t.name, t.exampleAddress, t.executable, t.minVotes, t.minAgreement, t.opinionScales, t.minVotingDuration, t.maxVotingDuration, t.minStartDelay, t.maxStartDelay);
+        return (t.name, t.verifier, t.executable, t.minVotes, t.minAgreement, t.opinionScales, t.minVotingDuration, t.maxVotingDuration, t.minStartDelay, t.maxStartDelay);
     }
 
     // addTemplate adds a template into the library
     // template must have unique type
-    function addTemplate(uint256 pType, string calldata name, address exampleAddress, Proposal.ExecType executable, uint256 minVotes, uint256 minAgreement, uint256[] calldata opinionScales, uint256 minVotingDuration, uint256 maxVotingDuration, uint256 minStartDelay, uint256 maxStartDelay) external onlyOwner {
+    function addTemplate(uint256 pType, string calldata name, address verifier, Proposal.ExecType executable, uint256 minVotes, uint256 minAgreement, uint256[] calldata opinionScales, uint256 minVotingDuration, uint256 maxVotingDuration, uint256 minStartDelay, uint256 maxStartDelay) external onlyOwner {
         ProposalTemplate storage template = proposalTemplates[pType];
         // empty name is a marker of non-existing template
         require(bytes(name).length != 0, "empty name");
@@ -61,11 +57,7 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
         require(opinionScales[opinionScales.length - 1] != 0, "all opinions are zero");
         require(minVotes <= Decimal.unit(), "minVotes > 1.0");
         require(minAgreement <= Decimal.unit(), "minAgreement > 1.0");
-        template.exampleAddress = exampleAddress;
-        if (exampleAddress != address(0)) {
-            // empty exampleAddress means "no constrains on code"
-            template.codeHash = exampleAddress.codeHash();
-        }
+        template.verifier = verifier;
         template.name = name;
         template.executable = executable;
         template.minVotes = minVotes;
@@ -77,17 +69,13 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
         template.maxStartDelay = maxStartDelay;
     }
 
-    function calcCodeHash(address addr) public view returns (bytes32) {
-        return addr.codeHash();
-    }
-
     // eraseTemplate removes the template of specified type from the library
     function eraseTemplate(uint256 pType) external onlyOwner {
         require(exists(pType), "template doesn't exist");
         delete (proposalTemplates[pType]);
     }
 
-    // verifyProposalParams checks proposal code and parameters
+    // verifyProposalParams checks proposal parameters
     function verifyProposalParams(uint256 pType, Proposal.ExecType executable, uint256 minVotes, uint256 minAgreement, uint256[] calldata opinionScales, uint256 start, uint256 minEnd, uint256 maxEnd) external view returns (bool) {
         if (start < block.timestamp) {
             // start in the past
@@ -156,21 +144,25 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
             // voting is too distant in future
             return false;
         }
-        return true;
+        if (template.verifier == address(0)) {
+            // template with no additional verifier
+            return true;
+        }
+        return IProposalVerifier(template.verifier).verifyProposalParams(pType, executable, minVotes, minAgreement, opinionScales, start, minEnd, maxEnd);
     }
 
-    // verifyProposalCode verifies proposal code from the specified type and address
-    function verifyProposalCode(uint256 pType, address propAddr) external view returns (bool) {
+    // verifyProposalContract verifies proposal using the additional verifier
+    function verifyProposalContract(uint256 pType, address propAddr) external view returns (bool) {
         if (!exists(pType)) {
             // non-existing template
             return false;
         }
         ProposalTemplate memory template = proposalTemplates[pType];
-        if (template.codeHash == bytes32(0)) {
-            // template with no requirements to code
+        if (template.verifier == address(0)) {
+            // template with no additional verifier
             return true;
         }
-        return template.codeHash == propAddr.codeHash();
+        return IProposalVerifier(template.verifier).verifyProposalContract(pType, propAddr);
     }
 
     // checkNonDecreasing returns true if array values are monotonically nondecreasing

@@ -4,7 +4,7 @@ import "../common/ReentrancyGuard.sol";
 import "../common/SafeMath.sol";
 import "../model/Governable.sol";
 import "../proposal/IProposal.sol";
-import "../proposal/IProposalVerifier.sol";
+import "../verifiers/IProposalVerifier.sol";
 import "../proposal/SoftwareUpgradeProposal.sol";
 import "./Proposal.sol";
 import "./Constants.sol";
@@ -138,14 +138,14 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         uint256 votingMinEndTime = p.votingMinEndTime();
         uint256 votingMaxEndTime = p.votingMaxEndTime();
         bytes32[] memory options = p.options();
-        // check the parameters and code
+        // check the parameters and contract
         require(options.length != 0, "proposal options are empty - nothing to vote for");
         require(options.length <= maxOptions(), "too many options");
         bool ok;
         ok = proposalVerifier.verifyProposalParams(pType, executable, minVotes, minAgreement, opinionScales, votingStartTime, votingMinEndTime, votingMaxEndTime);
         require(ok, "proposal parameters failed validation");
-        ok = proposalVerifier.verifyProposalCode(pType, proposalContract);
-        require(ok, "proposal code failed validation");
+        ok = proposalVerifier.verifyProposalContract(pType, proposalContract);
+        require(ok, "proposal contract failed validation");
         // save the parameters
         ProposalState storage prop = proposals[proposalID];
         prop.params.pType = pType;
