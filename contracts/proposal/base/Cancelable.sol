@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 
-import "../ownership/Ownable.sol";
-import "../governance/Governance.sol";
+import "../../ownership/Ownable.sol";
+import "../../governance/Governance.sol";
 
 contract Cancelable is Ownable {
     constructor() public {

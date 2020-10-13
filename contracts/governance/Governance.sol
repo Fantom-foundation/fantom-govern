@@ -3,7 +3,7 @@ pragma solidity ^0.5.0;
 import "../common/ReentrancyGuard.sol";
 import "../common/SafeMath.sol";
 import "../model/Governable.sol";
-import "../proposal/IProposal.sol";
+import "../proposal/base/IProposal.sol";
 import "../verifiers/IProposalVerifier.sol";
 import "../proposal/SoftwareUpgradeProposal.sol";
 import "./Proposal.sol";

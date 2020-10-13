@@ -1,13 +1,13 @@
 pragma solidity ^0.5.0;
 
 import "../upgrade/Upgradability.sol";
-import "./BaseProposal.sol";
-import "./Cancelable.sol";
+import "./base/Cancelable.sol";
+import "./base/DelegatecallExecutableProposal.sol";
 
 /**
  * @dev SoftwareUpgrade proposal
  */
-contract SoftwareUpgradeProposal is BaseProposal, Cancelable {
+contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
     address public upgradableContract;
     address public newImplementation;
 
@@ -16,7 +16,7 @@ contract SoftwareUpgradeProposal is BaseProposal, Cancelable {
         address __upgradableContract, address __newImplementation, address verifier) public {
         _name = __name;
         _description = __description;
-        _options.push(bytes32("upgrade"));
+        _options.push(bytes32("yes"));
         _minVotes = __minVotes;
         _minAgreement = __minAgreement;
         _opinionScales = [0, 1, 2, 3, 4];
@@ -29,14 +29,6 @@ contract SoftwareUpgradeProposal is BaseProposal, Cancelable {
         if (verifier != address(0)) {
             require(verifyProposalParams(verifier), "failed validation");
         }
-    }
-
-    function pType() public view returns (uint256) {
-        return uint256(StdProposalTypes.SOFTWARE_UPGRADE);
-    }
-
-    function executable() public view returns (Proposal.ExecType) {
-        return Proposal.ExecType.DELEGATECALL;
     }
 
     event SoftwareUpgradeIsDone(address newImplementation);

@@ -1,12 +1,12 @@
 pragma solidity ^0.5.0;
 
-import "./BaseProposal.sol";
-import "./Cancelable.sol";
+import "./base/Cancelable.sol";
+import "./base/NonExecutableProposal.sol";
 
 /**
  * @dev PlainText proposal
  */
-contract PlainTextProposal is BaseProposal, Cancelable {
+contract PlainTextProposal is NonExecutableProposal, Cancelable {
     constructor(string memory __name, string memory __description, bytes32[] memory __options,
         uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd, address verifier) public {
         _name = __name;
@@ -22,15 +22,5 @@ contract PlainTextProposal is BaseProposal, Cancelable {
         if (verifier != address(0)) {
             require(verifyProposalParams(verifier), "failed validation");
         }
-    }
-
-    // Returns proposal type as a plain text proposal
-    function pType() public view returns (uint256) {
-        return uint256(StdProposalTypes.PLAIN_TEXT);
-    }
-
-    // Returns execution type
-    function executable() public view returns (Proposal.ExecType) {
-        return Proposal.ExecType.NONE;
     }
 }
