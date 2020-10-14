@@ -75,6 +75,7 @@ Compiling your contracts...
     ✓ checking handling multiple tasks (2077ms)
     ✓ checking delegation vote creation (904ms)
     ✓ checking voting with custom parameters (586ms)
+    ✓ checking OwnableVerifier (603ms)
     checking votes for a self-voter
       ✓ checking voting state (154ms)
       ✓ cancel vote (115ms)
@@ -98,5 +99,5 @@ Compiling your contracts...
       ✓ cancel votes via recounting gradually in reversed order (294ms)
 
 
-  35 passing (39s)
+  36 passing (39s)
 ```
