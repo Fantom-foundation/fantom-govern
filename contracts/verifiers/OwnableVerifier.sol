@@ -6,18 +6,8 @@ import "../governance/Governance.sol";
 
 
 contract OwnableVerifier is IProposalVerifier, Ownable {
-    constructor(address govAddress) public {
+    constructor() public {
         Ownable.initialize(msg.sender);
-        gov = Governance(govAddress);
-    }
-
-    Governance gov;
-    address unlockedFor;
-
-    function createProposal(address propAddr) payable external onlyOwner {
-        unlockedFor = propAddr;
-        gov.createProposal.value(msg.value)(propAddr);
-        unlockedFor = address(0);
     }
 
     // verifyProposalParams checks proposal parameters
@@ -26,7 +16,7 @@ contract OwnableVerifier is IProposalVerifier, Ownable {
     }
 
     // verifyProposalContract verifies proposal creator
-    function verifyProposalContract(uint256, address propAddr) external view returns (bool) {
-        return propAddr == unlockedFor;
+    function verifyProposalContract(uint256, address) external view returns (bool) {
+        return tx.origin == owner();
     }
 }
