@@ -454,7 +454,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
 
     it('checking execution expiration', async () => {
         const choices = [new BN(2)];
-        const proposalInfo = await createProposal(DelegatecallType, 1, ratio('0.5'), ratio('0.6'), 60, 500, 1000);
+        const proposalInfo = await createProposal(CallType, 1, ratio('0.5'), ratio('0.6'), 60, 500, 1000);
         const proposalID = proposalInfo.proposalID;
         const proposalContract = proposalInfo.proposal;
         const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
@@ -476,15 +476,40 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         expect(await proposalContract.executedCounter()).to.be.bignumber.equal(new BN(0));
     });
 
-    it('checking proposal is discarded if low enough agreement after expiration period', async () => {
+    it('checking proposal is rejected if low agreement after max voting end', async () => {
         const choices = [new BN(1)];
-        const proposalInfo = await createProposal(NonExecutableType, 1, ratio('0.5'), ratio('0.6'), 60, 500, 1000);
+        const proposalInfo = await createProposal(CallType, 1, ratio('0.5'), ratio('0.6'), 60, 500, 1000);
         const proposalID = proposalInfo.proposalID;
         const proposalContract = proposalInfo.proposal;
         const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
         // make new vote
         time.increase(maxExecutionPeriod.add(new BN(60 + 1000 + 10)));
         this.govable.stake(defaultAcc, ether('10.0'));
+        await this.gov.vote(defaultAcc, proposalID, choices);
+
+        // finalize voting by handling its task
+        await this.gov.handleTasks(0, 10);
+
+        // check proposal status
+        const proposalStateInfo = await this.gov.proposalState(proposalID);
+        expect(proposalStateInfo.winnerOptionID).to.be.bignumber.equal(new BN(0));
+        expect(proposalStateInfo.votes).to.be.bignumber.equal(ether('10.0'));
+        expect(proposalStateInfo.status).to.be.bignumber.equal(new BN(2));
+
+        // check proposal isn't executed
+        expect(await proposalContract.executedCounter()).to.be.bignumber.equal(new BN(0));
+    });
+
+    it('checking proposal is rejected if low turnout after max voting end', async () => {
+        const choices = [new BN(4)];
+        const proposalInfo = await createProposal(CallType, 1, ratio('0.5'), ratio('0.6'), 60, 500, 1000);
+        const proposalID = proposalInfo.proposalID;
+        const proposalContract = proposalInfo.proposal;
+        const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
+        // make new vote
+        time.increase(maxExecutionPeriod.add(new BN(60 + 1000 + 10)));
+        this.govable.stake(defaultAcc, ether('10.0')); // defaultAcc has less than 50% of weight
+        this.govable.stake(firstVoterAcc, ether('11.0'));
         await this.gov.vote(defaultAcc, proposalID, choices);
 
         // finalize voting by handling its task
