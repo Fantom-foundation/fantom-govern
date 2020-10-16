@@ -287,9 +287,10 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     }
 
     function _calculateVotingTally(ProposalState storage prop) internal view returns (bool, uint256) {
+        uint256 minVotesAbs = minVotesAbsolute(governableContract.getTotalWeight(), prop.params.minVotes);
         uint256 mostAgreement = 0;
         uint256 winnerID = prop.params.options.length;
-        if (prop.votes == 0) {
+        if (prop.votes < minVotesAbs) {
             return (false, winnerID);
         }
         for (uint256 i = 0; i < prop.params.options.length; i++) {
