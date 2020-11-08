@@ -672,15 +672,16 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
                 proposalID = proposalInfo.proposalID;
                 // make the new votes
                 time.increase(60 + 10);
-                await this.govable.stake(firstVoterAcc, ether('10.0'), {from: firstVoterAcc});
-                await this.govable.stake(secondVoterAcc, ether('20.0'), {from: secondVoterAcc});
-                await this.govable.stake(firstVoterAcc, ether('30.0'), {from: delegatorAcc});
                 if (delegatorFirst) {
+                    await this.govable.stake(firstVoterAcc, ether('30.0'), {from: delegatorAcc});
                     await this.gov.vote(firstVoterAcc, proposalID, [new BN(1), new BN(2), new BN(3)], {from: delegatorAcc});
                 }
+                await this.govable.stake(firstVoterAcc, ether('10.0'), {from: firstVoterAcc});
                 await this.gov.vote(firstVoterAcc, proposalID, [new BN(3), new BN(2), new BN(0)], {from: firstVoterAcc});
+                await this.govable.stake(secondVoterAcc, ether('20.0'), {from: secondVoterAcc});
                 await this.gov.vote(secondVoterAcc, proposalID, [new BN(2), new BN(3), new BN(4)], {from: secondVoterAcc});
                 if (!delegatorFirst) {
+                    await this.govable.stake(firstVoterAcc, ether('30.0'), {from: delegatorAcc});
                     await this.gov.vote(firstVoterAcc, proposalID, [new BN(1), new BN(2), new BN(3)], {from: delegatorAcc});
                 }
             });
