@@ -662,360 +662,370 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         await expectRevert(this.gov.vote(firstVoterAcc, proposalID, [new BN(1), new BN(3), new BN(4)], {from: delegatorAcc}), 'vote already exists');
     });
 
-    describe('checking votes for 2 self-voters and 1 delegation', async () => {
-        const optionsNum = 3;
-        let proposalID = 0;
-        beforeEach('create vote', async () => {
-            await createProposal(NonExecutableType, optionsNum, ratio('0.5'), ratio('0.6'), 60);
-            const proposalInfo = await createProposal(NonExecutableType, optionsNum, ratio('0.5'), ratio('0.6'), 60);
-            proposalID = proposalInfo.proposalID;
-            // make the new votes
-            time.increase(60 + 10);
-            await this.govable.stake(firstVoterAcc, ether('10.0'), {from: firstVoterAcc});
-            await this.govable.stake(secondVoterAcc, ether('20.0'), {from: secondVoterAcc});
-            await this.govable.stake(firstVoterAcc, ether('30.0'), {from: delegatorAcc});
-            await this.gov.vote(firstVoterAcc, proposalID, [new BN(3), new BN(2), new BN(0)], {from: firstVoterAcc});
-            await this.gov.vote(secondVoterAcc, proposalID, [new BN(2), new BN(3), new BN(4)], {from: secondVoterAcc});
-            await this.gov.vote(firstVoterAcc, proposalID, [new BN(1), new BN(2), new BN(3)], {from: delegatorAcc});
-        });
+    var votersAndDelegatorsTests = (delegatorFirst) => {
+        return async () => {
+            const optionsNum = 3;
+            let proposalID = 0;
+            beforeEach('create vote', async () => {
+                await createProposal(NonExecutableType, optionsNum, ratio('0.5'), ratio('0.6'), 60);
+                const proposalInfo = await createProposal(NonExecutableType, optionsNum, ratio('0.5'), ratio('0.6'), 60);
+                proposalID = proposalInfo.proposalID;
+                // make the new votes
+                time.increase(60 + 10);
+                await this.govable.stake(firstVoterAcc, ether('10.0'), {from: firstVoterAcc});
+                await this.govable.stake(secondVoterAcc, ether('20.0'), {from: secondVoterAcc});
+                await this.govable.stake(firstVoterAcc, ether('30.0'), {from: delegatorAcc});
+                if (delegatorFirst) {
+                    await this.gov.vote(firstVoterAcc, proposalID, [new BN(1), new BN(2), new BN(3)], {from: delegatorAcc});
+                }
+                await this.gov.vote(firstVoterAcc, proposalID, [new BN(3), new BN(2), new BN(0)], {from: firstVoterAcc});
+                await this.gov.vote(secondVoterAcc, proposalID, [new BN(2), new BN(3), new BN(4)], {from: secondVoterAcc});
+                if (!delegatorFirst) {
+                    await this.gov.vote(firstVoterAcc, proposalID, [new BN(1), new BN(2), new BN(3)], {from: delegatorAcc});
+                }
+            });
 
-        const checkFullVotes = async () => {
-            const voteInfo1 = await this.gov.getVote(firstVoterAcc, firstVoterAcc, proposalID);
-            expect(voteInfo1.weight).to.be.bignumber.equal(ether('10.0'));
-            expect(voteInfo1.choices.length).to.equal(3);
-            const voteInfo2 = await this.gov.getVote(secondVoterAcc, secondVoterAcc, proposalID);
-            expect(voteInfo2.weight).to.be.bignumber.equal(ether('20.0'));
-            expect(voteInfo2.choices.length).to.equal(3);
-            const voteInfo3 = await this.gov.getVote(delegatorAcc, firstVoterAcc, proposalID);
-            expect(voteInfo3.weight).to.be.bignumber.equal(ether('30.0'));
-            expect(voteInfo3.choices.length).to.equal(3);
-            const voteInfo4 = await this.gov.getVote(firstVoterAcc, delegatorAcc, proposalID);
-            expect(voteInfo4.weight).to.be.bignumber.equal(ether('0.0'));
-            expect(voteInfo4.choices.length).to.equal(0);
-            expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID.sub(new BN(1)))).to.be.bignumber.equal(ether('0.0'));
-            expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID)).to.be.bignumber.equal(ether('30.0'));
-            const proposalStateInfo = await this.gov.proposalState(proposalID);
-            expect(proposalStateInfo.winnerOptionID).to.be.bignumber.equal(new BN(0));
-            expect(proposalStateInfo.votes).to.be.bignumber.equal(ether('60.0'));
-            expect(proposalStateInfo.status).to.be.bignumber.equal(new BN(0));
-            const option0 = await this.gov.proposalOptionState(proposalID, 0);
-            const option1 = await this.gov.proposalOptionState(proposalID, 1);
-            const option2 = await this.gov.proposalOptionState(proposalID, 2);
-            expect(option0.votes).to.be.bignumber.equal(ether('60.0'));
-            expect(option1.votes).to.be.bignumber.equal(ether('60.0'));
-            expect(option2.votes).to.be.bignumber.equal(ether('60.0'));
-            expect(option0.agreement).to.be.bignumber.equal(ether('32'));
-            expect(option1.agreement).to.be.bignumber.equal(ether('40'));
-            expect(option2.agreement).to.be.bignumber.equal(ether('44'));
-            expect(option0.agreementRatio).to.be.bignumber.equal(ratio('0.533333333333333333'));
-            expect(option1.agreementRatio).to.be.bignumber.equal(ratio('0.666666666666666666'));
-            expect(option2.agreementRatio).to.be.bignumber.equal(ratio('0.733333333333333333'));
-            const votingInfo = await this.gov.calculateVotingTally(proposalID);
-            expect(votingInfo.proposalResolved).to.equal(true);
-            expect(votingInfo.winnerID).to.be.bignumber.equal(new BN(2)); // option with a best opinion
-            expect(votingInfo.votes).to.be.bignumber.equal(ether('60.0'));
-        };
+            const checkFullVotes = async () => {
+                const voteInfo1 = await this.gov.getVote(firstVoterAcc, firstVoterAcc, proposalID);
+                expect(voteInfo1.weight).to.be.bignumber.equal(ether('10.0'));
+                expect(voteInfo1.choices.length).to.equal(3);
+                const voteInfo2 = await this.gov.getVote(secondVoterAcc, secondVoterAcc, proposalID);
+                expect(voteInfo2.weight).to.be.bignumber.equal(ether('20.0'));
+                expect(voteInfo2.choices.length).to.equal(3);
+                const voteInfo3 = await this.gov.getVote(delegatorAcc, firstVoterAcc, proposalID);
+                expect(voteInfo3.weight).to.be.bignumber.equal(ether('30.0'));
+                expect(voteInfo3.choices.length).to.equal(3);
+                const voteInfo4 = await this.gov.getVote(firstVoterAcc, delegatorAcc, proposalID);
+                expect(voteInfo4.weight).to.be.bignumber.equal(ether('0.0'));
+                expect(voteInfo4.choices.length).to.equal(0);
+                expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID.sub(new BN(1)))).to.be.bignumber.equal(ether('0.0'));
+                expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID)).to.be.bignumber.equal(ether('30.0'));
+                const proposalStateInfo = await this.gov.proposalState(proposalID);
+                expect(proposalStateInfo.winnerOptionID).to.be.bignumber.equal(new BN(0));
+                expect(proposalStateInfo.votes).to.be.bignumber.equal(ether('60.0'));
+                expect(proposalStateInfo.status).to.be.bignumber.equal(new BN(0));
+                const option0 = await this.gov.proposalOptionState(proposalID, 0);
+                const option1 = await this.gov.proposalOptionState(proposalID, 1);
+                const option2 = await this.gov.proposalOptionState(proposalID, 2);
+                expect(option0.votes).to.be.bignumber.equal(ether('60.0'));
+                expect(option1.votes).to.be.bignumber.equal(ether('60.0'));
+                expect(option2.votes).to.be.bignumber.equal(ether('60.0'));
+                expect(option0.agreement).to.be.bignumber.equal(ether('32'));
+                expect(option1.agreement).to.be.bignumber.equal(ether('40'));
+                expect(option2.agreement).to.be.bignumber.equal(ether('44'));
+                expect(option0.agreementRatio).to.be.bignumber.equal(ratio('0.533333333333333333'));
+                expect(option1.agreementRatio).to.be.bignumber.equal(ratio('0.666666666666666666'));
+                expect(option2.agreementRatio).to.be.bignumber.equal(ratio('0.733333333333333333'));
+                const votingInfo = await this.gov.calculateVotingTally(proposalID);
+                expect(votingInfo.proposalResolved).to.equal(true);
+                expect(votingInfo.winnerID).to.be.bignumber.equal(new BN(2)); // option with a best opinion
+                expect(votingInfo.votes).to.be.bignumber.equal(ether('60.0'));
+            };
 
-        it('cancel votes', async () => {
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
-            await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
-            expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID)).to.be.bignumber.equal(ether('30.0'));
-            const votingInfoAfter = await this.gov.calculateVotingTally(proposalID);
-            expect(votingInfoAfter.votes).to.be.bignumber.equal(ether('30.0'));
-            expect(votingInfoAfter.proposalResolved).to.equal(true);
-            expect(votingInfoAfter.winnerID).to.be.bignumber.equal(new BN(2)); // option with a best opinion
-            await expectRevert(this.gov.cancelVote(firstVoterAcc, proposalID.add(new BN(1)), {from: delegatorAcc}), "doesn't exist");
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
-        });
+            it('cancel votes', async () => {
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
+                await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
+                expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID)).to.be.bignumber.equal(ether('30.0'));
+                const votingInfoAfter = await this.gov.calculateVotingTally(proposalID);
+                expect(votingInfoAfter.votes).to.be.bignumber.equal(ether('30.0'));
+                expect(votingInfoAfter.proposalResolved).to.equal(true);
+                expect(votingInfoAfter.winnerID).to.be.bignumber.equal(new BN(2)); // option with a best opinion
+                await expectRevert(this.gov.cancelVote(firstVoterAcc, proposalID.add(new BN(1)), {from: delegatorAcc}), "doesn't exist");
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
+            });
 
-        it('cancel votes in reversed order', async () => {
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
-            await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
-        });
+            it('cancel votes in reversed order', async () => {
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
+                await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
+            });
 
-        it('checking voting state', async () => {
-            // check
-            await checkFullVotes();
-            // clean up
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
-            await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
-        });
+            it('checking voting state', async () => {
+                // check
+                await checkFullVotes();
+                // clean up
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
+                await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
+            });
 
-        it('checking voting state after delegator re-voting', async () => {
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
-            await expectRevert(this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc}), "doesn't exist");
-            await this.gov.vote(firstVoterAcc, proposalID, [new BN(1), new BN(2), new BN(3)], {from: delegatorAcc});
-            // check
-            await checkFullVotes();
-            // clean up
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
-            await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
-        });
+            it('checking voting state after delegator re-voting', async () => {
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
+                await expectRevert(this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc}), "doesn't exist");
+                await this.gov.vote(firstVoterAcc, proposalID, [new BN(1), new BN(2), new BN(3)], {from: delegatorAcc});
+                // check
+                await checkFullVotes();
+                // clean up
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
+                await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
+            });
 
-        it('checking voting state after first voter re-voting', async () => {
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
-            await expectRevert(this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc}), "doesn't exist");
-            await this.gov.vote(firstVoterAcc, proposalID, [new BN(3), new BN(2), new BN(0)], {from: firstVoterAcc});
-            // check
-            await checkFullVotes();
-            // clean up
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
-            await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
-        });
+            it('checking voting state after first voter re-voting', async () => {
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
+                await expectRevert(this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc}), "doesn't exist");
+                await this.gov.vote(firstVoterAcc, proposalID, [new BN(3), new BN(2), new BN(0)], {from: firstVoterAcc});
+                // check
+                await checkFullVotes();
+                // clean up
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
+                await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
+            });
 
-        it('checking voting state after second voter re-voting', async () => {
-            await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
-            await expectRevert(this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc}), "doesn't exist");
-            await this.gov.vote(secondVoterAcc, proposalID, [new BN(2), new BN(3), new BN(4)], {from: secondVoterAcc});
-            // check
-            await checkFullVotes();
-            // clean up
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
-            await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
-        });
+            it('checking voting state after second voter re-voting', async () => {
+                await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
+                await expectRevert(this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc}), "doesn't exist");
+                await this.gov.vote(secondVoterAcc, proposalID, [new BN(2), new BN(3), new BN(4)], {from: secondVoterAcc});
+                // check
+                await checkFullVotes();
+                // clean up
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
+                await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
+            });
 
-        it('checking voting state after delegator vote canceling', async () => {
-            // cancel delegator vote
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
-            // check
-            expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID.sub(new BN(1)))).to.be.bignumber.equal(ether('0.0'));
-            expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID)).to.be.bignumber.equal(ether('0.0'));
-            const proposalStateInfo = await this.gov.proposalState(proposalID);
-            expect(proposalStateInfo.winnerOptionID).to.be.bignumber.equal(new BN(0));
-            expect(proposalStateInfo.votes).to.be.bignumber.equal(ether('60.0'));
-            expect(proposalStateInfo.status).to.be.bignumber.equal(new BN(0));
-            const option0 = await this.gov.proposalOptionState(proposalID, 0);
-            const option1 = await this.gov.proposalOptionState(proposalID, 1);
-            const option2 = await this.gov.proposalOptionState(proposalID, 2);
-            expect(option0.votes).to.be.bignumber.equal(ether('60.0'));
-            expect(option1.votes).to.be.bignumber.equal(ether('60.0'));
-            expect(option2.votes).to.be.bignumber.equal(ether('60.0'));
-            expect(option0.agreement).to.be.bignumber.equal(ether('44'));
-            expect(option1.agreement).to.be.bignumber.equal(ether('40'));
-            expect(option2.agreement).to.be.bignumber.equal(ether('20'));
-            expect(option0.agreementRatio).to.be.bignumber.equal(ratio('0.733333333333333333'));
-            expect(option1.agreementRatio).to.be.bignumber.equal(ratio('0.666666666666666666'));
-            expect(option2.agreementRatio).to.be.bignumber.equal(ratio('0.333333333333333333'));
-            const votingInfo = await this.gov.calculateVotingTally(proposalID);
-            expect(votingInfo.proposalResolved).to.equal(true);
-            expect(votingInfo.winnerID).to.be.bignumber.equal(new BN(0)); // option with a best opinion
-            expect(votingInfo.votes).to.be.bignumber.equal(ether('60.0'));
-            // clean up
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
-            await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
-        });
+            it('checking voting state after delegator vote canceling', async () => {
+                // cancel delegator vote
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
+                // check
+                expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID.sub(new BN(1)))).to.be.bignumber.equal(ether('0.0'));
+                expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID)).to.be.bignumber.equal(ether('0.0'));
+                const proposalStateInfo = await this.gov.proposalState(proposalID);
+                expect(proposalStateInfo.winnerOptionID).to.be.bignumber.equal(new BN(0));
+                expect(proposalStateInfo.votes).to.be.bignumber.equal(ether('60.0'));
+                expect(proposalStateInfo.status).to.be.bignumber.equal(new BN(0));
+                const option0 = await this.gov.proposalOptionState(proposalID, 0);
+                const option1 = await this.gov.proposalOptionState(proposalID, 1);
+                const option2 = await this.gov.proposalOptionState(proposalID, 2);
+                expect(option0.votes).to.be.bignumber.equal(ether('60.0'));
+                expect(option1.votes).to.be.bignumber.equal(ether('60.0'));
+                expect(option2.votes).to.be.bignumber.equal(ether('60.0'));
+                expect(option0.agreement).to.be.bignumber.equal(ether('44'));
+                expect(option1.agreement).to.be.bignumber.equal(ether('40'));
+                expect(option2.agreement).to.be.bignumber.equal(ether('20'));
+                expect(option0.agreementRatio).to.be.bignumber.equal(ratio('0.733333333333333333'));
+                expect(option1.agreementRatio).to.be.bignumber.equal(ratio('0.666666666666666666'));
+                expect(option2.agreementRatio).to.be.bignumber.equal(ratio('0.333333333333333333'));
+                const votingInfo = await this.gov.calculateVotingTally(proposalID);
+                expect(votingInfo.proposalResolved).to.equal(true);
+                expect(votingInfo.winnerID).to.be.bignumber.equal(new BN(0)); // option with a best opinion
+                expect(votingInfo.votes).to.be.bignumber.equal(ether('60.0'));
+                // clean up
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
+                await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
+            });
 
-        it('checking voting state after first staker vote canceling', async () => {
-            // cancel first voter vote
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
-            // check
-            expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID.sub(new BN(1)))).to.be.bignumber.equal(ether('0.0'));
-            expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID)).to.be.bignumber.equal(ether('30.0'));
-            const proposalStateInfo = await this.gov.proposalState(proposalID);
-            expect(proposalStateInfo.winnerOptionID).to.be.bignumber.equal(new BN(0));
-            expect(proposalStateInfo.votes).to.be.bignumber.equal(ether('50.0'));
-            expect(proposalStateInfo.status).to.be.bignumber.equal(new BN(0));
-            const option0 = await this.gov.proposalOptionState(proposalID, 0);
-            const option1 = await this.gov.proposalOptionState(proposalID, 1);
-            const option2 = await this.gov.proposalOptionState(proposalID, 2);
-            expect(option0.votes).to.be.bignumber.equal(ether('50.0'));
-            expect(option1.votes).to.be.bignumber.equal(ether('50.0'));
-            expect(option2.votes).to.be.bignumber.equal(ether('50.0'));
-            expect(option0.agreement).to.be.bignumber.equal(ether('24'));
-            expect(option1.agreement).to.be.bignumber.equal(ether('34'));
-            expect(option2.agreement).to.be.bignumber.equal(ether('44'));
-            expect(option0.agreementRatio).to.be.bignumber.equal(ratio('0.48'));
-            expect(option1.agreementRatio).to.be.bignumber.equal(ratio('0.68'));
-            expect(option2.agreementRatio).to.be.bignumber.equal(ratio('0.88'));
-            const votingInfo = await this.gov.calculateVotingTally(proposalID);
-            expect(votingInfo.proposalResolved).to.equal(true);
-            expect(votingInfo.winnerID).to.be.bignumber.equal(new BN(2)); // option with a best opinion
-            expect(votingInfo.votes).to.be.bignumber.equal(ether('50.0'));
-            // clean up
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
-            await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
-        });
+            it('checking voting state after first staker vote canceling', async () => {
+                // cancel first voter vote
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
+                // check
+                expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID.sub(new BN(1)))).to.be.bignumber.equal(ether('0.0'));
+                expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID)).to.be.bignumber.equal(ether('30.0'));
+                const proposalStateInfo = await this.gov.proposalState(proposalID);
+                expect(proposalStateInfo.winnerOptionID).to.be.bignumber.equal(new BN(0));
+                expect(proposalStateInfo.votes).to.be.bignumber.equal(ether('50.0'));
+                expect(proposalStateInfo.status).to.be.bignumber.equal(new BN(0));
+                const option0 = await this.gov.proposalOptionState(proposalID, 0);
+                const option1 = await this.gov.proposalOptionState(proposalID, 1);
+                const option2 = await this.gov.proposalOptionState(proposalID, 2);
+                expect(option0.votes).to.be.bignumber.equal(ether('50.0'));
+                expect(option1.votes).to.be.bignumber.equal(ether('50.0'));
+                expect(option2.votes).to.be.bignumber.equal(ether('50.0'));
+                expect(option0.agreement).to.be.bignumber.equal(ether('24'));
+                expect(option1.agreement).to.be.bignumber.equal(ether('34'));
+                expect(option2.agreement).to.be.bignumber.equal(ether('44'));
+                expect(option0.agreementRatio).to.be.bignumber.equal(ratio('0.48'));
+                expect(option1.agreementRatio).to.be.bignumber.equal(ratio('0.68'));
+                expect(option2.agreementRatio).to.be.bignumber.equal(ratio('0.88'));
+                const votingInfo = await this.gov.calculateVotingTally(proposalID);
+                expect(votingInfo.proposalResolved).to.equal(true);
+                expect(votingInfo.winnerID).to.be.bignumber.equal(new BN(2)); // option with a best opinion
+                expect(votingInfo.votes).to.be.bignumber.equal(ether('50.0'));
+                // clean up
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
+                await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
+            });
 
-        it('checking voting state after delegator recounting', async () => {
-            this.govable.unstake(firstVoterAcc, ether('5.0'), {from: delegatorAcc});
-            await this.gov.recountVote(delegatorAcc, firstVoterAcc, proposalID, {from: otherAcc});
-            // check
-            expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID.sub(new BN(1)))).to.be.bignumber.equal(ether('0.0'));
-            expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID)).to.be.bignumber.equal(ether('25.0'));
-            const proposalStateInfo = await this.gov.proposalState(proposalID);
-            expect(proposalStateInfo.winnerOptionID).to.be.bignumber.equal(new BN(0));
-            expect(proposalStateInfo.votes).to.be.bignumber.equal(ether('55.0'));
-            expect(proposalStateInfo.status).to.be.bignumber.equal(new BN(0));
-            const option0 = await this.gov.proposalOptionState(proposalID, 0);
-            const option1 = await this.gov.proposalOptionState(proposalID, 1);
-            const option2 = await this.gov.proposalOptionState(proposalID, 2);
-            expect(option0.votes).to.be.bignumber.equal(ether('55.0'));
-            expect(option1.votes).to.be.bignumber.equal(ether('55.0'));
-            expect(option2.votes).to.be.bignumber.equal(ether('55.0'));
-            expect(option0.agreement).to.be.bignumber.equal(ether('30'));
-            expect(option1.agreement).to.be.bignumber.equal(ether('37'));
-            expect(option2.agreement).to.be.bignumber.equal(ether('40'));
-            expect(option0.agreementRatio).to.be.bignumber.equal(ratio('0.545454545454545454'));
-            expect(option1.agreementRatio).to.be.bignumber.equal(ratio('0.672727272727272727'));
-            expect(option2.agreementRatio).to.be.bignumber.equal(ratio('0.727272727272727272'));
-            const votingInfo = await this.gov.calculateVotingTally(proposalID);
-            expect(votingInfo.proposalResolved).to.equal(true);
-            expect(votingInfo.winnerID).to.be.bignumber.equal(new BN(2)); // option with a best opinion
-            expect(votingInfo.votes).to.be.bignumber.equal(ether('55.0'));
-            // clean up
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
-            await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
-        });
+            it('checking voting state after delegator recounting', async () => {
+                this.govable.unstake(firstVoterAcc, ether('5.0'), {from: delegatorAcc});
+                await this.gov.recountVote(delegatorAcc, firstVoterAcc, proposalID, {from: otherAcc});
+                // check
+                expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID.sub(new BN(1)))).to.be.bignumber.equal(ether('0.0'));
+                expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID)).to.be.bignumber.equal(ether('25.0'));
+                const proposalStateInfo = await this.gov.proposalState(proposalID);
+                expect(proposalStateInfo.winnerOptionID).to.be.bignumber.equal(new BN(0));
+                expect(proposalStateInfo.votes).to.be.bignumber.equal(ether('55.0'));
+                expect(proposalStateInfo.status).to.be.bignumber.equal(new BN(0));
+                const option0 = await this.gov.proposalOptionState(proposalID, 0);
+                const option1 = await this.gov.proposalOptionState(proposalID, 1);
+                const option2 = await this.gov.proposalOptionState(proposalID, 2);
+                expect(option0.votes).to.be.bignumber.equal(ether('55.0'));
+                expect(option1.votes).to.be.bignumber.equal(ether('55.0'));
+                expect(option2.votes).to.be.bignumber.equal(ether('55.0'));
+                expect(option0.agreement).to.be.bignumber.equal(ether('30'));
+                expect(option1.agreement).to.be.bignumber.equal(ether('37'));
+                expect(option2.agreement).to.be.bignumber.equal(ether('40'));
+                expect(option0.agreementRatio).to.be.bignumber.equal(ratio('0.545454545454545454'));
+                expect(option1.agreementRatio).to.be.bignumber.equal(ratio('0.672727272727272727'));
+                expect(option2.agreementRatio).to.be.bignumber.equal(ratio('0.727272727272727272'));
+                const votingInfo = await this.gov.calculateVotingTally(proposalID);
+                expect(votingInfo.proposalResolved).to.equal(true);
+                expect(votingInfo.winnerID).to.be.bignumber.equal(new BN(2)); // option with a best opinion
+                expect(votingInfo.votes).to.be.bignumber.equal(ether('55.0'));
+                // clean up
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
+                await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
+            });
 
-        it('checking voting state after first staker recounting', async () => {
-            await this.govable.stake(firstVoterAcc, ether('10.0'), {from: firstVoterAcc});
-            await this.gov.recountVote(firstVoterAcc, firstVoterAcc, proposalID, {from: otherAcc});
-            // check
-            expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID.sub(new BN(1)))).to.be.bignumber.equal(ether('0.0'));
-            expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID)).to.be.bignumber.equal(ether('30.0'));
-            const proposalStateInfo = await this.gov.proposalState(proposalID);
-            expect(proposalStateInfo.winnerOptionID).to.be.bignumber.equal(new BN(0));
-            expect(proposalStateInfo.votes).to.be.bignumber.equal(ether('70.0'));
-            expect(proposalStateInfo.status).to.be.bignumber.equal(new BN(0));
-            const option0 = await this.gov.proposalOptionState(proposalID, 0);
-            const option1 = await this.gov.proposalOptionState(proposalID, 1);
-            const option2 = await this.gov.proposalOptionState(proposalID, 2);
-            expect(option0.votes).to.be.bignumber.equal(ether('70.0'));
-            expect(option1.votes).to.be.bignumber.equal(ether('70.0'));
-            expect(option2.votes).to.be.bignumber.equal(ether('70.0'));
-            expect(option0.agreement).to.be.bignumber.equal(ether('40'));
-            expect(option1.agreement).to.be.bignumber.equal(ether('46'));
-            expect(option2.agreement).to.be.bignumber.equal(ether('44'));
-            expect(option0.agreementRatio).to.be.bignumber.equal(ratio('0.571428571428571428'));
-            expect(option1.agreementRatio).to.be.bignumber.equal(ratio('0.657142857142857142'));
-            expect(option2.agreementRatio).to.be.bignumber.equal(ratio('0.628571428571428571'));
-            const votingInfo = await this.gov.calculateVotingTally(proposalID);
-            expect(votingInfo.proposalResolved).to.equal(true);
-            expect(votingInfo.winnerID).to.be.bignumber.equal(new BN(1)); // option with a best opinion
-            expect(votingInfo.votes).to.be.bignumber.equal(ether('70.0'));
-            // clean up
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
-            await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
-        });
+            it('checking voting state after first staker recounting', async () => {
+                await this.govable.stake(firstVoterAcc, ether('10.0'), {from: firstVoterAcc});
+                await this.gov.recountVote(firstVoterAcc, firstVoterAcc, proposalID, {from: otherAcc});
+                // check
+                expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID.sub(new BN(1)))).to.be.bignumber.equal(ether('0.0'));
+                expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID)).to.be.bignumber.equal(ether('30.0'));
+                const proposalStateInfo = await this.gov.proposalState(proposalID);
+                expect(proposalStateInfo.winnerOptionID).to.be.bignumber.equal(new BN(0));
+                expect(proposalStateInfo.votes).to.be.bignumber.equal(ether('70.0'));
+                expect(proposalStateInfo.status).to.be.bignumber.equal(new BN(0));
+                const option0 = await this.gov.proposalOptionState(proposalID, 0);
+                const option1 = await this.gov.proposalOptionState(proposalID, 1);
+                const option2 = await this.gov.proposalOptionState(proposalID, 2);
+                expect(option0.votes).to.be.bignumber.equal(ether('70.0'));
+                expect(option1.votes).to.be.bignumber.equal(ether('70.0'));
+                expect(option2.votes).to.be.bignumber.equal(ether('70.0'));
+                expect(option0.agreement).to.be.bignumber.equal(ether('40'));
+                expect(option1.agreement).to.be.bignumber.equal(ether('46'));
+                expect(option2.agreement).to.be.bignumber.equal(ether('44'));
+                expect(option0.agreementRatio).to.be.bignumber.equal(ratio('0.571428571428571428'));
+                expect(option1.agreementRatio).to.be.bignumber.equal(ratio('0.657142857142857142'));
+                expect(option2.agreementRatio).to.be.bignumber.equal(ratio('0.628571428571428571'));
+                const votingInfo = await this.gov.calculateVotingTally(proposalID);
+                expect(votingInfo.proposalResolved).to.equal(true);
+                expect(votingInfo.winnerID).to.be.bignumber.equal(new BN(1)); // option with a best opinion
+                expect(votingInfo.votes).to.be.bignumber.equal(ether('70.0'));
+                // clean up
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
+                await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
+            });
 
-        it('checking voting state after cross-delegations between voters', async () => {
-            await this.govable.stake(firstVoterAcc, ether('10.0'), {from: secondVoterAcc});
-            await this.govable.stake(secondVoterAcc, ether('5.0'), {from: firstVoterAcc});
-            await this.gov.vote(firstVoterAcc, proposalID, [new BN(0), new BN(1), new BN(2)], {from: secondVoterAcc});
-            await expectRevert(this.gov.recountVote(firstVoterAcc, firstVoterAcc, proposalID, {from: otherAcc}), 'nothing changed');
-            await this.gov.recountVote(secondVoterAcc, secondVoterAcc, proposalID, {from: otherAcc});
-            // check
-            expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID)).to.be.bignumber.equal(ether('40.0'));
-            expect(await this.gov.overriddenWeight(secondVoterAcc, proposalID)).to.be.bignumber.equal(ether('0.0'));
-            const proposalStateInfo = await this.gov.proposalState(proposalID);
-            expect(proposalStateInfo.winnerOptionID).to.be.bignumber.equal(new BN(0));
-            expect(proposalStateInfo.votes).to.be.bignumber.equal(ether('75.0'));
-            expect(proposalStateInfo.status).to.be.bignumber.equal(new BN(0));
-            const option0 = await this.gov.proposalOptionState(proposalID, 0);
-            const option1 = await this.gov.proposalOptionState(proposalID, 1);
-            const option2 = await this.gov.proposalOptionState(proposalID, 2);
-            expect(option0.votes).to.be.bignumber.equal(ether('75.0'));
-            expect(option1.votes).to.be.bignumber.equal(ether('75.0'));
-            expect(option2.votes).to.be.bignumber.equal(ether('75'));
-            expect(option0.agreement).to.be.bignumber.equal(ether('35'));
-            expect(option1.agreement).to.be.bignumber.equal(ether('48'));
-            expect(option2.agreement).to.be.bignumber.equal(ether('55'));
-            expect(option0.agreementRatio).to.be.bignumber.equal(ratio('0.466666666666666666'));
-            expect(option1.agreementRatio).to.be.bignumber.equal(ratio('0.64'));
-            expect(option2.agreementRatio).to.be.bignumber.equal(ratio('0.733333333333333333'));
-            const votingInfo = await this.gov.calculateVotingTally(proposalID);
-            expect(votingInfo.proposalResolved).to.equal(true);
-            expect(votingInfo.winnerID).to.be.bignumber.equal(new BN(2)); // option with a best opinion
-            expect(votingInfo.votes).to.be.bignumber.equal(ether('75.0'));
-            // clean up
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: secondVoterAcc});
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
-            await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
-            await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
-        });
+            it('checking voting state after cross-delegations between voters', async () => {
+                await this.govable.stake(firstVoterAcc, ether('10.0'), {from: secondVoterAcc});
+                await this.govable.stake(secondVoterAcc, ether('5.0'), {from: firstVoterAcc});
+                await this.gov.vote(firstVoterAcc, proposalID, [new BN(0), new BN(1), new BN(2)], {from: secondVoterAcc});
+                await expectRevert(this.gov.recountVote(firstVoterAcc, firstVoterAcc, proposalID, {from: otherAcc}), 'nothing changed');
+                await this.gov.recountVote(secondVoterAcc, secondVoterAcc, proposalID, {from: otherAcc});
+                // check
+                expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID)).to.be.bignumber.equal(ether('40.0'));
+                expect(await this.gov.overriddenWeight(secondVoterAcc, proposalID)).to.be.bignumber.equal(ether('0.0'));
+                const proposalStateInfo = await this.gov.proposalState(proposalID);
+                expect(proposalStateInfo.winnerOptionID).to.be.bignumber.equal(new BN(0));
+                expect(proposalStateInfo.votes).to.be.bignumber.equal(ether('75.0'));
+                expect(proposalStateInfo.status).to.be.bignumber.equal(new BN(0));
+                const option0 = await this.gov.proposalOptionState(proposalID, 0);
+                const option1 = await this.gov.proposalOptionState(proposalID, 1);
+                const option2 = await this.gov.proposalOptionState(proposalID, 2);
+                expect(option0.votes).to.be.bignumber.equal(ether('75.0'));
+                expect(option1.votes).to.be.bignumber.equal(ether('75.0'));
+                expect(option2.votes).to.be.bignumber.equal(ether('75'));
+                expect(option0.agreement).to.be.bignumber.equal(ether('35'));
+                expect(option1.agreement).to.be.bignumber.equal(ether('48'));
+                expect(option2.agreement).to.be.bignumber.equal(ether('55'));
+                expect(option0.agreementRatio).to.be.bignumber.equal(ratio('0.466666666666666666'));
+                expect(option1.agreementRatio).to.be.bignumber.equal(ratio('0.64'));
+                expect(option2.agreementRatio).to.be.bignumber.equal(ratio('0.733333333333333333'));
+                const votingInfo = await this.gov.calculateVotingTally(proposalID);
+                expect(votingInfo.proposalResolved).to.equal(true);
+                expect(votingInfo.winnerID).to.be.bignumber.equal(new BN(2)); // option with a best opinion
+                expect(votingInfo.votes).to.be.bignumber.equal(ether('75.0'));
+                // clean up
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: secondVoterAcc});
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: firstVoterAcc});
+                await this.gov.cancelVote(firstVoterAcc, proposalID, {from: delegatorAcc});
+                await this.gov.cancelVote(secondVoterAcc, proposalID, {from: secondVoterAcc});
+            });
 
-        it('cancel votes via recounting', async () => {
-            this.govable.unstake(firstVoterAcc, ether('10.0'), {from: firstVoterAcc});
-            this.govable.unstake(secondVoterAcc, ether('20.0'), {from: secondVoterAcc});
-            this.govable.unstake(firstVoterAcc, ether('30.0'), {from: delegatorAcc});
-            await this.gov.recountVote(firstVoterAcc, firstVoterAcc, proposalID, {from: otherAcc});
-            await this.gov.recountVote(secondVoterAcc, secondVoterAcc, proposalID, {from: otherAcc});
-            await this.gov.recountVote(delegatorAcc, firstVoterAcc, proposalID, {from: otherAcc});
-        });
+            it('cancel votes via recounting', async () => {
+                this.govable.unstake(firstVoterAcc, ether('10.0'), {from: firstVoterAcc});
+                this.govable.unstake(secondVoterAcc, ether('20.0'), {from: secondVoterAcc});
+                this.govable.unstake(firstVoterAcc, ether('30.0'), {from: delegatorAcc});
+                await this.gov.recountVote(firstVoterAcc, firstVoterAcc, proposalID, {from: otherAcc});
+                await this.gov.recountVote(secondVoterAcc, secondVoterAcc, proposalID, {from: otherAcc});
+                await this.gov.recountVote(delegatorAcc, firstVoterAcc, proposalID, {from: otherAcc});
+            });
 
-        it('cancel votes via recounting gradually', async () => {
-            this.govable.unstake(firstVoterAcc, ether('10.0'), {from: firstVoterAcc});
-            await this.gov.recountVote(firstVoterAcc, firstVoterAcc, proposalID, {from: otherAcc});
-            this.govable.unstake(secondVoterAcc, ether('20.0'), {from: secondVoterAcc});
-            await this.gov.recountVote(secondVoterAcc, secondVoterAcc, proposalID, {from: otherAcc});
-            this.govable.unstake(firstVoterAcc, ether('30.0'), {from: delegatorAcc});
-            await this.gov.recountVote(delegatorAcc, firstVoterAcc, proposalID, {from: otherAcc});
-        });
+            it('cancel votes via recounting gradually', async () => {
+                this.govable.unstake(firstVoterAcc, ether('10.0'), {from: firstVoterAcc});
+                await this.gov.recountVote(firstVoterAcc, firstVoterAcc, proposalID, {from: otherAcc});
+                this.govable.unstake(secondVoterAcc, ether('20.0'), {from: secondVoterAcc});
+                await this.gov.recountVote(secondVoterAcc, secondVoterAcc, proposalID, {from: otherAcc});
+                this.govable.unstake(firstVoterAcc, ether('30.0'), {from: delegatorAcc});
+                await this.gov.recountVote(delegatorAcc, firstVoterAcc, proposalID, {from: otherAcc});
+            });
 
-        it('cancel votes via recounting in reversed order', async () => {
-            this.govable.unstake(firstVoterAcc, ether('10.0'), {from: firstVoterAcc});
-            this.govable.unstake(secondVoterAcc, ether('20.0'), {from: secondVoterAcc});
-            this.govable.unstake(firstVoterAcc, ether('30.0'), {from: delegatorAcc});
-            await this.gov.recountVote(delegatorAcc, firstVoterAcc, proposalID, {from: otherAcc});
-            await this.gov.recountVote(secondVoterAcc, secondVoterAcc, proposalID, {from: otherAcc});
-            // firstVoterAcc's self-vote is erased after delegator's recounting
-            await expectRevert(this.gov.recountVote(firstVoterAcc, firstVoterAcc, proposalID, {from: otherAcc}), "doesn't exist");
-        });
+            it('cancel votes via recounting in reversed order', async () => {
+                this.govable.unstake(firstVoterAcc, ether('10.0'), {from: firstVoterAcc});
+                this.govable.unstake(secondVoterAcc, ether('20.0'), {from: secondVoterAcc});
+                this.govable.unstake(firstVoterAcc, ether('30.0'), {from: delegatorAcc});
+                await this.gov.recountVote(delegatorAcc, firstVoterAcc, proposalID, {from: otherAcc});
+                await this.gov.recountVote(secondVoterAcc, secondVoterAcc, proposalID, {from: otherAcc});
+                // firstVoterAcc's self-vote is erased after delegator's recounting
+                await expectRevert(this.gov.recountVote(firstVoterAcc, firstVoterAcc, proposalID, {from: otherAcc}), "doesn't exist");
+            });
 
-        it('cancel votes via recounting gradually in reversed order', async () => {
-            this.govable.unstake(firstVoterAcc, ether('30.0'), {from: delegatorAcc});
-            await this.gov.recountVote(delegatorAcc, firstVoterAcc, proposalID, {from: otherAcc});
-            this.govable.unstake(secondVoterAcc, ether('20.0'), {from: secondVoterAcc});
-            await this.gov.recountVote(secondVoterAcc, secondVoterAcc, proposalID, {from: otherAcc});
-            this.govable.unstake(firstVoterAcc, ether('10.0'), {from: firstVoterAcc});
-            await this.gov.recountVote(firstVoterAcc, firstVoterAcc, proposalID, {from: otherAcc});
-        });
+            it('cancel votes via recounting gradually in reversed order', async () => {
+                this.govable.unstake(firstVoterAcc, ether('30.0'), {from: delegatorAcc});
+                await this.gov.recountVote(delegatorAcc, firstVoterAcc, proposalID, {from: otherAcc});
+                this.govable.unstake(secondVoterAcc, ether('20.0'), {from: secondVoterAcc});
+                await this.gov.recountVote(secondVoterAcc, secondVoterAcc, proposalID, {from: otherAcc});
+                this.govable.unstake(firstVoterAcc, ether('10.0'), {from: firstVoterAcc});
+                await this.gov.recountVote(firstVoterAcc, firstVoterAcc, proposalID, {from: otherAcc});
+            });
 
-        afterEach('checking state is empty', async () => {
-            expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID.sub(new BN(1)))).to.be.bignumber.equal(ether('0.0'));
-            expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID)).to.be.bignumber.equal(ether('0.0'));
-            const proposalStateInfo = await this.gov.proposalState(proposalID);
-            expect(proposalStateInfo.winnerOptionID).to.be.bignumber.equal(new BN(0));
-            expect(proposalStateInfo.votes).to.be.bignumber.equal(ether('0.0'));
-            expect(proposalStateInfo.status).to.be.bignumber.equal(new BN(0));
-            const voteInfo1 = await this.gov.getVote(firstVoterAcc, firstVoterAcc, proposalID);
-            expect(voteInfo1.weight).to.be.bignumber.equal(ether('0.0'));
-            expect(voteInfo1.choices.length).to.equal(0);
-            const voteInfo2 = await this.gov.getVote(secondVoterAcc, secondVoterAcc, proposalID);
-            expect(voteInfo2.weight).to.be.bignumber.equal(ether('0.0'));
-            expect(voteInfo2.choices.length).to.equal(0);
-            const voteInfo3 = await this.gov.getVote(delegatorAcc, firstVoterAcc, proposalID);
-            expect(voteInfo3.weight).to.be.bignumber.equal(ether('0.0'));
-            expect(voteInfo3.choices.length).to.equal(0);
-            const voteInfo4 = await this.gov.getVote(firstVoterAcc, delegatorAcc, proposalID);
-            expect(voteInfo4.weight).to.be.bignumber.equal(ether('0.0'));
-            expect(voteInfo4.choices.length).to.equal(0);
-            const option0 = await this.gov.proposalOptionState(proposalID, 0);
-            const option2 = await this.gov.proposalOptionState(proposalID, 2);
-            expect(option0.votes).to.be.bignumber.equal(ether('0.0'));
-            expect(option2.votes).to.be.bignumber.equal(ether('0.0'));
-            expect(option0.agreement).to.be.bignumber.equal(ether('0.0'));
-            expect(option2.agreement).to.be.bignumber.equal(ether('0.0'));
-            expect(option0.agreementRatio).to.be.bignumber.equal(ratio('0.0'));
-            expect(option2.agreementRatio).to.be.bignumber.equal(ratio('0.0'));
-            const votingInfo = await this.gov.calculateVotingTally(proposalID);
-            expect(votingInfo.proposalResolved).to.equal(false);
-            expect(votingInfo.winnerID).to.be.bignumber.equal(new BN(optionsNum));
-            expect(votingInfo.votes).to.be.bignumber.equal(ether('0.0'));
-            await expectRevert(this.gov.handleTasks(0, 1), 'no tasks handled');
-            await expectRevert(this.gov.tasksCleanup(1), 'no tasks erased');
-            await expectRevert(this.gov.recountVote(firstVoterAcc, firstVoterAcc, proposalID, {from: otherAcc}), "doesn't exist");
-            await expectRevert(this.gov.recountVote(delegatorAcc, firstVoterAcc, proposalID, {from: otherAcc}), "doesn't exist");
-            await expectRevert(this.gov.recountVote(secondVoterAcc, secondVoterAcc, proposalID, {from: otherAcc}), "doesn't exist");
-        });
-    });
+            afterEach('checking state is empty', async () => {
+                expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID.sub(new BN(1)))).to.be.bignumber.equal(ether('0.0'));
+                expect(await this.gov.overriddenWeight(firstVoterAcc, proposalID)).to.be.bignumber.equal(ether('0.0'));
+                const proposalStateInfo = await this.gov.proposalState(proposalID);
+                expect(proposalStateInfo.winnerOptionID).to.be.bignumber.equal(new BN(0));
+                expect(proposalStateInfo.votes).to.be.bignumber.equal(ether('0.0'));
+                expect(proposalStateInfo.status).to.be.bignumber.equal(new BN(0));
+                const voteInfo1 = await this.gov.getVote(firstVoterAcc, firstVoterAcc, proposalID);
+                expect(voteInfo1.weight).to.be.bignumber.equal(ether('0.0'));
+                expect(voteInfo1.choices.length).to.equal(0);
+                const voteInfo2 = await this.gov.getVote(secondVoterAcc, secondVoterAcc, proposalID);
+                expect(voteInfo2.weight).to.be.bignumber.equal(ether('0.0'));
+                expect(voteInfo2.choices.length).to.equal(0);
+                const voteInfo3 = await this.gov.getVote(delegatorAcc, firstVoterAcc, proposalID);
+                expect(voteInfo3.weight).to.be.bignumber.equal(ether('0.0'));
+                expect(voteInfo3.choices.length).to.equal(0);
+                const voteInfo4 = await this.gov.getVote(firstVoterAcc, delegatorAcc, proposalID);
+                expect(voteInfo4.weight).to.be.bignumber.equal(ether('0.0'));
+                expect(voteInfo4.choices.length).to.equal(0);
+                const option0 = await this.gov.proposalOptionState(proposalID, 0);
+                const option2 = await this.gov.proposalOptionState(proposalID, 2);
+                expect(option0.votes).to.be.bignumber.equal(ether('0.0'));
+                expect(option2.votes).to.be.bignumber.equal(ether('0.0'));
+                expect(option0.agreement).to.be.bignumber.equal(ether('0.0'));
+                expect(option2.agreement).to.be.bignumber.equal(ether('0.0'));
+                expect(option0.agreementRatio).to.be.bignumber.equal(ratio('0.0'));
+                expect(option2.agreementRatio).to.be.bignumber.equal(ratio('0.0'));
+                const votingInfo = await this.gov.calculateVotingTally(proposalID);
+                expect(votingInfo.proposalResolved).to.equal(false);
+                expect(votingInfo.winnerID).to.be.bignumber.equal(new BN(optionsNum));
+                expect(votingInfo.votes).to.be.bignumber.equal(ether('0.0'));
+                await expectRevert(this.gov.handleTasks(0, 1), 'no tasks handled');
+                await expectRevert(this.gov.tasksCleanup(1), 'no tasks erased');
+                await expectRevert(this.gov.recountVote(firstVoterAcc, firstVoterAcc, proposalID, {from: otherAcc}), "doesn't exist");
+                await expectRevert(this.gov.recountVote(delegatorAcc, firstVoterAcc, proposalID, {from: otherAcc}), "doesn't exist");
+                await expectRevert(this.gov.recountVote(secondVoterAcc, secondVoterAcc, proposalID, {from: otherAcc}), "doesn't exist");
+            });
+        }
+    }
+
+    describe('checking votes for 1 delegation and 2 self-voters', votersAndDelegatorsTests(true));
+    describe('checking votes for 2 self-voters and 1 delegation', votersAndDelegatorsTests(false));
 
     it('checking voting with custom parameters', async () => {
         await expectRevert(this.verifier.addTemplate(99, 'custom', emptyAddr, NonExecutableType, ratio('1.1'), ratio('0.6'), scales, 120, 1200, 0, 60), 'minVotes > 1.0');
