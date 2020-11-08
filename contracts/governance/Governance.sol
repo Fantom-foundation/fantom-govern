@@ -367,11 +367,15 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
             makeVote(proposalID, voterAddr, voterAddr, choices, weight);
             return weight;
         } else {
+            if (_votes[delegatedTo][delegatedTo][proposalID].choices.length > 0) {
+                // recount vote from delegatedTo
+                // Needed only in a case if delegatedTo's received weight has changed without calling recountVote
+                _recountVote(delegatedTo, delegatedTo, proposalID);
+            }
             // votes through one of delegations, overrides previous vote of "delegatedTo" (if any)
             uint256 delegatedWeight = governableContract.getWeight(voterAddr, delegatedTo);
-            // reduce weight of vote of "delegatedTo" (if any)
+            // reduce weight of vote of "delegatedTo" (current vote or any future vote)
             overrideDelegationWeight(delegatedTo, proposalID, delegatedWeight);
-            _recountVote(delegatedTo, delegatedTo, proposalID);
             if (delegatedWeight == 0) {
                 return 0;
             }
@@ -384,7 +388,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     function recountVote(address voterAddr, address delegatedTo, uint256 proposalID) nonReentrant external {
         Vote storage v = _votes[voterAddr][delegatedTo][proposalID];
         Vote storage vSuper = _votes[delegatedTo][delegatedTo][proposalID];
-        require(v.weight != 0, "doesn't exist");
+        require(v.choices.length > 0, "doesn't exist");
         require(isInitialStatus(proposals[proposalID].status), "proposal isn't active");
         uint256 beforeSelf = v.weight;
         uint256 beforeSuper = vSuper.weight;
@@ -408,7 +412,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         overridden = overridden.add(weight);
         overriddenWeight[delegatedTo][proposalID] = overridden;
         Vote storage v = _votes[delegatedTo][delegatedTo][proposalID];
-        if (v.weight != 0) {
+        if (v.choices.length > 0) {
             v.weight = v.weight.sub(weight);
             removeChoicesFromProp(proposalID, v.choices, weight);
         }
@@ -424,7 +428,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
             delete overriddenWeight[delegatedTo][proposalID];
         }
         Vote storage v = _votes[delegatedTo][delegatedTo][proposalID];
-        if (v.weight != 0) {
+        if (v.choices.length > 0) {
             v.weight = v.weight.add(weight);
             addChoicesToProp(proposalID, v.choices, weight);
         }
