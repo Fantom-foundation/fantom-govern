@@ -422,11 +422,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     function unOverrideDelegationWeight(address delegatedTo, uint256 proposalID, uint256 weight) internal {
         uint256 overridden = overriddenWeight[delegatedTo][proposalID];
         overridden = overridden.sub(weight);
-        if (overridden != 0) {
-            overriddenWeight[delegatedTo][proposalID] = overridden;
-        } else {
-            delete overriddenWeight[delegatedTo][proposalID];
-        }
+        overriddenWeight[delegatedTo][proposalID] = overridden;
         Vote storage v = _votes[delegatedTo][delegatedTo][proposalID];
         if (v.choices.length > 0) {
             v.weight = v.weight.add(weight);
