@@ -82,6 +82,22 @@ Compiling your contracts...
       ✓ cancel vote (110ms)
       ✓ recount vote (380ms)
       ✓ cancel vote via recounting (94ms)
+    checking votes for 1 delegation and 2 self-voters
+      ✓ cancel votes (229ms)
+      ✓ cancel votes in reversed order (131ms)
+      ✓ checking voting state (311ms)
+      ✓ checking voting state after delegator re-voting (472ms)
+      ✓ checking voting state after first voter re-voting (392ms)
+      ✓ checking voting state after second voter re-voting (403ms)
+      ✓ checking voting state after delegator vote canceling (237ms)
+      ✓ checking voting state after first staker vote canceling (291ms)
+      ✓ checking voting state after delegator recounting (362ms)
+      ✓ checking voting state after first staker recounting (300ms)
+      ✓ checking voting state after cross-delegations between voters (679ms)
+      ✓ cancel votes via recounting (200ms)
+      ✓ cancel votes via recounting gradually (213ms)
+      ✓ cancel votes via recounting in reversed order (328ms)
+      ✓ cancel votes via recounting gradually in reversed order (251ms)
     checking votes for 2 self-voters and 1 delegation
       ✓ cancel votes (205ms)
       ✓ cancel votes in reversed order (212ms)
@@ -100,5 +116,5 @@ Compiling your contracts...
       ✓ cancel votes via recounting gradually in reversed order (267ms)
 
 
-  37 passing (44s)
+  52 passing (1m)
 ```
