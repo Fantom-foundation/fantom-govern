@@ -15,6 +15,7 @@ const ExplicitProposal = artifacts.require('ExplicitProposal');
 const ExecLoggingProposal = artifacts.require('ExecLoggingProposal');
 const PlainTextProposalFactory = artifacts.require('PlainTextProposalFactory');
 const OwnableVerifier = artifacts.require('OwnableVerifier');
+const SlashingRefundProposal = artifacts.require('SlashingRefundProposal');
 
 const NonExecutableType = new BN('0');
 const CallType = new BN('1');
@@ -1084,5 +1085,30 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         await expectRevert(this.gov.createProposal(proposal.address, {value: this.proposalFee, from: defaultAcc}), 'proposal contract failed verification');
         await expectRevert(ownableVerifier.createProposal(proposal.address, {value: this.proposalFee, from: otherAcc}), 'Ownable: caller is not the owner');
         await ownableVerifier.createProposal(proposal.address, {value: this.proposalFee, from: defaultAcc});
+    });
+
+    it('checking SlashingRefundProposal naming scheme', async () => {
+        await this.verifier.addTemplate(5003, 'SlashingRefundProposals', emptyAddr, DelegatecallType, ratio('0.5'), ratio('0.8'), [0, 1, 2, 3, 4], 121, 1199, 30, 30);
+        const proposal0 = await SlashingRefundProposal.new(0, 'description', ratio('0.5'), ratio('0.8'), 30, 121, 1199, emptyAddr, this.verifier.address);
+        const proposal1 = await SlashingRefundProposal.new(1, 'description', ratio('0.5'), ratio('0.8'), 30, 121, 1199, emptyAddr, this.verifier.address);
+        const proposal5 = await SlashingRefundProposal.new(5, 'description', ratio('0.5'), ratio('0.8'), 30, 121, 1199, emptyAddr, this.verifier.address);
+        const proposal9 = await SlashingRefundProposal.new(9, 'description', ratio('0.5'), ratio('0.8'), 30, 121, 1199, emptyAddr, this.verifier.address);
+        const proposal10 = await SlashingRefundProposal.new(10, 'description', ratio('0.5'), ratio('0.8'), 30, 121, 1199, emptyAddr, this.verifier.address);
+        const proposal21 = await SlashingRefundProposal.new(21, 'description', ratio('0.5'), ratio('0.8'), 30, 121, 1199, emptyAddr, this.verifier.address);
+        const proposal99 = await SlashingRefundProposal.new(99, 'description', ratio('0.5'), ratio('0.8'), 30, 121, 1199, emptyAddr, this.verifier.address);
+        const proposal100 = await SlashingRefundProposal.new(100, 'description', ratio('0.5'), ratio('0.8'), 30, 121, 1199, emptyAddr, this.verifier.address);
+        const proposal999 = await SlashingRefundProposal.new(999, 'description', ratio('0.5'), ratio('0.8'), 30, 121, 1199, emptyAddr, this.verifier.address);
+
+        expect(await proposal0.description()).to.equal('description');
+
+        expect(await proposal0.name()).to.equal('Refund for Slashed Validator #0');
+        expect(await proposal1.name()).to.equal('Refund for Slashed Validator #1');
+        expect(await proposal5.name()).to.equal('Refund for Slashed Validator #5');
+        expect(await proposal9.name()).to.equal('Refund for Slashed Validator #9');
+        expect(await proposal10.name()).to.equal('Refund for Slashed Validator #10');
+        expect(await proposal21.name()).to.equal('Refund for Slashed Validator #21');
+        expect(await proposal99.name()).to.equal('Refund for Slashed Validator #99');
+        expect(await proposal100.name()).to.equal('Refund for Slashed Validator #100');
+        expect(await proposal999.name()).to.equal('Refund for Slashed Validator #999');
     });
 });
