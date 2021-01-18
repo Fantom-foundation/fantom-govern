@@ -1,8 +1,14 @@
 pragma solidity ^0.5.0;
 
-import "../upgrade/Upgradability.sol";
 import "./base/Cancelable.sol";
 import "./base/DelegatecallExecutableProposal.sol";
+
+/**
+ * @dev An interface to update this contract to a destination address
+ */
+interface Upgradability {
+    function upgradeTo(address newImplementation) external;
+}
 
 /**
  * @dev SoftwareUpgrade proposal
@@ -16,7 +22,7 @@ contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
         address __upgradeableContract, address __newImplementation, address verifier) public {
         _name = __name;
         _description = __description;
-        _options.push(bytes32("yes"));
+        _options.push(bytes32("Level of agreement"));
         _minVotes = __minVotes;
         _minAgreement = __minAgreement;
         _opinionScales = [0, 1, 2, 3, 4];
@@ -31,11 +37,8 @@ contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
         }
     }
 
-    event SoftwareUpgradeIsDone(address newImplementation);
-
     function execute_delegatecall(address selfAddr, uint256) external {
         SoftwareUpgradeProposal self = SoftwareUpgradeProposal(selfAddr);
         Upgradability(self.upgradeableContract()).upgradeTo(self.newImplementation());
-        emit SoftwareUpgradeIsDone(self.newImplementation());
     }
 }
