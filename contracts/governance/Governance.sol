@@ -250,6 +250,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
             }
             if (!expired) {
                 prop.status = statusResolved();
+                prop.winnerOptionID = winnerID;
                 emit ProposalResolved(proposalID);
             } else {
                 prop.status = statusExecutionExpired();
@@ -267,7 +268,6 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         if (!executable) {
             return (true, false);
         }
-        prop.winnerOptionID = winnerOptionID;
 
         bool executionExpired = block.timestamp > prop.params.deadlines.votingMaxEndTime + maxExecutionPeriod();
         if (executionExpired) {
@@ -457,5 +457,13 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
 
     function burn(uint256 amount) internal {
         address(0).transfer(amount);
+    }
+
+    function sanitizeWinnerID(uint256 proposalID) external {
+        ProposalState storage prop = proposals[proposalID];
+        require(prop.status == STATUS_RESOLVED, "proposal isn't resolved");
+        require(prop.params.executable == Proposal.ExecType.NONE, "proposal is executable");
+        require(prop.winnerOptionID == 0, "winner ID is correct");
+        (, prop.winnerOptionID) = _calculateVotingTally(prop);
     }
 }
