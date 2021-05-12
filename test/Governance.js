@@ -388,7 +388,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
     });
 
     it('checking proposal execution via delegatecall', async () => {
-        const optionsNum = 1; // use maximum number of options to test gas usage
+        const optionsNum = 1;
         const choices = [new BN(4)];
         const proposalInfo = await createProposal(DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120);
         const proposalID = proposalInfo.proposalID;
@@ -406,6 +406,29 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         expect(await proposalContract.executedMsgSender()).to.equal(defaultAcc);
         expect(await proposalContract.executedAs()).to.equal(this.gov.address);
         expect(await proposalContract.executedOption()).to.be.bignumber.equal(new BN(0));
+    });
+
+    it('checking non-executable proposal resolving', async () => {
+        const optionsNum = 2;
+        const choices = [new BN(0), new BN(4)];
+        const proposalInfo = await createProposal(NonExecutableType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120);
+        const proposalID = proposalInfo.proposalID;
+        const proposalContract = proposalInfo.proposal;
+        // make new vote
+        await this.govable.stake(defaultAcc, ether('10.0'));
+        await this.gov.vote(defaultAcc, proposalID, choices);
+
+        // finalize voting by handling its task
+        time.increase(120); // wait until min voting end time
+        await this.gov.handleTasks(0, 1);
+
+        // check proposal execution via delegatecall
+        expect(await proposalContract.executedCounter()).to.be.bignumber.equal(new BN(0));
+
+        const proposalStateInfo = await this.gov.proposalState(proposalID);
+        expect(proposalStateInfo.winnerOptionID).to.be.bignumber.equal(new BN(1));
+        expect(proposalStateInfo.votes).to.be.bignumber.equal(ether('10.0'));
+        expect(proposalStateInfo.status).to.be.bignumber.equal(new BN(1));
     });
 
     it('checking proposal rejecting before max voting end is reached', async () => {
