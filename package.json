@@ -22,7 +22,7 @@
     "bluebird": "^3.7.2",
     "buffer": "^6.0.3",
     "chai": "^4.3.4",
-    "chai-bignumber": "^3.0.0",
+    "dns-packet": "^5.3.0",
     "ethereum-waffle": "^3.4.0",
     "ethers": "^5.5.1",
     "ganache": "^6.4.4",

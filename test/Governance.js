@@ -5,7 +5,8 @@ const {
     time,
     balance,
 } = require('@openzeppelin/test-helpers');
-const {expect} = require('chai');
+
+const {expect, assert} = require('chai');
 
 const Governance = artifacts.require('UnitTestGovernance');
 const ProposalTemplates = artifacts.require('ProposalTemplates');
@@ -27,6 +28,9 @@ function ratio(n) {
 
 const emptyAddr = '0x0000000000000000000000000000000000000000';
 
+const { evm, exceptions } = require('./test-utils');
+const { toNumber } = require('lodash');
+
 contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondVoterAcc, delegatorAcc]) => {
     beforeEach(async () => {
         this.govable = await UnitTestGovernable.new();
@@ -35,6 +39,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         this.gov = await Governance.new();
         this.gov.initialize(this.govable.address, this.verifier.address);
         this.proposalFee = await this.gov.proposalFee();
+        await evm.mine();
     });
 
     const scales = [0, 2, 3, 4, 5];
@@ -64,7 +69,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
 
     it('checking creation of a plaintext proposal', async () => {
         const pType = new BN(1);
-        const now = (await web3.eth.getBlock('latest')).timestamp;
+        var ts = (await web3.eth.getBlock('latest')).timestamp;
         const examplePlaintext = await PlainTextProposal.new('example', 'example-descr', [], 0, 0, 0, 0, 0, emptyAddr);
         const plaintextBytecodeVerifier = await BytecodeMatcher.new();
         await plaintextBytecodeVerifier.initialize(examplePlaintext.address);
@@ -93,7 +98,8 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         expect(infoManyOptions.proposalContract).to.equal(manyOptions.address);
         expect(infoManyOptions.options.length).to.equal(10);
         expect(infoManyOptions.options[0]).to.equal('0x6f7074696f6e0000000000000000000000000000000000000000000000000000');
-        expect(infoManyOptions.votingStartTime).to.be.bignumber.least(now);
+        //expect(infoManyOptions.votingStartTime).to.be.bignumber.least(ts);
+        assert.isAtLeast((infoManyOptions.votingStartTime).toNumber(), ts);
         expect(infoManyOptions.votingMinEndTime).to.be.bignumber.equal(infoManyOptions.votingStartTime.add(new BN(121)));
         expect(infoManyOptions.votingMaxEndTime).to.be.bignumber.equal(infoManyOptions.votingStartTime.add(new BN(1199)));
         const infoOneOption = await this.gov.proposalParams(2);
@@ -102,7 +108,8 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         expect(infoOneOption.minVotes).to.be.bignumber.equal(ratio('0.51'));
         expect(infoOneOption.proposalContract).to.equal(oneOption.address);
         expect(infoOneOption.options.length).to.equal(1);
-        expect(infoOneOption.votingStartTime).to.be.bignumber.least(now);
+        //expect(infoOneOption.votingStartTime).to.be.bignumber.least(now);
+        assert.isAtLeast((infoOneOption.votingStartTime).toNumber(), ts);
         expect(infoOneOption.votingMinEndTime).to.be.bignumber.equal(infoOneOption.votingStartTime.add(new BN(122)));
         expect(infoOneOption.votingMaxEndTime).to.be.bignumber.equal(infoOneOption.votingStartTime.add(new BN(1198)));
     });
@@ -126,6 +133,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         await proposal.setVotingMaxEndTime(maxEnd);
         await proposal.setExecutable(DelegatecallType);
         expect(await proposal.verifyProposalParams.call(this.verifier.address)).to.equal(true);
+        //assert.isTrue(await proposal.verifyProposalParams.call(this.verifier.address));
 
         await proposal.setVotingStartTime(now.sub(new BN(10))); // starts in past
         expect(await proposal.verifyProposalParams.call(this.verifier.address)).to.equal(false);
