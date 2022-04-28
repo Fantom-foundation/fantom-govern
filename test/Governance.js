@@ -4,7 +4,7 @@ const {
     expectRevert,
     time,
     balance,
-} = require('openzeppelin-test-helpers');
+} = require('@openzeppelin/test-helpers');
 const {expect} = require('chai');
 
 const Governance = artifacts.require('UnitTestGovernance');
@@ -64,7 +64,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
 
     it('checking creation of a plaintext proposal', async () => {
         const pType = new BN(1);
-        const now = await time.latest();
+        const now = (await web3.eth.getBlock('latest')).timestamp;
         const examplePlaintext = await PlainTextProposal.new('example', 'example-descr', [], 0, 0, 0, 0, 0, emptyAddr);
         const plaintextBytecodeVerifier = await BytecodeMatcher.new();
         await plaintextBytecodeVerifier.initialize(examplePlaintext.address);

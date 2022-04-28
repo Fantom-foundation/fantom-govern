@@ -1,0 +1,1321 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\adapters\\RelayProxy.sol": {
+      "lastModificationDate": 1651070415171,
+      "contentHash": "8d87129044c51626f50f0a0b0d7b69b4",
+      "sourceName": "contracts/adapters/RelayProxy.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../ownership/Ownable.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "RelayProxy"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\ownership\\Ownable.sol": {
+      "lastModificationDate": 1651070415176,
+      "contentHash": "45b5d30e50f171e18d8c9c2199decee8",
+      "sourceName": "contracts/ownership/Ownable.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../common/Initializable.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "Ownable"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\common\\Initializable.sol": {
+      "lastModificationDate": 1651070415172,
+      "contentHash": "2f1d6754a5208fb3797a875158d55219",
+      "sourceName": "contracts/common/Initializable.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.4.24 <0.7.0"
+      ],
+      "artifacts": [
+        "Initializable"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\verifiers\\ProposalTemplates.sol": {
+      "lastModificationDate": 1651070415184,
+      "contentHash": "4161e242f533cd7d2ba698e63c2d7502",
+      "sourceName": "contracts/verifiers/ProposalTemplates.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../common/Decimal.sol",
+        "../proposal/base/IProposal.sol",
+        "./IProposalVerifier.sol",
+        "../ownership/Ownable.sol",
+        "../version/Version.sol",
+        "../common/Initializable.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "ProposalTemplates"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\common\\Decimal.sol": {
+      "lastModificationDate": 1651070415171,
+      "contentHash": "244e5409b4e6c5dac85144deb059570a",
+      "sourceName": "contracts/common/Decimal.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "Decimal"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\proposal\\base\\IProposal.sol": {
+      "lastModificationDate": 1651070415179,
+      "contentHash": "c89bdd1ea794b752ea062e24e30e77e5",
+      "sourceName": "contracts/proposal/base/IProposal.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../../governance/Proposal.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "IProposal"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\verifiers\\IProposalVerifier.sol": {
+      "lastModificationDate": 1651070415183,
+      "contentHash": "4bf814246e4dd0f488c3e52b72e691ad",
+      "sourceName": "contracts/verifiers/IProposalVerifier.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../governance/Proposal.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "IProposalVerifier"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\version\\Version.sol": {
+      "lastModificationDate": 1651070415184,
+      "contentHash": "04be7a4dd93bac95c89b9068f8d35637",
+      "sourceName": "contracts/version/Version.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "Version"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\governance\\Proposal.sol": {
+      "lastModificationDate": 1651070415175,
+      "contentHash": "7b07f43578e07d24de0dfc7ce8fea98b",
+      "sourceName": "contracts/governance/Proposal.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../proposal/base/IProposal.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "Proposal"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\verifiers\\BytecodeMatcher.sol": {
+      "lastModificationDate": 1651070415183,
+      "contentHash": "edf1f9f27c07a925d6f8b4620970003f",
+      "sourceName": "contracts/verifiers/BytecodeMatcher.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../common/GetCode.sol",
+        "../governance/Proposal.sol",
+        "./IProposalVerifier.sol",
+        "../common/Initializable.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "BytecodeMatcher"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\common\\GetCode.sol": {
+      "lastModificationDate": 1651070415172,
+      "contentHash": "ad6b5a774524f0eeee27bfee4ec4bcbe",
+      "sourceName": "contracts/common/GetCode.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "GetCode"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\verifiers\\OwnableVerifier.sol": {
+      "lastModificationDate": 1651070415183,
+      "contentHash": "c443b910155807d36a56cfce7a6f24c5",
+      "sourceName": "contracts/verifiers/OwnableVerifier.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../ownership/Ownable.sol",
+        "./IProposalVerifier.sol",
+        "../governance/Governance.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "OwnableVerifier"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\governance\\Governance.sol": {
+      "lastModificationDate": 1651070415174,
+      "contentHash": "7d1d7f934ce6d028400d902ddd663d38",
+      "sourceName": "contracts/governance/Governance.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../common/ReentrancyGuard.sol",
+        "../common/SafeMath.sol",
+        "../model/Governable.sol",
+        "../proposal/base/IProposal.sol",
+        "../verifiers/IProposalVerifier.sol",
+        "../proposal/SoftwareUpgradeProposal.sol",
+        "./Proposal.sol",
+        "./Constants.sol",
+        "./GovernanceSettings.sol",
+        "./LRC.sol",
+        "../version/Version.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "Governance"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\common\\ReentrancyGuard.sol": {
+      "lastModificationDate": 1651070415172,
+      "contentHash": "59d8113aa37352cba8082184497d0a83",
+      "sourceName": "contracts/common/ReentrancyGuard.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Initializable.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "ReentrancyGuard"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\common\\SafeMath.sol": {
+      "lastModificationDate": 1651070415173,
+      "contentHash": "db38ab635c06815fde3a173882b890fb",
+      "sourceName": "contracts/common/SafeMath.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "SafeMath"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\model\\Governable.sol": {
+      "lastModificationDate": 1651070415176,
+      "contentHash": "7157f2288063dc086245b50185149fb8",
+      "sourceName": "contracts/model/Governable.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "Governable"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\proposal\\SoftwareUpgradeProposal.sol": {
+      "lastModificationDate": 1651070415177,
+      "contentHash": "efb572458cdea1b96ee906854338ec0c",
+      "sourceName": "contracts/proposal/SoftwareUpgradeProposal.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../upgrade/Upgradability.sol",
+        "./base/Cancelable.sol",
+        "./base/DelegatecallExecutableProposal.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "SoftwareUpgradeProposal"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\governance\\Constants.sol": {
+      "lastModificationDate": 1651070415173,
+      "contentHash": "b16a1efa5451f147ef4e4880a2abd9ac",
+      "sourceName": "contracts/governance/Constants.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../common/SafeMath.sol",
+        "../common/Decimal.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "Constants",
+        "StatusConstants"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\governance\\GovernanceSettings.sol": {
+      "lastModificationDate": 1651070415175,
+      "contentHash": "28e2a7fbd9c77e446736135676f08cbc",
+      "sourceName": "contracts/governance/GovernanceSettings.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../common/Decimal.sol",
+        "../common/SafeMath.sol",
+        "../model/Governable.sol",
+        "../proposal/SoftwareUpgradeProposal.sol",
+        "./Constants.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "GovernanceSettings"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\governance\\LRC.sol": {
+      "lastModificationDate": 1651070415175,
+      "contentHash": "1fbc49d1cb3a8cee96ee57190688c9f3",
+      "sourceName": "contracts/governance/LRC.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../common/Decimal.sol",
+        "../common/SafeMath.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "LRC"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\upgrade\\Upgradability.sol": {
+      "lastModificationDate": 1651070415182,
+      "contentHash": "0450499b07935248e0d69b54ac73f7ae",
+      "sourceName": "contracts/upgrade/Upgradability.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "Upgradability"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\proposal\\base\\Cancelable.sol": {
+      "lastModificationDate": 1651070415178,
+      "contentHash": "3a14f4384b6c4fdc566cd0fbb2b03929",
+      "sourceName": "contracts/proposal/base/Cancelable.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../../ownership/Ownable.sol",
+        "../../governance/Governance.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "Cancelable"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\proposal\\base\\DelegatecallExecutableProposal.sol": {
+      "lastModificationDate": 1651070415179,
+      "contentHash": "b4da7b9c927d04f0182654560ba9e4b8",
+      "sourceName": "contracts/proposal/base/DelegatecallExecutableProposal.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./BaseProposal.sol",
+        "../../governance/Proposal.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "DelegatecallExecutableProposal"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\proposal\\base\\BaseProposal.sol": {
+      "lastModificationDate": 1651070415178,
+      "contentHash": "a725b1da9e04063396877ac157e071a4",
+      "sourceName": "contracts/proposal/base/BaseProposal.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../../common/SafeMath.sol",
+        "./IProposal.sol",
+        "../../verifiers/IProposalVerifier.sol",
+        "../../governance/Proposal.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "BaseProposal"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\test\\UnitTestGovernance.sol": {
+      "lastModificationDate": 1651070415182,
+      "contentHash": "798ab389f2eac52f8a4288fb8750dd12",
+      "sourceName": "contracts/test/UnitTestGovernance.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../governance/Governance.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "UnitTestGovernance"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\proposal\\test\\ExecLoggingProposal.sol": {
+      "lastModificationDate": 1651070415180,
+      "contentHash": "8d62600f9847495d3345f1252e891fd0",
+      "sourceName": "contracts/proposal/test/ExecLoggingProposal.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../PlainTextProposal.sol",
+        "../../governance/Governance.sol",
+        "../../governance/Proposal.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "ExecLoggingProposal"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\proposal\\PlainTextProposal.sol": {
+      "lastModificationDate": 1651070415177,
+      "contentHash": "d9f34c2b242cd7422b01bf6443017cf9",
+      "sourceName": "contracts/proposal/PlainTextProposal.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./base/Cancelable.sol",
+        "./base/NonExecutableProposal.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "PlainTextProposal"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\proposal\\base\\NonExecutableProposal.sol": {
+      "lastModificationDate": 1651070415179,
+      "contentHash": "f4db44ac13ef17a86d892cf0b98d21e2",
+      "sourceName": "contracts/proposal/base/NonExecutableProposal.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./BaseProposal.sol",
+        "../../governance/Proposal.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "NonExecutableProposal"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\proposal\\test\\AlteredPlainTextProposal.sol": {
+      "lastModificationDate": 1651070415180,
+      "contentHash": "67ca3affe279698d094901d283b6240d",
+      "sourceName": "contracts/proposal/test/AlteredPlainTextProposal.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../PlainTextProposal.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "AlteredPlainTextProposal"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\proposal\\test\\ExplicitProposal.sol": {
+      "lastModificationDate": 1651070415181,
+      "contentHash": "fcbe15af120e70c479f62b875f64a6c6",
+      "sourceName": "contracts/proposal/test/ExplicitProposal.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../base/BaseProposal.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "ExplicitProposal"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\proposal\\base\\CallExecutableProposal.sol": {
+      "lastModificationDate": 1651070415178,
+      "contentHash": "1b23b7814d74c3570038652ce1e21728",
+      "sourceName": "contracts/proposal/base/CallExecutableProposal.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./BaseProposal.sol",
+        "../../governance/Proposal.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "CallExecutableProposal"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\test\\UnitTestGovernable.sol": {
+      "lastModificationDate": 1651070415181,
+      "contentHash": "5faed699d883e75ca5b7fcc7ff8db7f8",
+      "sourceName": "contracts/test/UnitTestGovernable.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../model/Governable.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "UnitTestGovernable"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\adapters\\SFCToGovernable.sol": {
+      "lastModificationDate": 1651070415171,
+      "contentHash": "1766d803bc71615765ab659a8101e8b8",
+      "sourceName": "contracts/adapters/SFCToGovernable.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../model/Governable.sol"
+      ],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "SFC",
+        "SFCToGovernable"
+      ]
+    },
+    "C:\\Users\\16266\\Desktop\\fresh-govern-repos\\contracts\\Migrations.sol": {
+      "lastModificationDate": 1651070415170,
+      "contentHash": "91ce2bcadc416e6744d63934d511f3f9",
+      "sourceName": "contracts/Migrations.sol",
+      "solcConfig": {
+        "version": "0.5.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.5.0"
+      ],
+      "artifacts": [
+        "Migrations"
+      ]
+    }
+  }
+}

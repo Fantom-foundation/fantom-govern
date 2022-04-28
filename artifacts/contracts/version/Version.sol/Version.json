@@ -1,0 +1,26 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "Version",
+  "sourceName": "contracts/version/Version.sol",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "version",
+      "outputs": [
+        {
+          "internalType": "bytes4",
+          "name": "",
+          "type": "bytes4"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "pure",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x6080604052348015600f57600080fd5b5060908061001e6000396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c806354fd4d5014602d575b600080fd5b60336050565b604080516001600160e01b03199092168252519081900360200190f35b633030303160e01b9056fea265627a7a7231582078641c4b20bc74f9e8ef8394bf81d59eacd7ba18551512060c5a7eaf973254e364736f6c63430005110032",
+  "deployedBytecode": "0x6080604052348015600f57600080fd5b506004361060285760003560e01c806354fd4d5014602d575b600080fd5b60336050565b604080516001600160e01b03199092168252519081900360200190f35b633030303160e01b9056fea265627a7a7231582078641c4b20bc74f9e8ef8394bf81d59eacd7ba18551512060c5a7eaf973254e364736f6c63430005110032",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

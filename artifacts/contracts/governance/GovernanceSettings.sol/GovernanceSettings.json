@@ -1,0 +1,148 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "GovernanceSettings",
+  "sourceName": "contracts/governance/GovernanceSettings.sol",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_bytes32",
+          "type": "bytes32"
+        }
+      ],
+      "name": "bytes32ToString",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "maxExecutionPeriod",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "maxOptions",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "totalWeight",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "minVotesRatio",
+          "type": "uint256"
+        }
+      ],
+      "name": "minVotesAbsolute",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "proposalBurntFee",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "proposalFee",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "taskErasingReward",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "taskHandlingReward",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "pure",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x608060405234801561001057600080fd5b50610292806100206000396000f3fe608060405234801561001057600080fd5b50600436106100885760003560e01c8063aea2ddbd1161005b578063aea2ddbd14610164578063c25c2f261461016c578063c27cabb514610174578063e3a4d7091461017c57610088565b80631191e2701461008d5780635df17077146100c25780638a444bd7146100ca5780639201de55146100d2575b600080fd5b6100b0600480360360408110156100a357600080fd5b5080359060200135610184565b60408051918252519081900360200190f35b6100b06101a0565b6100b06101a5565b6100ef600480360360208110156100e857600080fd5b50356101b2565b6040805160208082528351818301528351919283929083019185019080838360005b83811015610129578181015183820152602001610111565b50505050905090810190601f1680156101565780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b6100b0610224565b6100b0610230565b6100b0610237565b6100b0610244565b600061018e610251565b8284028161019857fe5b049392505050565b600a90565b6802b5e3af16b188000090565b60408051602080825281830190925260609182919060208201818038833901905050905060005b602081101561021d578381602081106101ee57fe5b1a60f81b8282815181106101fe57fe5b60200101906001600160f81b031916908160001a9053506001016101d9565b5092915050565b678ac7230489e8000090565b6203f48090565b68056bc75e2d6310000090565b68022b1c8c1227a0000090565b670de0b6b3a76400009056fea265627a7a72315820a920419b89fc4d4c42e39f457ce1c584eda55ed4494e2647f8c841e17943f57764736f6c63430005110032",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100885760003560e01c8063aea2ddbd1161005b578063aea2ddbd14610164578063c25c2f261461016c578063c27cabb514610174578063e3a4d7091461017c57610088565b80631191e2701461008d5780635df17077146100c25780638a444bd7146100ca5780639201de55146100d2575b600080fd5b6100b0600480360360408110156100a357600080fd5b5080359060200135610184565b60408051918252519081900360200190f35b6100b06101a0565b6100b06101a5565b6100ef600480360360208110156100e857600080fd5b50356101b2565b6040805160208082528351818301528351919283929083019185019080838360005b83811015610129578181015183820152602001610111565b50505050905090810190601f1680156101565780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b6100b0610224565b6100b0610230565b6100b0610237565b6100b0610244565b600061018e610251565b8284028161019857fe5b049392505050565b600a90565b6802b5e3af16b188000090565b60408051602080825281830190925260609182919060208201818038833901905050905060005b602081101561021d578381602081106101ee57fe5b1a60f81b8282815181106101fe57fe5b60200101906001600160f81b031916908160001a9053506001016101d9565b5092915050565b678ac7230489e8000090565b6203f48090565b68056bc75e2d6310000090565b68022b1c8c1227a0000090565b670de0b6b3a76400009056fea265627a7a72315820a920419b89fc4d4c42e39f457ce1c584eda55ed4494e2647f8c841e17943f57764736f6c63430005110032",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

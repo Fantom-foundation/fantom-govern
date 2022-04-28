@@ -1,0 +1,3454 @@
+{
+  "version": "3.2",
+  "log": [
+    {
+      "RelayProxy": {
+        "src": "contracts\\adapters\\RelayProxy.sol:5",
+        "version": {
+          "withMetadata": "aba090ba5a75e947c759e55447d93a120be91ac3deb9d05e5c7438625c60d257",
+          "withoutMetadata": "f13c1fc665b263d696859f8429da80a89ea18aa6afdc013b8d630e77c26ebcce",
+          "linkedWithoutMetadata": "f13c1fc665b263d696859f8429da80a89ea18aa6afdc013b8d630e77c26ebcce"
+        },
+        "inherit": [],
+        "libraries": [],
+        "methods": [
+          "(address,address)",
+          "__transferOwnership(address)",
+          "__setDestination(address)",
+          "()"
+        ],
+        "linkReferences": [],
+        "errors": [
+          {
+            "kind": "constructor",
+            "contract": "RelayProxy",
+            "src": "contracts\\adapters\\RelayProxy.sol:9"
+          }
+        ],
+        "layout": {
+          "storage": [
+            {
+              "label": "__destination",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_address",
+              "contract": "RelayProxy",
+              "src": "contracts\\adapters\\RelayProxy.sol:6"
+            },
+            {
+              "label": "__owner",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_address",
+              "contract": "RelayProxy",
+              "src": "contracts\\adapters\\RelayProxy.sol:7"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      },
+      "SFC": {
+        "src": "contracts\\adapters\\SFCToGovernable.sol:5",
+        "inherit": [],
+        "libraries": [],
+        "methods": [
+          "delegations(address,uint256)",
+          "stakers(uint256)",
+          "getStakerID(address)",
+          "stakeTotalAmount()",
+          "delegationsTotalAmount()"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.1",
+          "flat": false
+        }
+      },
+      "SFCToGovernable": {
+        "src": "contracts\\adapters\\SFCToGovernable.sol:19",
+        "version": {
+          "withMetadata": "0989f9330dfbab034d1abc569d32a3380ba65ca9ac5229e4b3b7eaabf1726328",
+          "withoutMetadata": "67b1a6358e6653301bb5e85ea314821a7e367656c874e3061935bf1e69208814",
+          "linkedWithoutMetadata": "67b1a6358e6653301bb5e85ea314821a7e367656c874e3061935bf1e69208814"
+        },
+        "inherit": [
+          "Governable"
+        ],
+        "libraries": [],
+        "methods": [
+          "getTotalWeight()",
+          "getReceivedWeight(address)",
+          "getWeight(address,address)"
+        ],
+        "linkReferences": [],
+        "errors": [
+          {
+            "kind": "state-variable-assignment",
+            "name": "sfc",
+            "src": "contracts\\adapters\\SFCToGovernable.sol:20"
+          }
+        ],
+        "layout": {
+          "storage": [
+            {
+              "label": "sfc",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_contract(SFC)196",
+              "contract": "SFCToGovernable",
+              "src": "contracts\\adapters\\SFCToGovernable.sol:20"
+            }
+          ],
+          "types": {
+            "t_contract(SFC)196": {
+              "label": "contract SFC",
+              "numberOfBytes": "20"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      },
+      "Decimal": {
+        "src": "contracts\\common\\Decimal.sol:3",
+        "version": {
+          "withMetadata": "9b41a03176eee2388bc7bcdc3d60b7aaea378e603da276ec5697b70238a35018",
+          "withoutMetadata": "84fb217c68f538a0f01a573a7f9b991a4d3395eb699ba1c1542256b37f46c48b",
+          "linkedWithoutMetadata": "84fb217c68f538a0f01a573a7f9b991a4d3395eb699ba1c1542256b37f46c48b"
+        },
+        "inherit": [],
+        "libraries": [],
+        "methods": [],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.1",
+          "flat": false
+        }
+      },
+      "GetCode": {
+        "src": "contracts\\common\\GetCode.sol:3",
+        "version": {
+          "withMetadata": "5f5fac698b01c50d18012be8a6e0b6d3ccda5881c0b51c4ff6dc385cd6a3db9e",
+          "withoutMetadata": "84fb217c68f538a0f01a573a7f9b991a4d3395eb699ba1c1542256b37f46c48b",
+          "linkedWithoutMetadata": "84fb217c68f538a0f01a573a7f9b991a4d3395eb699ba1c1542256b37f46c48b"
+        },
+        "inherit": [],
+        "libraries": [],
+        "methods": [],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.1",
+          "flat": false
+        }
+      },
+      "Initializable": {
+        "src": "contracts\\common\\Initializable.sol:16",
+        "version": {
+          "withMetadata": "a467b20eab82d425ad56b1b1884a46a2871f121b80e3540bcabe39526ecf3527",
+          "withoutMetadata": "7f2d58cc2fe2c8fb8725c9dc5086beed1e02e5e3c82f5ddf3a4ef452244d19b0",
+          "linkedWithoutMetadata": "7f2d58cc2fe2c8fb8725c9dc5086beed1e02e5e3c82f5ddf3a4ef452244d19b0"
+        },
+        "inherit": [],
+        "libraries": [],
+        "methods": [],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [
+            {
+              "label": "initialized",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:21"
+            },
+            {
+              "label": "initializing",
+              "offset": 1,
+              "slot": "0",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:26"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:61"
+            }
+          ],
+          "types": {
+            "t_array(t_uint256)50_storage": {
+              "label": "uint256[50]",
+              "numberOfBytes": "1600"
+            },
+            "t_bool": {
+              "label": "bool",
+              "numberOfBytes": "1"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      },
+      "ReentrancyGuard": {
+        "src": "contracts\\common\\ReentrancyGuard.sol:16",
+        "version": {
+          "withMetadata": "08a080a3baae7111cf2de7d05c7dc81001063cd52c0218d1a71c6443ac3ae738",
+          "withoutMetadata": "7f2d58cc2fe2c8fb8725c9dc5086beed1e02e5e3c82f5ddf3a4ef452244d19b0",
+          "linkedWithoutMetadata": "7f2d58cc2fe2c8fb8725c9dc5086beed1e02e5e3c82f5ddf3a4ef452244d19b0"
+        },
+        "inherit": [
+          "Initializable"
+        ],
+        "libraries": [],
+        "methods": [],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [
+            {
+              "label": "initialized",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:21"
+            },
+            {
+              "label": "initializing",
+              "offset": 1,
+              "slot": "0",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:26"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:61"
+            },
+            {
+              "label": "_guardCounter",
+              "offset": 0,
+              "slot": "51",
+              "type": "t_uint256",
+              "contract": "ReentrancyGuard",
+              "src": "contracts\\common\\ReentrancyGuard.sol:18"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "52",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "ReentrancyGuard",
+              "src": "contracts\\common\\ReentrancyGuard.sol:40"
+            }
+          ],
+          "types": {
+            "t_array(t_uint256)50_storage": {
+              "label": "uint256[50]",
+              "numberOfBytes": "1600"
+            },
+            "t_bool": {
+              "label": "bool",
+              "numberOfBytes": "1"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      },
+      "SafeMath": {
+        "src": "contracts\\common\\SafeMath.sol:16",
+        "version": {
+          "withMetadata": "d10ebbed170881055600b4bd9a927e55b8d7db4d9b5bb6fa605a0a070655515a",
+          "withoutMetadata": "84fb217c68f538a0f01a573a7f9b991a4d3395eb699ba1c1542256b37f46c48b",
+          "linkedWithoutMetadata": "84fb217c68f538a0f01a573a7f9b991a4d3395eb699ba1c1542256b37f46c48b"
+        },
+        "inherit": [],
+        "libraries": [],
+        "methods": [],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.1",
+          "flat": false
+        }
+      },
+      "Constants": {
+        "src": "contracts\\governance\\Constants.sol:48",
+        "version": {
+          "withMetadata": "8d7249ffc041fae52a2b97d00f1928f9078c30cfb69487f3e354d72ee916c319",
+          "withoutMetadata": "e3c003c295bb5953d5e6c500d59e847d6999d3a7bf0ef241329a97a89b3d8861",
+          "linkedWithoutMetadata": "e3c003c295bb5953d5e6c500d59e847d6999d3a7bf0ef241329a97a89b3d8861"
+        },
+        "inherit": [
+          "StatusConstants"
+        ],
+        "libraries": [
+          "SafeMath",
+          "Decimal"
+        ],
+        "methods": [
+          "minVotesAbsolute(uint256,uint256)",
+          "bytes32ToString(bytes32)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.1",
+          "flat": false
+        }
+      },
+      "StatusConstants": {
+        "src": "contracts\\governance\\Constants.sol:6",
+        "version": {
+          "withMetadata": "21cece588531d692a9ba8b64f5cf72fba90ecfd6f4496972fb89856c63acd393",
+          "withoutMetadata": "7f2d58cc2fe2c8fb8725c9dc5086beed1e02e5e3c82f5ddf3a4ef452244d19b0",
+          "linkedWithoutMetadata": "7f2d58cc2fe2c8fb8725c9dc5086beed1e02e5e3c82f5ddf3a4ef452244d19b0"
+        },
+        "inherit": [],
+        "libraries": [],
+        "methods": [],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.1",
+          "flat": false
+        }
+      },
+      "Governance": {
+        "src": "contracts\\governance\\Governance.sol:15",
+        "version": {
+          "withMetadata": "b627109d39aa2b6e4db0287dd5e8cf125d540aa916d41b0b348ab301726b1cae",
+          "withoutMetadata": "589999e11eb7fb2dacfef19ab7132886af898613b0681aab71bf4247766449f8",
+          "linkedWithoutMetadata": "589999e11eb7fb2dacfef19ab7132886af898613b0681aab71bf4247766449f8"
+        },
+        "inherit": [
+          "Version",
+          "GovernanceSettings",
+          "Constants",
+          "StatusConstants",
+          "ReentrancyGuard",
+          "Initializable"
+        ],
+        "libraries": [
+          "SafeMath",
+          "LRC",
+          "Proposal"
+        ],
+        "methods": [
+          "initialize(address,address)",
+          "proposalParams(uint256)",
+          "proposalOptionState(uint256,uint256)",
+          "proposalState(uint256)",
+          "getVote(address,address,uint256)",
+          "tasksCount()",
+          "getTask(uint256)",
+          "vote(address,uint256,uint256[])",
+          "createProposal(address)",
+          "cancelProposal(uint256)",
+          "handleTasks(uint256,uint256)",
+          "tasksCleanup(uint256)",
+          "calculateVotingTally(uint256)",
+          "cancelVote(address,uint256)",
+          "recountVote(address,address,uint256)"
+        ],
+        "linkReferences": [],
+        "errors": [
+          {
+            "kind": "delegatecall",
+            "src": "contracts\\governance\\Governance.sol:283"
+          }
+        ],
+        "layout": {
+          "storage": [
+            {
+              "label": "initialized",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:21"
+            },
+            {
+              "label": "initializing",
+              "offset": 1,
+              "slot": "0",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:26"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:61"
+            },
+            {
+              "label": "_guardCounter",
+              "offset": 0,
+              "slot": "51",
+              "type": "t_uint256",
+              "contract": "ReentrancyGuard",
+              "src": "contracts\\common\\ReentrancyGuard.sol:18"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "52",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "ReentrancyGuard",
+              "src": "contracts\\common\\ReentrancyGuard.sol:40"
+            },
+            {
+              "label": "governableContract",
+              "offset": 0,
+              "slot": "102",
+              "type": "t_contract(Governable)3252",
+              "contract": "Governance",
+              "src": "contracts\\governance\\Governance.sol:41"
+            },
+            {
+              "label": "proposalVerifier",
+              "offset": 0,
+              "slot": "103",
+              "type": "t_contract(IProposalVerifier)4723",
+              "contract": "Governance",
+              "src": "contracts\\governance\\Governance.sol:42"
+            },
+            {
+              "label": "lastProposalID",
+              "offset": 0,
+              "slot": "104",
+              "type": "t_uint256",
+              "contract": "Governance",
+              "src": "contracts\\governance\\Governance.sol:43"
+            },
+            {
+              "label": "tasks",
+              "offset": 0,
+              "slot": "105",
+              "type": "t_array(t_struct(Task)900_storage)dyn_storage",
+              "contract": "Governance",
+              "src": "contracts\\governance\\Governance.sol:44"
+            },
+            {
+              "label": "proposals",
+              "offset": 0,
+              "slot": "106",
+              "type": "t_mapping(t_uint256,t_struct(ProposalState)893_storage)",
+              "contract": "Governance",
+              "src": "contracts\\governance\\Governance.sol:46"
+            },
+            {
+              "label": "overriddenWeight",
+              "offset": 0,
+              "slot": "107",
+              "type": "t_mapping(t_address,t_mapping(t_uint256,t_uint256))",
+              "contract": "Governance",
+              "src": "contracts\\governance\\Governance.sol:47"
+            },
+            {
+              "label": "_votes",
+              "offset": 0,
+              "slot": "108",
+              "type": "t_mapping(t_address,t_mapping(t_address,t_mapping(t_uint256,t_struct(Vote)880_storage)))",
+              "contract": "Governance",
+              "src": "contracts\\governance\\Governance.sol:48"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            },
+            "t_array(t_bytes32)dyn_storage": {
+              "label": "bytes32[]",
+              "numberOfBytes": "32"
+            },
+            "t_array(t_struct(Task)900_storage)dyn_storage": {
+              "label": "struct Governance.Task[]",
+              "numberOfBytes": "32"
+            },
+            "t_array(t_uint256)50_storage": {
+              "label": "uint256[50]",
+              "numberOfBytes": "1600"
+            },
+            "t_array(t_uint256)dyn_storage": {
+              "label": "uint256[]",
+              "numberOfBytes": "32"
+            },
+            "t_bool": {
+              "label": "bool",
+              "numberOfBytes": "1"
+            },
+            "t_bytes32": {
+              "label": "bytes32",
+              "numberOfBytes": "32"
+            },
+            "t_contract(Governable)3252": {
+              "label": "contract Governable",
+              "numberOfBytes": "20"
+            },
+            "t_contract(IProposalVerifier)4723": {
+              "label": "contract IProposalVerifier",
+              "numberOfBytes": "20"
+            },
+            "t_enum(ExecType)3208": {
+              "label": "enum Proposal.ExecType",
+              "members": [
+                "NONE",
+                "CALL",
+                "DELEGATECALL"
+              ],
+              "numberOfBytes": "1"
+            },
+            "t_mapping(t_address,t_mapping(t_address,t_mapping(t_uint256,t_struct(Vote)880_storage)))": {
+              "label": "mapping(address => mapping(address => mapping(uint256 => struct Governance.Vote)))",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_address,t_mapping(t_uint256,t_struct(Vote)880_storage))": {
+              "label": "mapping(address => mapping(uint256 => struct Governance.Vote))",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_address,t_mapping(t_uint256,t_uint256))": {
+              "label": "mapping(address => mapping(uint256 => uint256))",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_uint256,t_struct(Option)3039_storage)": {
+              "label": "mapping(uint256 => struct LRC.Option)",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_uint256,t_struct(ProposalState)893_storage)": {
+              "label": "mapping(uint256 => struct Governance.ProposalState)",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_uint256,t_struct(Vote)880_storage)": {
+              "label": "mapping(uint256 => struct Governance.Vote)",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_uint256,t_uint256)": {
+              "label": "mapping(uint256 => uint256)",
+              "numberOfBytes": "32"
+            },
+            "t_struct(Option)3039_storage": {
+              "label": "struct LRC.Option",
+              "members": [
+                {
+                  "label": "votes",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "agreement",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "1"
+                }
+              ],
+              "numberOfBytes": "64"
+            },
+            "t_struct(Parameters)3227_storage": {
+              "label": "struct Proposal.Parameters",
+              "members": [
+                {
+                  "label": "pType",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "executable",
+                  "type": "t_enum(ExecType)3208",
+                  "offset": 0,
+                  "slot": "1"
+                },
+                {
+                  "label": "minVotes",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "2"
+                },
+                {
+                  "label": "minAgreement",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "3"
+                },
+                {
+                  "label": "opinionScales",
+                  "type": "t_array(t_uint256)dyn_storage",
+                  "offset": 0,
+                  "slot": "4"
+                },
+                {
+                  "label": "proposalContract",
+                  "type": "t_address",
+                  "offset": 0,
+                  "slot": "5"
+                },
+                {
+                  "label": "options",
+                  "type": "t_array(t_bytes32)dyn_storage",
+                  "offset": 0,
+                  "slot": "6"
+                },
+                {
+                  "label": "deadlines",
+                  "type": "t_struct(Timeline)3204_storage",
+                  "offset": 0,
+                  "slot": "7"
+                }
+              ],
+              "numberOfBytes": "320"
+            },
+            "t_struct(ProposalState)893_storage": {
+              "label": "struct Governance.ProposalState",
+              "members": [
+                {
+                  "label": "params",
+                  "type": "t_struct(Parameters)3227_storage",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "options",
+                  "type": "t_mapping(t_uint256,t_struct(Option)3039_storage)",
+                  "offset": 0,
+                  "slot": "10"
+                },
+                {
+                  "label": "winnerOptionID",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "11"
+                },
+                {
+                  "label": "votes",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "12"
+                },
+                {
+                  "label": "status",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "13"
+                }
+              ],
+              "numberOfBytes": "448"
+            },
+            "t_struct(Task)900_storage": {
+              "label": "struct Governance.Task",
+              "members": [
+                {
+                  "label": "active",
+                  "type": "t_bool",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "assignment",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "1"
+                },
+                {
+                  "label": "proposalID",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "2"
+                }
+              ],
+              "numberOfBytes": "96"
+            },
+            "t_struct(Timeline)3204_storage": {
+              "label": "struct Proposal.Timeline",
+              "members": [
+                {
+                  "label": "votingStartTime",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "votingMinEndTime",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "1"
+                },
+                {
+                  "label": "votingMaxEndTime",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "2"
+                }
+              ],
+              "numberOfBytes": "96"
+            },
+            "t_struct(Vote)880_storage": {
+              "label": "struct Governance.Vote",
+              "members": [
+                {
+                  "label": "weight",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "choices",
+                  "type": "t_array(t_uint256)dyn_storage",
+                  "offset": 0,
+                  "slot": "1"
+                }
+              ],
+              "numberOfBytes": "64"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      },
+      "GovernanceSettings": {
+        "src": "contracts\\governance\\GovernanceSettings.sol:12",
+        "version": {
+          "withMetadata": "ca2f94c0adc25a021da6e0550b46086f518fa7fd67aed325ecf0fc57f5d1e5ce",
+          "withoutMetadata": "cf9f40d6cff8718fb8b3a32bedf0671e47dcd22325ef6c0847a396588b46970e",
+          "linkedWithoutMetadata": "cf9f40d6cff8718fb8b3a32bedf0671e47dcd22325ef6c0847a396588b46970e"
+        },
+        "inherit": [
+          "Constants",
+          "StatusConstants"
+        ],
+        "libraries": [],
+        "methods": [
+          "proposalFee()",
+          "proposalBurntFee()",
+          "taskHandlingReward()",
+          "taskErasingReward()",
+          "maxOptions()",
+          "maxExecutionPeriod()"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.1",
+          "flat": false
+        }
+      },
+      "LRC": {
+        "src": "contracts\\governance\\LRC.sol:9",
+        "version": {
+          "withMetadata": "6f13707eb8de9bcb07349388e658b93f88951939d0d18ea037f8a2668e728bc3",
+          "withoutMetadata": "84fb217c68f538a0f01a573a7f9b991a4d3395eb699ba1c1542256b37f46c48b",
+          "linkedWithoutMetadata": "84fb217c68f538a0f01a573a7f9b991a4d3395eb699ba1c1542256b37f46c48b"
+        },
+        "inherit": [],
+        "libraries": [
+          "SafeMath",
+          "Decimal"
+        ],
+        "methods": [],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.1",
+          "flat": false
+        }
+      },
+      "Proposal": {
+        "src": "contracts\\governance\\Proposal.sol:5",
+        "version": {
+          "withMetadata": "1bf4679c169f734e9c2277a824485211c51a1eed9a23dacf4204ddea7198861b",
+          "withoutMetadata": "84fb217c68f538a0f01a573a7f9b991a4d3395eb699ba1c1542256b37f46c48b",
+          "linkedWithoutMetadata": "84fb217c68f538a0f01a573a7f9b991a4d3395eb699ba1c1542256b37f46c48b"
+        },
+        "inherit": [],
+        "libraries": [],
+        "methods": [],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.1",
+          "flat": false
+        }
+      },
+      "Governable": {
+        "src": "contracts\\model\\Governable.sol:6",
+        "inherit": [],
+        "libraries": [],
+        "methods": [
+          "getTotalWeight()",
+          "getReceivedWeight(address)",
+          "getWeight(address,address)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.1",
+          "flat": false
+        }
+      },
+      "Ownable": {
+        "src": "contracts\\ownership\\Ownable.sol:14",
+        "version": {
+          "withMetadata": "333f233460930a59d7470a49755e239311647425f2af076e7b3156c20f8e5e63",
+          "withoutMetadata": "9a175aae8b6ce193ed673d711cb1359bca74ca946ba8fa8a8e0b82a894149dfb",
+          "linkedWithoutMetadata": "9a175aae8b6ce193ed673d711cb1359bca74ca946ba8fa8a8e0b82a894149dfb"
+        },
+        "inherit": [
+          "Initializable"
+        ],
+        "libraries": [],
+        "methods": [
+          "owner()",
+          "isOwner()",
+          "renounceOwnership()",
+          "transferOwnership(address)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [
+            {
+              "label": "initialized",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:21"
+            },
+            {
+              "label": "initializing",
+              "offset": 1,
+              "slot": "0",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:26"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:61"
+            },
+            {
+              "label": "_owner",
+              "offset": 0,
+              "slot": "51",
+              "type": "t_address",
+              "contract": "Ownable",
+              "src": "contracts\\ownership\\Ownable.sol:15"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "52",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "Ownable",
+              "src": "contracts\\ownership\\Ownable.sol:78"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            },
+            "t_array(t_uint256)50_storage": {
+              "label": "uint256[50]",
+              "numberOfBytes": "1600"
+            },
+            "t_bool": {
+              "label": "bool",
+              "numberOfBytes": "1"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      },
+      "PlainTextProposal": {
+        "src": "contracts\\proposal\\PlainTextProposal.sol:9",
+        "version": {
+          "withMetadata": "b3e87514fa07ff866c8b7bc966cc0a68014a89d815ba74f2932f6af7f6e97d7b",
+          "withoutMetadata": "b3e87514fa07ff866c8b7bc966cc0a68014a89d815ba74f2932f6af7f6e97d7b",
+          "linkedWithoutMetadata": "b3e87514fa07ff866c8b7bc966cc0a68014a89d815ba74f2932f6af7f6e97d7b"
+        },
+        "inherit": [
+          "Cancelable",
+          "Ownable",
+          "Initializable",
+          "NonExecutableProposal",
+          "BaseProposal",
+          "IProposal"
+        ],
+        "libraries": [],
+        "methods": [
+          "(string,string,bytes32[],uint256,uint256,uint256,uint256,uint256,address)"
+        ],
+        "linkReferences": [],
+        "errors": [
+          {
+            "kind": "constructor",
+            "contract": "PlainTextProposal",
+            "src": "contracts\\proposal\\PlainTextProposal.sol:10"
+          }
+        ],
+        "layout": {
+          "storage": [
+            {
+              "label": "_name",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_string_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:14"
+            },
+            {
+              "label": "_description",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_string_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:15"
+            },
+            {
+              "label": "_options",
+              "offset": 0,
+              "slot": "2",
+              "type": "t_array(t_bytes32)dyn_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:16"
+            },
+            {
+              "label": "_minVotes",
+              "offset": 0,
+              "slot": "3",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:18"
+            },
+            {
+              "label": "_minAgreement",
+              "offset": 0,
+              "slot": "4",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:19"
+            },
+            {
+              "label": "_opinionScales",
+              "offset": 0,
+              "slot": "5",
+              "type": "t_array(t_uint256)dyn_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:20"
+            },
+            {
+              "label": "_start",
+              "offset": 0,
+              "slot": "6",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:22"
+            },
+            {
+              "label": "_minEnd",
+              "offset": 0,
+              "slot": "7",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:23"
+            },
+            {
+              "label": "_maxEnd",
+              "offset": 0,
+              "slot": "8",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:24"
+            },
+            {
+              "label": "initialized",
+              "offset": 0,
+              "slot": "9",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:21"
+            },
+            {
+              "label": "initializing",
+              "offset": 1,
+              "slot": "9",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:26"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "10",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:61"
+            },
+            {
+              "label": "_owner",
+              "offset": 0,
+              "slot": "60",
+              "type": "t_address",
+              "contract": "Ownable",
+              "src": "contracts\\ownership\\Ownable.sol:15"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "61",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "Ownable",
+              "src": "contracts\\ownership\\Ownable.sol:78"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            },
+            "t_array(t_bytes32)dyn_storage": {
+              "label": "bytes32[]",
+              "numberOfBytes": "32"
+            },
+            "t_array(t_uint256)50_storage": {
+              "label": "uint256[50]",
+              "numberOfBytes": "1600"
+            },
+            "t_array(t_uint256)dyn_storage": {
+              "label": "uint256[]",
+              "numberOfBytes": "32"
+            },
+            "t_bool": {
+              "label": "bool",
+              "numberOfBytes": "1"
+            },
+            "t_bytes32": {
+              "label": "bytes32",
+              "numberOfBytes": "32"
+            },
+            "t_string_storage": {
+              "label": "string",
+              "numberOfBytes": "32"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      },
+      "SoftwareUpgradeProposal": {
+        "src": "contracts\\proposal\\SoftwareUpgradeProposal.sol:10",
+        "version": {
+          "withMetadata": "2071378ea36a55a693494268ad3da64d257cc40c89eed581f71ccff03aeb2f7c",
+          "withoutMetadata": "2071378ea36a55a693494268ad3da64d257cc40c89eed581f71ccff03aeb2f7c",
+          "linkedWithoutMetadata": "2071378ea36a55a693494268ad3da64d257cc40c89eed581f71ccff03aeb2f7c"
+        },
+        "inherit": [
+          "Cancelable",
+          "Ownable",
+          "Initializable",
+          "DelegatecallExecutableProposal",
+          "BaseProposal",
+          "IProposal"
+        ],
+        "libraries": [],
+        "methods": [
+          "(string,string,uint256,uint256,uint256,uint256,uint256,address,address,address)",
+          "execute_delegatecall(address,uint256)"
+        ],
+        "linkReferences": [],
+        "errors": [
+          {
+            "kind": "constructor",
+            "contract": "SoftwareUpgradeProposal",
+            "src": "contracts\\proposal\\SoftwareUpgradeProposal.sol:14"
+          }
+        ],
+        "layout": {
+          "storage": [
+            {
+              "label": "_name",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_string_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:14"
+            },
+            {
+              "label": "_description",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_string_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:15"
+            },
+            {
+              "label": "_options",
+              "offset": 0,
+              "slot": "2",
+              "type": "t_array(t_bytes32)dyn_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:16"
+            },
+            {
+              "label": "_minVotes",
+              "offset": 0,
+              "slot": "3",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:18"
+            },
+            {
+              "label": "_minAgreement",
+              "offset": 0,
+              "slot": "4",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:19"
+            },
+            {
+              "label": "_opinionScales",
+              "offset": 0,
+              "slot": "5",
+              "type": "t_array(t_uint256)dyn_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:20"
+            },
+            {
+              "label": "_start",
+              "offset": 0,
+              "slot": "6",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:22"
+            },
+            {
+              "label": "_minEnd",
+              "offset": 0,
+              "slot": "7",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:23"
+            },
+            {
+              "label": "_maxEnd",
+              "offset": 0,
+              "slot": "8",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:24"
+            },
+            {
+              "label": "initialized",
+              "offset": 0,
+              "slot": "9",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:21"
+            },
+            {
+              "label": "initializing",
+              "offset": 1,
+              "slot": "9",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:26"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "10",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:61"
+            },
+            {
+              "label": "_owner",
+              "offset": 0,
+              "slot": "60",
+              "type": "t_address",
+              "contract": "Ownable",
+              "src": "contracts\\ownership\\Ownable.sol:15"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "61",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "Ownable",
+              "src": "contracts\\ownership\\Ownable.sol:78"
+            },
+            {
+              "label": "upgradeableContract",
+              "offset": 0,
+              "slot": "111",
+              "type": "t_address",
+              "contract": "SoftwareUpgradeProposal",
+              "src": "contracts\\proposal\\SoftwareUpgradeProposal.sol:11"
+            },
+            {
+              "label": "newImplementation",
+              "offset": 0,
+              "slot": "112",
+              "type": "t_address",
+              "contract": "SoftwareUpgradeProposal",
+              "src": "contracts\\proposal\\SoftwareUpgradeProposal.sol:12"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            },
+            "t_array(t_bytes32)dyn_storage": {
+              "label": "bytes32[]",
+              "numberOfBytes": "32"
+            },
+            "t_array(t_uint256)50_storage": {
+              "label": "uint256[50]",
+              "numberOfBytes": "1600"
+            },
+            "t_array(t_uint256)dyn_storage": {
+              "label": "uint256[]",
+              "numberOfBytes": "32"
+            },
+            "t_bool": {
+              "label": "bool",
+              "numberOfBytes": "1"
+            },
+            "t_bytes32": {
+              "label": "bytes32",
+              "numberOfBytes": "32"
+            },
+            "t_string_storage": {
+              "label": "string",
+              "numberOfBytes": "32"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      },
+      "BaseProposal": {
+        "src": "contracts\\proposal\\base\\BaseProposal.sol:11",
+        "version": {
+          "withMetadata": "598d4b1980b14f09d749adde8041ac48e70559942a3135b4a15c2b59b17d9fc5",
+          "withoutMetadata": "3ad110707e6647407ac4ee60071b1c5cc55ffeace426dd404feb8f9ae01061fc",
+          "linkedWithoutMetadata": "3ad110707e6647407ac4ee60071b1c5cc55ffeace426dd404feb8f9ae01061fc"
+        },
+        "inherit": [
+          "IProposal"
+        ],
+        "libraries": [
+          "SafeMath",
+          "Proposal"
+        ],
+        "methods": [
+          "verifyProposalParams(address)",
+          "pType()",
+          "executable()",
+          "minVotes()",
+          "minAgreement()",
+          "opinionScales()",
+          "options()",
+          "votingStartTime()",
+          "votingMinEndTime()",
+          "votingMaxEndTime()",
+          "name()",
+          "description()",
+          "execute_delegatecall(address,uint256)",
+          "execute_call(uint256)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [
+            {
+              "label": "_name",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_string_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:14"
+            },
+            {
+              "label": "_description",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_string_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:15"
+            },
+            {
+              "label": "_options",
+              "offset": 0,
+              "slot": "2",
+              "type": "t_array(t_bytes32)dyn_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:16"
+            },
+            {
+              "label": "_minVotes",
+              "offset": 0,
+              "slot": "3",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:18"
+            },
+            {
+              "label": "_minAgreement",
+              "offset": 0,
+              "slot": "4",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:19"
+            },
+            {
+              "label": "_opinionScales",
+              "offset": 0,
+              "slot": "5",
+              "type": "t_array(t_uint256)dyn_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:20"
+            },
+            {
+              "label": "_start",
+              "offset": 0,
+              "slot": "6",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:22"
+            },
+            {
+              "label": "_minEnd",
+              "offset": 0,
+              "slot": "7",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:23"
+            },
+            {
+              "label": "_maxEnd",
+              "offset": 0,
+              "slot": "8",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:24"
+            }
+          ],
+          "types": {
+            "t_array(t_bytes32)dyn_storage": {
+              "label": "bytes32[]",
+              "numberOfBytes": "32"
+            },
+            "t_array(t_uint256)dyn_storage": {
+              "label": "uint256[]",
+              "numberOfBytes": "32"
+            },
+            "t_bytes32": {
+              "label": "bytes32",
+              "numberOfBytes": "32"
+            },
+            "t_string_storage": {
+              "label": "string",
+              "numberOfBytes": "32"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      },
+      "CallExecutableProposal": {
+        "src": "contracts\\proposal\\base\\CallExecutableProposal.sol:6",
+        "version": {
+          "withMetadata": "ccfac819d1269ad66c8e71e9622f7930b50596a6c7296418af24ebb752a2bd30",
+          "withoutMetadata": "cceb9443c5f5a12ceba8ae64c2ad531e8f4368eb45ef0fe9169816df64aabb2f",
+          "linkedWithoutMetadata": "cceb9443c5f5a12ceba8ae64c2ad531e8f4368eb45ef0fe9169816df64aabb2f"
+        },
+        "inherit": [
+          "BaseProposal",
+          "IProposal"
+        ],
+        "libraries": [
+          "Proposal"
+        ],
+        "methods": [
+          "executable()",
+          "pType()",
+          "execute_call(uint256)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [
+            {
+              "label": "_name",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_string_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:14"
+            },
+            {
+              "label": "_description",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_string_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:15"
+            },
+            {
+              "label": "_options",
+              "offset": 0,
+              "slot": "2",
+              "type": "t_array(t_bytes32)dyn_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:16"
+            },
+            {
+              "label": "_minVotes",
+              "offset": 0,
+              "slot": "3",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:18"
+            },
+            {
+              "label": "_minAgreement",
+              "offset": 0,
+              "slot": "4",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:19"
+            },
+            {
+              "label": "_opinionScales",
+              "offset": 0,
+              "slot": "5",
+              "type": "t_array(t_uint256)dyn_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:20"
+            },
+            {
+              "label": "_start",
+              "offset": 0,
+              "slot": "6",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:22"
+            },
+            {
+              "label": "_minEnd",
+              "offset": 0,
+              "slot": "7",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:23"
+            },
+            {
+              "label": "_maxEnd",
+              "offset": 0,
+              "slot": "8",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:24"
+            }
+          ],
+          "types": {
+            "t_array(t_bytes32)dyn_storage": {
+              "label": "bytes32[]",
+              "numberOfBytes": "32"
+            },
+            "t_array(t_uint256)dyn_storage": {
+              "label": "uint256[]",
+              "numberOfBytes": "32"
+            },
+            "t_bytes32": {
+              "label": "bytes32",
+              "numberOfBytes": "32"
+            },
+            "t_string_storage": {
+              "label": "string",
+              "numberOfBytes": "32"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      },
+      "Cancelable": {
+        "src": "contracts\\proposal\\base\\Cancelable.sol:6",
+        "version": {
+          "withMetadata": "891770c0b8a19fdd325c9ca9f3d06ac86cbacfe3abadf0bf7b766185986f22b4",
+          "withoutMetadata": "891770c0b8a19fdd325c9ca9f3d06ac86cbacfe3abadf0bf7b766185986f22b4",
+          "linkedWithoutMetadata": "891770c0b8a19fdd325c9ca9f3d06ac86cbacfe3abadf0bf7b766185986f22b4"
+        },
+        "inherit": [
+          "Ownable",
+          "Initializable"
+        ],
+        "libraries": [],
+        "methods": [
+          "()",
+          "cancel(uint256,address)"
+        ],
+        "linkReferences": [],
+        "errors": [
+          {
+            "kind": "constructor",
+            "contract": "Cancelable",
+            "src": "contracts\\proposal\\base\\Cancelable.sol:7"
+          }
+        ],
+        "layout": {
+          "storage": [
+            {
+              "label": "initialized",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:21"
+            },
+            {
+              "label": "initializing",
+              "offset": 1,
+              "slot": "0",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:26"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:61"
+            },
+            {
+              "label": "_owner",
+              "offset": 0,
+              "slot": "51",
+              "type": "t_address",
+              "contract": "Ownable",
+              "src": "contracts\\ownership\\Ownable.sol:15"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "52",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "Ownable",
+              "src": "contracts\\ownership\\Ownable.sol:78"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            },
+            "t_array(t_uint256)50_storage": {
+              "label": "uint256[50]",
+              "numberOfBytes": "1600"
+            },
+            "t_bool": {
+              "label": "bool",
+              "numberOfBytes": "1"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      },
+      "DelegatecallExecutableProposal": {
+        "src": "contracts\\proposal\\base\\DelegatecallExecutableProposal.sol:6",
+        "version": {
+          "withMetadata": "ddb9774aca5f1f0994279cf9609603bfa974d98930f0751f158251f68292677d",
+          "withoutMetadata": "ba352828d3a480b2e58077a65031dffe1b68def957f49e5cab9d3319a3b164a3",
+          "linkedWithoutMetadata": "ba352828d3a480b2e58077a65031dffe1b68def957f49e5cab9d3319a3b164a3"
+        },
+        "inherit": [
+          "BaseProposal",
+          "IProposal"
+        ],
+        "libraries": [
+          "Proposal"
+        ],
+        "methods": [
+          "executable()",
+          "pType()",
+          "execute_delegatecall(address,uint256)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [
+            {
+              "label": "_name",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_string_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:14"
+            },
+            {
+              "label": "_description",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_string_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:15"
+            },
+            {
+              "label": "_options",
+              "offset": 0,
+              "slot": "2",
+              "type": "t_array(t_bytes32)dyn_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:16"
+            },
+            {
+              "label": "_minVotes",
+              "offset": 0,
+              "slot": "3",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:18"
+            },
+            {
+              "label": "_minAgreement",
+              "offset": 0,
+              "slot": "4",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:19"
+            },
+            {
+              "label": "_opinionScales",
+              "offset": 0,
+              "slot": "5",
+              "type": "t_array(t_uint256)dyn_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:20"
+            },
+            {
+              "label": "_start",
+              "offset": 0,
+              "slot": "6",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:22"
+            },
+            {
+              "label": "_minEnd",
+              "offset": 0,
+              "slot": "7",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:23"
+            },
+            {
+              "label": "_maxEnd",
+              "offset": 0,
+              "slot": "8",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:24"
+            }
+          ],
+          "types": {
+            "t_array(t_bytes32)dyn_storage": {
+              "label": "bytes32[]",
+              "numberOfBytes": "32"
+            },
+            "t_array(t_uint256)dyn_storage": {
+              "label": "uint256[]",
+              "numberOfBytes": "32"
+            },
+            "t_bytes32": {
+              "label": "bytes32",
+              "numberOfBytes": "32"
+            },
+            "t_string_storage": {
+              "label": "string",
+              "numberOfBytes": "32"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      },
+      "IProposal": {
+        "src": "contracts\\proposal\\base\\IProposal.sol:8",
+        "inherit": [],
+        "libraries": [],
+        "methods": [
+          "pType()",
+          "executable()",
+          "minVotes()",
+          "minAgreement()",
+          "opinionScales()",
+          "options()",
+          "votingStartTime()",
+          "votingMinEndTime()",
+          "votingMaxEndTime()",
+          "execute_call(uint256)",
+          "execute_delegatecall(address,uint256)",
+          "name()",
+          "description()"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.1",
+          "flat": false
+        }
+      },
+      "NonExecutableProposal": {
+        "src": "contracts\\proposal\\base\\NonExecutableProposal.sol:6",
+        "version": {
+          "withMetadata": "0ef83817c4841296a40df9b59726be8633ea099c407c601064dc7d888472c85b",
+          "withoutMetadata": "6322dc033bd491432bf10bf111fe38a5504260604942e4573252f4e21d19f91f",
+          "linkedWithoutMetadata": "6322dc033bd491432bf10bf111fe38a5504260604942e4573252f4e21d19f91f"
+        },
+        "inherit": [
+          "BaseProposal",
+          "IProposal"
+        ],
+        "libraries": [
+          "Proposal"
+        ],
+        "methods": [
+          "pType()",
+          "executable()"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [
+            {
+              "label": "_name",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_string_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:14"
+            },
+            {
+              "label": "_description",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_string_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:15"
+            },
+            {
+              "label": "_options",
+              "offset": 0,
+              "slot": "2",
+              "type": "t_array(t_bytes32)dyn_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:16"
+            },
+            {
+              "label": "_minVotes",
+              "offset": 0,
+              "slot": "3",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:18"
+            },
+            {
+              "label": "_minAgreement",
+              "offset": 0,
+              "slot": "4",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:19"
+            },
+            {
+              "label": "_opinionScales",
+              "offset": 0,
+              "slot": "5",
+              "type": "t_array(t_uint256)dyn_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:20"
+            },
+            {
+              "label": "_start",
+              "offset": 0,
+              "slot": "6",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:22"
+            },
+            {
+              "label": "_minEnd",
+              "offset": 0,
+              "slot": "7",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:23"
+            },
+            {
+              "label": "_maxEnd",
+              "offset": 0,
+              "slot": "8",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:24"
+            }
+          ],
+          "types": {
+            "t_array(t_bytes32)dyn_storage": {
+              "label": "bytes32[]",
+              "numberOfBytes": "32"
+            },
+            "t_array(t_uint256)dyn_storage": {
+              "label": "uint256[]",
+              "numberOfBytes": "32"
+            },
+            "t_bytes32": {
+              "label": "bytes32",
+              "numberOfBytes": "32"
+            },
+            "t_string_storage": {
+              "label": "string",
+              "numberOfBytes": "32"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      },
+      "AlteredPlainTextProposal": {
+        "src": "contracts\\proposal\\test\\AlteredPlainTextProposal.sol:5",
+        "version": {
+          "withMetadata": "b8b240e2c81041ba8e4f208a8053ec45e7182e3baaddb90ec092b444cd65a933",
+          "withoutMetadata": "b8b240e2c81041ba8e4f208a8053ec45e7182e3baaddb90ec092b444cd65a933",
+          "linkedWithoutMetadata": "b8b240e2c81041ba8e4f208a8053ec45e7182e3baaddb90ec092b444cd65a933"
+        },
+        "inherit": [
+          "PlainTextProposal",
+          "Cancelable",
+          "Ownable",
+          "Initializable",
+          "NonExecutableProposal",
+          "BaseProposal",
+          "IProposal"
+        ],
+        "libraries": [],
+        "methods": [
+          "(string,string,bytes32[],uint256,uint256,uint256,uint256,uint256,address)",
+          "name()"
+        ],
+        "linkReferences": [],
+        "errors": [
+          {
+            "kind": "constructor",
+            "contract": "AlteredPlainTextProposal",
+            "src": "contracts\\proposal\\test\\AlteredPlainTextProposal.sol:6"
+          }
+        ],
+        "layout": {
+          "storage": [
+            {
+              "label": "_name",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_string_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:14"
+            },
+            {
+              "label": "_description",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_string_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:15"
+            },
+            {
+              "label": "_options",
+              "offset": 0,
+              "slot": "2",
+              "type": "t_array(t_bytes32)dyn_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:16"
+            },
+            {
+              "label": "_minVotes",
+              "offset": 0,
+              "slot": "3",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:18"
+            },
+            {
+              "label": "_minAgreement",
+              "offset": 0,
+              "slot": "4",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:19"
+            },
+            {
+              "label": "_opinionScales",
+              "offset": 0,
+              "slot": "5",
+              "type": "t_array(t_uint256)dyn_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:20"
+            },
+            {
+              "label": "_start",
+              "offset": 0,
+              "slot": "6",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:22"
+            },
+            {
+              "label": "_minEnd",
+              "offset": 0,
+              "slot": "7",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:23"
+            },
+            {
+              "label": "_maxEnd",
+              "offset": 0,
+              "slot": "8",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:24"
+            },
+            {
+              "label": "initialized",
+              "offset": 0,
+              "slot": "9",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:21"
+            },
+            {
+              "label": "initializing",
+              "offset": 1,
+              "slot": "9",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:26"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "10",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:61"
+            },
+            {
+              "label": "_owner",
+              "offset": 0,
+              "slot": "60",
+              "type": "t_address",
+              "contract": "Ownable",
+              "src": "contracts\\ownership\\Ownable.sol:15"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "61",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "Ownable",
+              "src": "contracts\\ownership\\Ownable.sol:78"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            },
+            "t_array(t_bytes32)dyn_storage": {
+              "label": "bytes32[]",
+              "numberOfBytes": "32"
+            },
+            "t_array(t_uint256)50_storage": {
+              "label": "uint256[50]",
+              "numberOfBytes": "1600"
+            },
+            "t_array(t_uint256)dyn_storage": {
+              "label": "uint256[]",
+              "numberOfBytes": "32"
+            },
+            "t_bool": {
+              "label": "bool",
+              "numberOfBytes": "1"
+            },
+            "t_bytes32": {
+              "label": "bytes32",
+              "numberOfBytes": "32"
+            },
+            "t_string_storage": {
+              "label": "string",
+              "numberOfBytes": "32"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      },
+      "ExecLoggingProposal": {
+        "src": "contracts\\proposal\\test\\ExecLoggingProposal.sol:7",
+        "version": {
+          "withMetadata": "1af2ad27add7b84ff323f6723ca7a00a668bbade7876eb78918e13d4c82d1182",
+          "withoutMetadata": "1af2ad27add7b84ff323f6723ca7a00a668bbade7876eb78918e13d4c82d1182",
+          "linkedWithoutMetadata": "1af2ad27add7b84ff323f6723ca7a00a668bbade7876eb78918e13d4c82d1182"
+        },
+        "inherit": [
+          "PlainTextProposal",
+          "Cancelable",
+          "Ownable",
+          "Initializable",
+          "NonExecutableProposal",
+          "BaseProposal",
+          "IProposal"
+        ],
+        "libraries": [],
+        "methods": [
+          "(string,string,bytes32[],uint256,uint256,uint256,uint256,uint256,address)",
+          "setOpinionScales(uint256[])",
+          "pType()",
+          "executable()",
+          "setExecutable(uint8)",
+          "cancel(uint256,address)",
+          "executeNonDelegateCall(address,address,uint256)",
+          "execute_delegatecall(address,uint256)",
+          "execute_call(uint256)"
+        ],
+        "linkReferences": [],
+        "errors": [
+          {
+            "kind": "constructor",
+            "contract": "ExecLoggingProposal",
+            "src": "contracts\\proposal\\test\\ExecLoggingProposal.sol:10"
+          }
+        ],
+        "layout": {
+          "storage": [
+            {
+              "label": "_name",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_string_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:14"
+            },
+            {
+              "label": "_description",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_string_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:15"
+            },
+            {
+              "label": "_options",
+              "offset": 0,
+              "slot": "2",
+              "type": "t_array(t_bytes32)dyn_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:16"
+            },
+            {
+              "label": "_minVotes",
+              "offset": 0,
+              "slot": "3",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:18"
+            },
+            {
+              "label": "_minAgreement",
+              "offset": 0,
+              "slot": "4",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:19"
+            },
+            {
+              "label": "_opinionScales",
+              "offset": 0,
+              "slot": "5",
+              "type": "t_array(t_uint256)dyn_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:20"
+            },
+            {
+              "label": "_start",
+              "offset": 0,
+              "slot": "6",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:22"
+            },
+            {
+              "label": "_minEnd",
+              "offset": 0,
+              "slot": "7",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:23"
+            },
+            {
+              "label": "_maxEnd",
+              "offset": 0,
+              "slot": "8",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:24"
+            },
+            {
+              "label": "initialized",
+              "offset": 0,
+              "slot": "9",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:21"
+            },
+            {
+              "label": "initializing",
+              "offset": 1,
+              "slot": "9",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:26"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "10",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:61"
+            },
+            {
+              "label": "_owner",
+              "offset": 0,
+              "slot": "60",
+              "type": "t_address",
+              "contract": "Ownable",
+              "src": "contracts\\ownership\\Ownable.sol:15"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "61",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "Ownable",
+              "src": "contracts\\ownership\\Ownable.sol:78"
+            },
+            {
+              "label": "_exec",
+              "offset": 0,
+              "slot": "111",
+              "type": "t_enum(ExecType)3208",
+              "contract": "ExecLoggingProposal",
+              "src": "contracts\\proposal\\test\\ExecLoggingProposal.sol:8"
+            },
+            {
+              "label": "executedCounter",
+              "offset": 0,
+              "slot": "112",
+              "type": "t_uint256",
+              "contract": "ExecLoggingProposal",
+              "src": "contracts\\proposal\\test\\ExecLoggingProposal.sol:34"
+            },
+            {
+              "label": "executedMsgSender",
+              "offset": 0,
+              "slot": "113",
+              "type": "t_address",
+              "contract": "ExecLoggingProposal",
+              "src": "contracts\\proposal\\test\\ExecLoggingProposal.sol:35"
+            },
+            {
+              "label": "executedAs",
+              "offset": 0,
+              "slot": "114",
+              "type": "t_address",
+              "contract": "ExecLoggingProposal",
+              "src": "contracts\\proposal\\test\\ExecLoggingProposal.sol:36"
+            },
+            {
+              "label": "executedOption",
+              "offset": 0,
+              "slot": "115",
+              "type": "t_uint256",
+              "contract": "ExecLoggingProposal",
+              "src": "contracts\\proposal\\test\\ExecLoggingProposal.sol:37"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            },
+            "t_array(t_bytes32)dyn_storage": {
+              "label": "bytes32[]",
+              "numberOfBytes": "32"
+            },
+            "t_array(t_uint256)50_storage": {
+              "label": "uint256[50]",
+              "numberOfBytes": "1600"
+            },
+            "t_array(t_uint256)dyn_storage": {
+              "label": "uint256[]",
+              "numberOfBytes": "32"
+            },
+            "t_bool": {
+              "label": "bool",
+              "numberOfBytes": "1"
+            },
+            "t_bytes32": {
+              "label": "bytes32",
+              "numberOfBytes": "32"
+            },
+            "t_enum(ExecType)3208": {
+              "label": "enum Proposal.ExecType",
+              "members": [
+                "NONE",
+                "CALL",
+                "DELEGATECALL"
+              ],
+              "numberOfBytes": "1"
+            },
+            "t_string_storage": {
+              "label": "string",
+              "numberOfBytes": "32"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      },
+      "ExplicitProposal": {
+        "src": "contracts\\proposal\\test\\ExplicitProposal.sol:5",
+        "version": {
+          "withMetadata": "b0c68e34fe9e30bc7a3d848b8b2d384f24e27cab8f1094c6f360fc8aaebd6e49",
+          "withoutMetadata": "ba89465663e66e8cf52bf07fe5cd9806e682a38a0fb1ff21658d03eb570b98ac",
+          "linkedWithoutMetadata": "ba89465663e66e8cf52bf07fe5cd9806e682a38a0fb1ff21658d03eb570b98ac"
+        },
+        "inherit": [
+          "BaseProposal",
+          "IProposal"
+        ],
+        "libraries": [
+          "SafeMath"
+        ],
+        "methods": [
+          "setType(uint256)",
+          "setMinVotes(uint256)",
+          "setMinAgreement(uint256)",
+          "setOpinionScales(uint256[])",
+          "setVotingStartTime(uint256)",
+          "setVotingMinEndTime(uint256)",
+          "setVotingMaxEndTime(uint256)",
+          "setExecutable(uint8)",
+          "setOptions(bytes32[])",
+          "setName(string)",
+          "setDescription(string)",
+          "pType()",
+          "executable()",
+          "votingStartTime()",
+          "votingMinEndTime()",
+          "votingMaxEndTime()",
+          "execute_delegatecall(address,uint256)",
+          "execute_call(uint256)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [
+            {
+              "label": "_name",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_string_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:14"
+            },
+            {
+              "label": "_description",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_string_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:15"
+            },
+            {
+              "label": "_options",
+              "offset": 0,
+              "slot": "2",
+              "type": "t_array(t_bytes32)dyn_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:16"
+            },
+            {
+              "label": "_minVotes",
+              "offset": 0,
+              "slot": "3",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:18"
+            },
+            {
+              "label": "_minAgreement",
+              "offset": 0,
+              "slot": "4",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:19"
+            },
+            {
+              "label": "_opinionScales",
+              "offset": 0,
+              "slot": "5",
+              "type": "t_array(t_uint256)dyn_storage",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:20"
+            },
+            {
+              "label": "_start",
+              "offset": 0,
+              "slot": "6",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:22"
+            },
+            {
+              "label": "_minEnd",
+              "offset": 0,
+              "slot": "7",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:23"
+            },
+            {
+              "label": "_maxEnd",
+              "offset": 0,
+              "slot": "8",
+              "type": "t_uint256",
+              "contract": "BaseProposal",
+              "src": "contracts\\proposal\\base\\BaseProposal.sol:24"
+            },
+            {
+              "label": "_pType",
+              "offset": 0,
+              "slot": "9",
+              "type": "t_uint256",
+              "contract": "ExplicitProposal",
+              "src": "contracts\\proposal\\test\\ExplicitProposal.sol:8"
+            },
+            {
+              "label": "_exec",
+              "offset": 0,
+              "slot": "10",
+              "type": "t_enum(ExecType)3208",
+              "contract": "ExplicitProposal",
+              "src": "contracts\\proposal\\test\\ExplicitProposal.sol:9"
+            }
+          ],
+          "types": {
+            "t_array(t_bytes32)dyn_storage": {
+              "label": "bytes32[]",
+              "numberOfBytes": "32"
+            },
+            "t_array(t_uint256)dyn_storage": {
+              "label": "uint256[]",
+              "numberOfBytes": "32"
+            },
+            "t_bytes32": {
+              "label": "bytes32",
+              "numberOfBytes": "32"
+            },
+            "t_enum(ExecType)3208": {
+              "label": "enum Proposal.ExecType",
+              "members": [
+                "NONE",
+                "CALL",
+                "DELEGATECALL"
+              ],
+              "numberOfBytes": "1"
+            },
+            "t_string_storage": {
+              "label": "string",
+              "numberOfBytes": "32"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      },
+      "UnitTestGovernable": {
+        "src": "contracts\\test\\UnitTestGovernable.sol:5",
+        "version": {
+          "withMetadata": "80f3eea3e66a27b5e6ee80e84f4a09189e6d603da7209a68183f93ebec024c4c",
+          "withoutMetadata": "d24b4c23f8ddc483bd5deb6dbc4620bc06aea77bcad30f9d83a877ae193a4412",
+          "linkedWithoutMetadata": "d24b4c23f8ddc483bd5deb6dbc4620bc06aea77bcad30f9d83a877ae193a4412"
+        },
+        "inherit": [
+          "Governable"
+        ],
+        "libraries": [],
+        "methods": [
+          "stake(address,uint256)",
+          "unstake(address,uint256)",
+          "getTotalWeight()",
+          "getReceivedWeight(address)",
+          "getWeight(address,address)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [
+            {
+              "label": "delegations",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+              "contract": "UnitTestGovernable",
+              "src": "contracts\\test\\UnitTestGovernable.sol:6"
+            },
+            {
+              "label": "rcvDelegations",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_mapping(t_address,t_uint256)",
+              "contract": "UnitTestGovernable",
+              "src": "contracts\\test\\UnitTestGovernable.sol:7"
+            },
+            {
+              "label": "totalStake",
+              "offset": 0,
+              "slot": "2",
+              "type": "t_uint256",
+              "contract": "UnitTestGovernable",
+              "src": "contracts\\test\\UnitTestGovernable.sol:8"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            },
+            "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+              "label": "mapping(address => mapping(address => uint256))",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_address,t_uint256)": {
+              "label": "mapping(address => uint256)",
+              "numberOfBytes": "32"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      },
+      "UnitTestGovernance": {
+        "src": "contracts\\test\\UnitTestGovernance.sol:5",
+        "version": {
+          "withMetadata": "dcae1543e6cda1227803f4e3f59a83988788c62a8388aa3926954c813d21505c",
+          "withoutMetadata": "1d58a12b12e378f1ac32477cd3843daa762b9f90fc7383556c613f725dabb3ce",
+          "linkedWithoutMetadata": "1d58a12b12e378f1ac32477cd3843daa762b9f90fc7383556c613f725dabb3ce"
+        },
+        "inherit": [
+          "Governance",
+          "Version",
+          "GovernanceSettings",
+          "Constants",
+          "StatusConstants",
+          "ReentrancyGuard",
+          "Initializable"
+        ],
+        "libraries": [],
+        "methods": [
+          "proposalFee()",
+          "proposalBurntFee()",
+          "taskHandlingReward()",
+          "taskErasingReward()"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [
+            {
+              "label": "initialized",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:21"
+            },
+            {
+              "label": "initializing",
+              "offset": 1,
+              "slot": "0",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:26"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:61"
+            },
+            {
+              "label": "_guardCounter",
+              "offset": 0,
+              "slot": "51",
+              "type": "t_uint256",
+              "contract": "ReentrancyGuard",
+              "src": "contracts\\common\\ReentrancyGuard.sol:18"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "52",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "ReentrancyGuard",
+              "src": "contracts\\common\\ReentrancyGuard.sol:40"
+            },
+            {
+              "label": "governableContract",
+              "offset": 0,
+              "slot": "102",
+              "type": "t_contract(Governable)3252",
+              "contract": "Governance",
+              "src": "contracts\\governance\\Governance.sol:41"
+            },
+            {
+              "label": "proposalVerifier",
+              "offset": 0,
+              "slot": "103",
+              "type": "t_contract(IProposalVerifier)4723",
+              "contract": "Governance",
+              "src": "contracts\\governance\\Governance.sol:42"
+            },
+            {
+              "label": "lastProposalID",
+              "offset": 0,
+              "slot": "104",
+              "type": "t_uint256",
+              "contract": "Governance",
+              "src": "contracts\\governance\\Governance.sol:43"
+            },
+            {
+              "label": "tasks",
+              "offset": 0,
+              "slot": "105",
+              "type": "t_array(t_struct(Task)900_storage)dyn_storage",
+              "contract": "Governance",
+              "src": "contracts\\governance\\Governance.sol:44"
+            },
+            {
+              "label": "proposals",
+              "offset": 0,
+              "slot": "106",
+              "type": "t_mapping(t_uint256,t_struct(ProposalState)893_storage)",
+              "contract": "Governance",
+              "src": "contracts\\governance\\Governance.sol:46"
+            },
+            {
+              "label": "overriddenWeight",
+              "offset": 0,
+              "slot": "107",
+              "type": "t_mapping(t_address,t_mapping(t_uint256,t_uint256))",
+              "contract": "Governance",
+              "src": "contracts\\governance\\Governance.sol:47"
+            },
+            {
+              "label": "_votes",
+              "offset": 0,
+              "slot": "108",
+              "type": "t_mapping(t_address,t_mapping(t_address,t_mapping(t_uint256,t_struct(Vote)880_storage)))",
+              "contract": "Governance",
+              "src": "contracts\\governance\\Governance.sol:48"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            },
+            "t_array(t_bytes32)dyn_storage": {
+              "label": "bytes32[]",
+              "numberOfBytes": "32"
+            },
+            "t_array(t_struct(Task)900_storage)dyn_storage": {
+              "label": "struct Governance.Task[]",
+              "numberOfBytes": "32"
+            },
+            "t_array(t_uint256)50_storage": {
+              "label": "uint256[50]",
+              "numberOfBytes": "1600"
+            },
+            "t_array(t_uint256)dyn_storage": {
+              "label": "uint256[]",
+              "numberOfBytes": "32"
+            },
+            "t_bool": {
+              "label": "bool",
+              "numberOfBytes": "1"
+            },
+            "t_bytes32": {
+              "label": "bytes32",
+              "numberOfBytes": "32"
+            },
+            "t_contract(Governable)3252": {
+              "label": "contract Governable",
+              "numberOfBytes": "20"
+            },
+            "t_contract(IProposalVerifier)4723": {
+              "label": "contract IProposalVerifier",
+              "numberOfBytes": "20"
+            },
+            "t_enum(ExecType)3208": {
+              "label": "enum Proposal.ExecType",
+              "members": [
+                "NONE",
+                "CALL",
+                "DELEGATECALL"
+              ],
+              "numberOfBytes": "1"
+            },
+            "t_mapping(t_address,t_mapping(t_address,t_mapping(t_uint256,t_struct(Vote)880_storage)))": {
+              "label": "mapping(address => mapping(address => mapping(uint256 => struct Governance.Vote)))",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_address,t_mapping(t_uint256,t_struct(Vote)880_storage))": {
+              "label": "mapping(address => mapping(uint256 => struct Governance.Vote))",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_address,t_mapping(t_uint256,t_uint256))": {
+              "label": "mapping(address => mapping(uint256 => uint256))",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_uint256,t_struct(Option)3039_storage)": {
+              "label": "mapping(uint256 => struct LRC.Option)",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_uint256,t_struct(ProposalState)893_storage)": {
+              "label": "mapping(uint256 => struct Governance.ProposalState)",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_uint256,t_struct(Vote)880_storage)": {
+              "label": "mapping(uint256 => struct Governance.Vote)",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_uint256,t_uint256)": {
+              "label": "mapping(uint256 => uint256)",
+              "numberOfBytes": "32"
+            },
+            "t_struct(Option)3039_storage": {
+              "label": "struct LRC.Option",
+              "members": [
+                {
+                  "label": "votes",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "agreement",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "1"
+                }
+              ],
+              "numberOfBytes": "64"
+            },
+            "t_struct(Parameters)3227_storage": {
+              "label": "struct Proposal.Parameters",
+              "members": [
+                {
+                  "label": "pType",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "executable",
+                  "type": "t_enum(ExecType)3208",
+                  "offset": 0,
+                  "slot": "1"
+                },
+                {
+                  "label": "minVotes",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "2"
+                },
+                {
+                  "label": "minAgreement",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "3"
+                },
+                {
+                  "label": "opinionScales",
+                  "type": "t_array(t_uint256)dyn_storage",
+                  "offset": 0,
+                  "slot": "4"
+                },
+                {
+                  "label": "proposalContract",
+                  "type": "t_address",
+                  "offset": 0,
+                  "slot": "5"
+                },
+                {
+                  "label": "options",
+                  "type": "t_array(t_bytes32)dyn_storage",
+                  "offset": 0,
+                  "slot": "6"
+                },
+                {
+                  "label": "deadlines",
+                  "type": "t_struct(Timeline)3204_storage",
+                  "offset": 0,
+                  "slot": "7"
+                }
+              ],
+              "numberOfBytes": "320"
+            },
+            "t_struct(ProposalState)893_storage": {
+              "label": "struct Governance.ProposalState",
+              "members": [
+                {
+                  "label": "params",
+                  "type": "t_struct(Parameters)3227_storage",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "options",
+                  "type": "t_mapping(t_uint256,t_struct(Option)3039_storage)",
+                  "offset": 0,
+                  "slot": "10"
+                },
+                {
+                  "label": "winnerOptionID",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "11"
+                },
+                {
+                  "label": "votes",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "12"
+                },
+                {
+                  "label": "status",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "13"
+                }
+              ],
+              "numberOfBytes": "448"
+            },
+            "t_struct(Task)900_storage": {
+              "label": "struct Governance.Task",
+              "members": [
+                {
+                  "label": "active",
+                  "type": "t_bool",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "assignment",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "1"
+                },
+                {
+                  "label": "proposalID",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "2"
+                }
+              ],
+              "numberOfBytes": "96"
+            },
+            "t_struct(Timeline)3204_storage": {
+              "label": "struct Proposal.Timeline",
+              "members": [
+                {
+                  "label": "votingStartTime",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "votingMinEndTime",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "1"
+                },
+                {
+                  "label": "votingMaxEndTime",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "2"
+                }
+              ],
+              "numberOfBytes": "96"
+            },
+            "t_struct(Vote)880_storage": {
+              "label": "struct Governance.Vote",
+              "members": [
+                {
+                  "label": "weight",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "choices",
+                  "type": "t_array(t_uint256)dyn_storage",
+                  "offset": 0,
+                  "slot": "1"
+                }
+              ],
+              "numberOfBytes": "64"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      },
+      "Upgradability": {
+        "src": "contracts\\upgrade\\Upgradability.sol:7",
+        "inherit": [],
+        "libraries": [],
+        "methods": [
+          "upgradeTo(address)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.1",
+          "flat": false
+        }
+      },
+      "BytecodeMatcher": {
+        "src": "contracts\\verifiers\\BytecodeMatcher.sol:8",
+        "version": {
+          "withMetadata": "1dcaf62175a9c62326e0313ddbb2077996306f17b41a109604d18a6dcdcdaa01",
+          "withoutMetadata": "a1219555945207fc3bb6f382e47f60693f5703cfb553134fd3417e95d59b92d8",
+          "linkedWithoutMetadata": "a1219555945207fc3bb6f382e47f60693f5703cfb553134fd3417e95d59b92d8"
+        },
+        "inherit": [
+          "Initializable",
+          "IProposalVerifier"
+        ],
+        "libraries": [
+          "GetCode"
+        ],
+        "methods": [
+          "initialize(address)",
+          "verifyProposalParams(uint256,uint8,uint256,uint256,uint256[],uint256,uint256,uint256)",
+          "verifyProposalContract(uint256,address)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [
+            {
+              "label": "initialized",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:21"
+            },
+            {
+              "label": "initializing",
+              "offset": 1,
+              "slot": "0",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:26"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:61"
+            },
+            {
+              "label": "codeSample",
+              "offset": 0,
+              "slot": "51",
+              "type": "t_address",
+              "contract": "BytecodeMatcher",
+              "src": "contracts\\verifiers\\BytecodeMatcher.sol:11"
+            },
+            {
+              "label": "codeHash",
+              "offset": 0,
+              "slot": "52",
+              "type": "t_bytes32",
+              "contract": "BytecodeMatcher",
+              "src": "contracts\\verifiers\\BytecodeMatcher.sol:12"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            },
+            "t_array(t_uint256)50_storage": {
+              "label": "uint256[50]",
+              "numberOfBytes": "1600"
+            },
+            "t_bool": {
+              "label": "bool",
+              "numberOfBytes": "1"
+            },
+            "t_bytes32": {
+              "label": "bytes32",
+              "numberOfBytes": "32"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      },
+      "IProposalVerifier": {
+        "src": "contracts\\verifiers\\IProposalVerifier.sol:8",
+        "inherit": [],
+        "libraries": [],
+        "methods": [
+          "verifyProposalParams(uint256,uint8,uint256,uint256,uint256[],uint256,uint256,uint256)",
+          "verifyProposalContract(uint256,address)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.1",
+          "flat": false
+        }
+      },
+      "OwnableVerifier": {
+        "src": "contracts\\verifiers\\OwnableVerifier.sol:8",
+        "version": {
+          "withMetadata": "c9535e68b5e59837489f397355bd622c37626f17d0c9999f32dbef9b7c959257",
+          "withoutMetadata": "c9535e68b5e59837489f397355bd622c37626f17d0c9999f32dbef9b7c959257",
+          "linkedWithoutMetadata": "c9535e68b5e59837489f397355bd622c37626f17d0c9999f32dbef9b7c959257"
+        },
+        "inherit": [
+          "Ownable",
+          "Initializable",
+          "IProposalVerifier"
+        ],
+        "libraries": [],
+        "methods": [
+          "(address)",
+          "createProposal(address)",
+          "verifyProposalParams(uint256,uint8,uint256,uint256,uint256[],uint256,uint256,uint256)",
+          "verifyProposalContract(uint256,address)"
+        ],
+        "linkReferences": [],
+        "errors": [
+          {
+            "kind": "constructor",
+            "contract": "OwnableVerifier",
+            "src": "contracts\\verifiers\\OwnableVerifier.sol:9"
+          }
+        ],
+        "layout": {
+          "storage": [
+            {
+              "label": "initialized",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:21"
+            },
+            {
+              "label": "initializing",
+              "offset": 1,
+              "slot": "0",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:26"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:61"
+            },
+            {
+              "label": "_owner",
+              "offset": 0,
+              "slot": "51",
+              "type": "t_address",
+              "contract": "Ownable",
+              "src": "contracts\\ownership\\Ownable.sol:15"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "52",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "Ownable",
+              "src": "contracts\\ownership\\Ownable.sol:78"
+            },
+            {
+              "label": "gov",
+              "offset": 0,
+              "slot": "102",
+              "type": "t_contract(Governance)2941",
+              "contract": "OwnableVerifier",
+              "src": "contracts\\verifiers\\OwnableVerifier.sol:14"
+            },
+            {
+              "label": "unlockedFor",
+              "offset": 0,
+              "slot": "103",
+              "type": "t_address",
+              "contract": "OwnableVerifier",
+              "src": "contracts\\verifiers\\OwnableVerifier.sol:15"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            },
+            "t_array(t_uint256)50_storage": {
+              "label": "uint256[50]",
+              "numberOfBytes": "1600"
+            },
+            "t_bool": {
+              "label": "bool",
+              "numberOfBytes": "1"
+            },
+            "t_contract(Governance)2941": {
+              "label": "contract Governance",
+              "numberOfBytes": "20"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      },
+      "ProposalTemplates": {
+        "src": "contracts\\verifiers\\ProposalTemplates.sol:15",
+        "version": {
+          "withMetadata": "00cdecdcafb12f78c989a4fe677e2be5d8eea6d6cba10f0b63a6c78e559ce645",
+          "withoutMetadata": "549e4445851a7c1facb8bc1ab7dd15d5b772cba8e5eedd2d42fccdfbee20f145",
+          "linkedWithoutMetadata": "549e4445851a7c1facb8bc1ab7dd15d5b772cba8e5eedd2d42fccdfbee20f145"
+        },
+        "inherit": [
+          "Version",
+          "Ownable",
+          "IProposalVerifier",
+          "Initializable"
+        ],
+        "libraries": [
+          "Decimal"
+        ],
+        "methods": [
+          "initialize()",
+          "exists(uint256)",
+          "get(uint256)",
+          "addTemplate(uint256,string,address,uint8,uint256,uint256,uint256[],uint256,uint256,uint256,uint256)",
+          "eraseTemplate(uint256)",
+          "verifyProposalParams(uint256,uint8,uint256,uint256,uint256[],uint256,uint256,uint256)",
+          "verifyProposalContract(uint256,address)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [
+            {
+              "label": "initialized",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:21"
+            },
+            {
+              "label": "initializing",
+              "offset": 1,
+              "slot": "0",
+              "type": "t_bool",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:26"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "Initializable",
+              "src": "contracts\\common\\Initializable.sol:61"
+            },
+            {
+              "label": "_owner",
+              "offset": 0,
+              "slot": "51",
+              "type": "t_address",
+              "contract": "Ownable",
+              "src": "contracts\\ownership\\Ownable.sol:15"
+            },
+            {
+              "label": "______gap",
+              "offset": 0,
+              "slot": "52",
+              "type": "t_array(t_uint256)50_storage",
+              "contract": "Ownable",
+              "src": "contracts\\ownership\\Ownable.sol:78"
+            },
+            {
+              "label": "proposalTemplates",
+              "offset": 0,
+              "slot": "102",
+              "type": "t_mapping(t_uint256,t_struct(ProposalTemplate)4883_storage)",
+              "contract": "ProposalTemplates",
+              "src": "contracts\\verifiers\\ProposalTemplates.sol:38"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            },
+            "t_array(t_uint256)50_storage": {
+              "label": "uint256[50]",
+              "numberOfBytes": "1600"
+            },
+            "t_array(t_uint256)dyn_storage": {
+              "label": "uint256[]",
+              "numberOfBytes": "32"
+            },
+            "t_bool": {
+              "label": "bool",
+              "numberOfBytes": "1"
+            },
+            "t_enum(ExecType)3208": {
+              "label": "enum Proposal.ExecType",
+              "members": [
+                "NONE",
+                "CALL",
+                "DELEGATECALL"
+              ],
+              "numberOfBytes": "1"
+            },
+            "t_mapping(t_uint256,t_struct(ProposalTemplate)4883_storage)": {
+              "label": "mapping(uint256 => struct ProposalTemplates.ProposalTemplate)",
+              "numberOfBytes": "32"
+            },
+            "t_string_storage": {
+              "label": "string",
+              "numberOfBytes": "32"
+            },
+            "t_struct(ProposalTemplate)4883_storage": {
+              "label": "struct ProposalTemplates.ProposalTemplate",
+              "members": [
+                {
+                  "label": "name",
+                  "type": "t_string_storage",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "verifier",
+                  "type": "t_address",
+                  "offset": 0,
+                  "slot": "1"
+                },
+                {
+                  "label": "executable",
+                  "type": "t_enum(ExecType)3208",
+                  "offset": 20,
+                  "slot": "1"
+                },
+                {
+                  "label": "minVotes",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "2"
+                },
+                {
+                  "label": "minAgreement",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "3"
+                },
+                {
+                  "label": "opinionScales",
+                  "type": "t_array(t_uint256)dyn_storage",
+                  "offset": 0,
+                  "slot": "4"
+                },
+                {
+                  "label": "minVotingDuration",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "5"
+                },
+                {
+                  "label": "maxVotingDuration",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "6"
+                },
+                {
+                  "label": "minStartDelay",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "7"
+                },
+                {
+                  "label": "maxStartDelay",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "8"
+                }
+              ],
+              "numberOfBytes": "288"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      },
+      "Version": {
+        "src": "contracts\\version\\Version.sol:6",
+        "version": {
+          "withMetadata": "3e606a603bac14d347d3c76fcf0d28bd9fbe53dd43d0b7f3e65ef5c938fa7c37",
+          "withoutMetadata": "32b9a4b27e26e1689a11a50b1e1c97318552e0259b0eeb3517cb307d21f4e3b1",
+          "linkedWithoutMetadata": "32b9a4b27e26e1689a11a50b1e1c97318552e0259b0eeb3517cb307d21f4e3b1"
+        },
+        "inherit": [],
+        "libraries": [],
+        "methods": [
+          "version()"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.1",
+          "flat": false
+        }
+      }
+    },
+    {
+      "Migrations": {
+        "src": "contracts\\Migrations.sol:4",
+        "version": {
+          "withMetadata": "835f15db42e6177453d5a537110735cdb706c185a7940f8224f51ef4ac2e3ad8",
+          "withoutMetadata": "831713aa2d6773e57b8bf22e20984944ddffc1828043fc8354635480d89f6885",
+          "linkedWithoutMetadata": "831713aa2d6773e57b8bf22e20984944ddffc1828043fc8354635480d89f6885"
+        },
+        "inherit": [],
+        "libraries": [],
+        "methods": [
+          "()",
+          "setCompleted(uint256)"
+        ],
+        "linkReferences": [],
+        "errors": [
+          {
+            "kind": "constructor",
+            "contract": "Migrations",
+            "src": "contracts\\Migrations.sol:8"
+          }
+        ],
+        "layout": {
+          "storage": [
+            {
+              "label": "owner",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_address",
+              "contract": "Migrations",
+              "src": "contracts\\Migrations.sol:5"
+            },
+            {
+              "label": "last_completed_migration",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_uint256",
+              "contract": "Migrations",
+              "src": "contracts\\Migrations.sol:6"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.1",
+          "flat": true
+        }
+      }
+    }
+  ]
+}

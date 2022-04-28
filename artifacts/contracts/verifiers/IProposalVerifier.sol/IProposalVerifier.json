@@ -1,0 +1,93 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IProposalVerifier",
+  "sourceName": "contracts/verifiers/IProposalVerifier.sol",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "pType",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "propAddr",
+          "type": "address"
+        }
+      ],
+      "name": "verifyProposalContract",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "pType",
+          "type": "uint256"
+        },
+        {
+          "internalType": "enum Proposal.ExecType",
+          "name": "executable",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint256",
+          "name": "minVotes",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "minAgreement",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "opinionScales",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "uint256",
+          "name": "start",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "minEnd",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maxEnd",
+          "type": "uint256"
+        }
+      ],
+      "name": "verifyProposalParams",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
