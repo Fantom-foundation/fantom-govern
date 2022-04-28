@@ -118,10 +118,11 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         // check code which can be checked only by explicitly setting timestamps and opinions
         const pType = 999; // non-standard proposal type
         this.verifier.addTemplate(pType, 'custom', emptyAddr, DelegatecallType, ratio('0.4'), ratio('0.6'), scales, 1000, 10000, 400, 2000);
-        const now = await time.latest();
-        const start = now.add(new BN(500));
-        const minEnd = start.add(new BN(1000));
-        const maxEnd = minEnd.add(new BN(1000));
+        // const now = await time.latest();
+        var now = (await web3.eth.getBlock('latest')).timestamp;
+        const start = now + (new BN(500));
+        const minEnd = start + (new BN(1000));
+        const maxEnd = minEnd + (new BN(1000));
 
         const proposal = await ExplicitProposal.new();
         await proposal.setType(pType);
@@ -133,7 +134,6 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         await proposal.setVotingMaxEndTime(maxEnd);
         await proposal.setExecutable(DelegatecallType);
         expect(await proposal.verifyProposalParams.call(this.verifier.address)).to.equal(true);
-        //assert.isTrue(await proposal.verifyProposalParams.call(this.verifier.address));
 
         await proposal.setVotingStartTime(now.sub(new BN(10))); // starts in past
         expect(await proposal.verifyProposalParams.call(this.verifier.address)).to.equal(false);
@@ -190,8 +190,8 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         const proposalInfo = await createProposal(NonExecutableType, optionsNum, ratio('0.5'), ratio('0.6'), 60);
         const proposalID = proposalInfo.proposalID;
         // make new vote
-        await expectRevert(this.gov.vote(defaultAcc, proposalID, choices), "proposal voting has't begun");
-        time.increase(60);
+        await expectRevert(this.gov.vote(defaultAcc, proposalID, choices), "proposal voting hasn't begun");
+        evm.advanceTime(60)
         await expectRevert(this.gov.vote(defaultAcc, proposalID, choices), 'zero weight');
         await this.govable.stake(defaultAcc, ether('10.0'));
         await expectRevert(this.gov.vote(defaultAcc, proposalID.add(new BN(1)), choices), 'proposal with a given ID doesnt exist');
@@ -209,7 +209,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
             const proposalInfo = await createProposal(NonExecutableType, optionsNum, ratio('0.5'), ratio('0.6'), 60);
             proposalID = proposalInfo.proposalID;
             // make new vote
-            time.increase(60);
+            evm.advanceTime(60);
             await this.govable.stake(defaultAcc, ether('10.0'));
             await this.gov.vote(defaultAcc, proposalID, choices);
         });
@@ -318,7 +318,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         const proposalID = proposalInfo.proposalID;
         const proposalContract = proposalInfo.proposal;
         // make new vote
-        time.increase(60);
+        evm.advanceTime(60);
         await this.govable.stake(defaultAcc, ether('10.0'));
         await this.gov.vote(defaultAcc, proposalID, choices);
 
@@ -339,7 +339,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         expect(task.proposalID).to.be.bignumber.equal(proposalID);
 
         await expectRevert(this.gov.handleTasks(0, 1), 'no tasks handled');
-        time.increase(120); // wait until min voting end time
+        evm.advanceTime(120); // wait until min voting end time
         await expectRevert(this.gov.handleTasks(1, 1), 'no tasks handled');
         await this.gov.handleTasks(0, 1);
         await expectRevert(this.gov.handleTasks(0, 1), 'no tasks handled');
@@ -385,7 +385,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         await this.gov.vote(defaultAcc, proposalID, choices);
 
         // finalize voting by handling its task
-        time.increase(120); // wait until min voting end time
+        evm.advanceTime(120); // wait until min voting end time
         await this.gov.handleTasks(0, 1);
 
         // check proposal execution via call
@@ -406,7 +406,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         await this.gov.vote(defaultAcc, proposalID, choices);
 
         // finalize voting by handling its task
-        time.increase(120); // wait until min voting end time
+        evm.advanceTime(120); // wait until min voting end time
         await this.gov.handleTasks(0, 1);
 
         // check proposal execution via delegatecall
@@ -427,7 +427,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         await this.gov.vote(defaultAcc, proposalID, choices);
 
         // finalize voting by handling its task
-        time.increase(120); // wait until min voting end time
+        evm.advanceTime(120); // wait until min voting end time
         await this.gov.handleTasks(0, 1);
 
         // check proposal is rejected
@@ -443,7 +443,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         const proposalInfo = await createProposal(NonExecutableType, 1, ratio('0.5'), ratio('0.6'), 60, 500, 1000);
         const proposalID = proposalInfo.proposalID;
         // make new vote
-        time.increase(60 + 500 + 10);
+        evm.advanceTime(60 + 500 + 10);
         await this.govable.stake(defaultAcc, ether('10.0'));
         await this.gov.vote(defaultAcc, proposalID, choices);
 
@@ -467,7 +467,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         const proposalContract = proposalInfo.proposal;
         const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
         // make new vote
-        time.increase(maxExecutionPeriod.add(new BN(60 + 1000 + 10)));
+        evm.advanceTime(Number(maxExecutionPeriod.add(new BN(60 + 1000 + 10))));
         await this.govable.stake(defaultAcc, ether('10.0'));
         await this.gov.vote(defaultAcc, proposalID, choices);
 
@@ -491,7 +491,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         const proposalContract = proposalInfo.proposal;
         const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
         // make new vote
-        time.increase(maxExecutionPeriod.add(new BN(60 + 1000 + 10)));
+        evm.advanceTime(Number(maxExecutionPeriod.add(new BN(60 + 1000 + 10))));
         this.govable.stake(defaultAcc, ether('10.0'));
         await this.gov.vote(defaultAcc, proposalID, choices);
 
@@ -515,7 +515,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         const proposalContract = proposalInfo.proposal;
         const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
         // make new vote
-        time.increase(maxExecutionPeriod.add(new BN(60 + 1000 + 10)));
+        evm.advanceTime(Number(maxExecutionPeriod.add(new BN(60 + 1000 + 10))));
         this.govable.stake(defaultAcc, ether('10.0')); // defaultAcc has less than 50% of weight
         this.govable.stake(firstVoterAcc, ether('11.0'));
         await this.gov.vote(defaultAcc, proposalID, choices);
@@ -540,7 +540,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         const proposalContract = proposalInfo.proposal;
         const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
         // make new vote
-        time.increase(maxExecutionPeriod.add(new BN(60 + 1000 - 10)));
+        evm.advanceTime(Number(maxExecutionPeriod.add(new BN(60 + 1000 - 10))));
         await this.govable.stake(defaultAcc, ether('10.0'));
         await this.gov.vote(defaultAcc, proposalID, choices);
 
@@ -564,7 +564,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         const proposalContract = proposalInfo.proposal;
         const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
         // make new vote
-        time.increase(maxExecutionPeriod.add(new BN(60 + 1000 - 10)));
+        evm.advanceTime(Number(maxExecutionPeriod.add(new BN(60 + 1000 - 10))));
         await this.govable.stake(defaultAcc, ether('10.0'));
         await this.gov.vote(defaultAcc, proposalID, choices);
 
@@ -607,7 +607,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
             // make a vote
             await this.gov.vote(defaultAcc, proposalID, choices);
         }
-        time.increase(new BN(500 + 10));
+        evm.advanceTime(500 + 10);
 
         expect(await this.gov.tasksCount()).to.be.bignumber.equal(new BN(5));
         await this.gov.handleTasks(1, 3);
@@ -655,7 +655,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         const proposalInfo = await createProposal(NonExecutableType, optionsNum, ratio('0.5'), ratio('0.6'), 60);
         const proposalID = proposalInfo.proposalID;
         // make new vote
-        time.increase(60);
+        evm.advanceTime(60);
         await this.govable.stake(firstVoterAcc, ether('10.0'), {from: firstVoterAcc});
         await this.gov.vote(firstVoterAcc, proposalID, choices0, {from: firstVoterAcc});
         await expectRevert(this.gov.vote(firstVoterAcc, proposalID, choices1, {from: delegatorAcc}), 'zero weight');
@@ -679,7 +679,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
                 const proposalInfo = await createProposal(NonExecutableType, optionsNum, ratio('0.5'), ratio('0.6'), 60);
                 proposalID = proposalInfo.proposalID;
                 // make the new votes
-                time.increase(60 + 10);
+                evm.advanceTime(60 + 10);
                 if (delegatorFirst) {
                     await this.govable.stake(firstVoterAcc, ether('30.0'), {from: delegatorAcc});
                     await this.gov.vote(firstVoterAcc, proposalID, [new BN(1), new BN(2), new BN(3)], {from: delegatorAcc});
@@ -1047,7 +1047,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         const proposalInfo = await createProposal(NonExecutableType, optionsNum, ratio('0.01'), ratio('1.0'), 10000, 100000, 1000000, [1000000000000]);
         const proposalID = proposalInfo.proposalID;
         // make new vote
-        time.increase(10000 + 10);
+        evm.advanceTime(10000 + 10);
         await this.govable.stake(defaultAcc, ether('10.0'));
         await expectRevert(this.gov.vote(defaultAcc, proposalID, [new BN(1)]), 'wrong opinion ID'); // only 1 opinion is defined
         await this.gov.vote(defaultAcc, proposalID, [new BN(0)]);
