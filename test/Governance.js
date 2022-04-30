@@ -120,9 +120,9 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         this.verifier.addTemplate(pType, 'custom', emptyAddr, DelegatecallType, ratio('0.4'), ratio('0.6'), scales, 1000, 10000, 400, 2000);
         // const now = await time.latest();
         var now = (await web3.eth.getBlock('latest')).timestamp;
-        const start = now + (new BN(500));
-        const minEnd = start + (new BN(1000));
-        const maxEnd = minEnd + (new BN(1000));
+        const start = now + (500);
+        const minEnd = start + (1000);
+        const maxEnd = minEnd + (1000);
 
         const proposal = await ExplicitProposal.new();
         await proposal.setType(pType);
@@ -135,19 +135,19 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         await proposal.setExecutable(DelegatecallType);
         expect(await proposal.verifyProposalParams.call(this.verifier.address)).to.equal(true);
 
-        await proposal.setVotingStartTime(now.sub(new BN(10))); // starts in past
+        await proposal.setVotingStartTime(now - 10); // starts in past
         expect(await proposal.verifyProposalParams.call(this.verifier.address)).to.equal(false);
         await proposal.setVotingStartTime(start);
 
-        await proposal.setVotingMinEndTime(start.sub(new BN(1))); // may end before the start
+        await proposal.setVotingMinEndTime(start - 1); // may end before the start
         expect(await proposal.verifyProposalParams.call(this.verifier.address)).to.equal(false);
         await proposal.setVotingMinEndTime(minEnd);
 
-        await proposal.setVotingMaxEndTime(start.sub(new BN(1))); // must end before the start
+        await proposal.setVotingMaxEndTime(start - 1); // must end before the start
         expect(await proposal.verifyProposalParams.call(this.verifier.address)).to.equal(false);
         await proposal.setVotingMaxEndTime(maxEnd);
 
-        await proposal.setVotingMaxEndTime(minEnd.sub(new BN(1))); // min > max
+        await proposal.setVotingMaxEndTime(minEnd - 1); // min > max
         expect(await proposal.verifyProposalParams.call(this.verifier.address)).to.equal(false);
         await proposal.setVotingMaxEndTime(maxEnd);
 
