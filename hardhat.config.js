@@ -15,11 +15,14 @@ module.exports = {
     },
     mainnet: {
       url: 'https://rpcapi.fantom.network',
-      chainId: 250,
+      chainId: 250
     },
     testnet: {
       url: 'https://rpc.testnet.fantom.network',
       chainID: 4002,
+      accounts: [
+        `0xdf57089febbacf7ba0bc227dafbffa9fc08a93fdc68e1e42411a14efcf23656e`
+      ]
     }
   },
   mocha: {},

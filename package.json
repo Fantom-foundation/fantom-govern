@@ -11,9 +11,11 @@
     "flatten": "rm -rf contracts/Flattened.sol && truffle-flattener contracts/Staker.sol >> contracts/Flattened.sol"
   },
   "dependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.0",
     "@nomiclabs/hardhat-solhint": "^2.0.0",
     "@nomiclabs/hardhat-truffle5": "^2.0.5",
     "@nomiclabs/hardhat-waffle": "^2.0.3",
+    "@nomiclabs/hardhat-web3": "^2.0.0",
     "@openzeppelin/contracts": "^2.3.0",
     "@openzeppelin/contracts-upgradeable": "^4.5.2",
     "@openzeppelin/hardhat-upgrades": "^1.17.0",
@@ -27,6 +29,7 @@
     "ethers": "^5.5.1",
     "ganache": "^6.4.4",
     "ganache-cli": "^6.12.2",
+    "hardhat": "^2.9.3",
     "hardhat-abi-exporter": "^2.7.2",
     "hardhat-contract-sizer": "^2.4.0",
     "hardhat-deploy": "^0.9.24",
