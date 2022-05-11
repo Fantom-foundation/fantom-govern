@@ -33,13 +33,13 @@ const { toNumber } = require('lodash');
 
 contract('Governance test', async ([defaultAcc]) => {
   beforeEach(async () => {
-    this.govable = await UnitTestGovernable.new();
+    //this.govable = await UnitTestGovernable.new();
     this.verifier = await ProposalTemplates.new();
     this.verifier.initialize();
-    this.gov = await Governance.new();
+    /*  this.gov = await Governance.new();
     this.gov.initialize(this.govable.address, this.verifier.address);
     this.proposalFee = await this.gov.proposalFee();
-    await evm.mine();
+    await evm.mine(); */
   });
 
   it('checking creation of a plaintext proposal', async () => {
@@ -81,6 +81,7 @@ contract('Governance test', async ([defaultAcc]) => {
       121,
       1199,
       this.verifier.address
+      //emptyAddr
     );
     const pType2 = await emptyOptions.pType();
     console.log(pType2.toString());
