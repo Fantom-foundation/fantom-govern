@@ -154,12 +154,12 @@ contract ProposalTemplates is
         uint256 minDuration = minEnd - start;
         uint256 maxDuration = maxEnd - start;
         uint256 startDelay_ = start - block.timestamp;
-
+        //return true;
         if (!exists(pType)) {
             // non-existing template
             return false;
         }
-
+        //return true;
         ProposalTemplate memory template = proposalTemplates[pType];
         if (executable != template.executable) {
             // inconsistent executable flag
