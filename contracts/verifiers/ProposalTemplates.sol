@@ -138,79 +138,80 @@ contract ProposalTemplates is
         uint256 start,
         uint256 minEnd,
         uint256 maxEnd
-    ) external view returns (bool) {
+    ) external view returns (bool, string memory) {
         if (start < block.timestamp) {
             // start in the past
-            return false;
+            return (false, "start in the past");
         }
         if (minEnd > maxEnd) {
             // inconsistent data
-            return false;
+            return (false, "min end greater than max end");
         }
         if (start > minEnd) {
             // inconsistent data
-            return false;
+            return (false, "start greater than min end");
         }
-        uint256 minDuration = minEnd - start;
+        //uint256 minDuration = minEnd - start;
         uint256 maxDuration = maxEnd - start;
         uint256 startDelay_ = start - block.timestamp;
-        //return true;
+
         if (!exists(pType)) {
             // non-existing template
-            return false;
+            return (false, "non-existing template");
         }
-        //return true;
+
         ProposalTemplate memory template = proposalTemplates[pType];
         if (executable != template.executable) {
             // inconsistent executable flag
-            return false;
+            return (false, "inconsistent executable flag");
         }
 
         if (minVotes < template.minVotes) {
             // turnout is too small
-            return false;
+            return (false, "turn out too small");
         }
         if (minVotes > Decimal.unit()) {
             // turnout is bigger than 100%
-            return false;
+            return (false, "turn out bigger than 100%");
         }
         if (minAgreement < template.minAgreement) {
             // quorum is too small
-            return false;
+            return (false, "quorum too small");
         }
         if (minAgreement > Decimal.unit()) {
             // quorum is bigger than 100%
-            return false;
+            return (false, "quorum bigger than 100%");
         }
         if (opinionScales.length != template.opinionScales.length) {
             // wrong opinion scales
-            return false;
+            return (false, "wrong opinion scales length");
         }
         for (uint256 i = 0; i < opinionScales.length; i++) {
             if (opinionScales[i] != template.opinionScales[i]) {
                 // wrong opinion scales
-                return false;
+                return (false, "wrong opinion scales");
             }
         }
-        if (minDuration < template.minVotingDuration) {
+        //if (minDuration < template.minVotingDuration) {
+        if (minEnd - start < template.minVotingDuration) {
             // min. voting duration is too short
-            return false;
+            return (false, "min voting duration too short");
         }
         if (maxDuration > template.maxVotingDuration) {
             // max. voting duration is too long
-            return false;
+            return (false, "max voting duration too long");
         }
         if (startDelay_ < template.minStartDelay) {
             // voting must start later
-            return false;
+            return (false, "voting must start later");
         }
         if (startDelay_ > template.maxStartDelay) {
             // voting is too distant in future
-            return false;
+            return (false, "voting too distant in future");
         }
         if (template.verifier == address(0)) {
             // template with no additional verifier
-            return true;
+            return (true, "");
         }
         return
             IProposalVerifier(template.verifier).verifyProposalParams(

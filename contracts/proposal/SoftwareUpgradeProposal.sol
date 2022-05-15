@@ -11,9 +11,18 @@ contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
     address public upgradeableContract;
     address public newImplementation;
 
-    constructor(string memory __name, string memory __description,
-        uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd,
-        address __upgradeableContract, address __newImplementation, address verifier) public {
+    constructor(
+        string memory __name,
+        string memory __description,
+        uint256 __minVotes,
+        uint256 __minAgreement,
+        uint256 __start,
+        uint256 __minEnd,
+        uint256 __maxEnd,
+        address __upgradeableContract,
+        address __newImplementation,
+        address verifier
+    ) public {
         _name = __name;
         _description = __description;
         _options.push(bytes32("yes"));
@@ -27,7 +36,11 @@ contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
         newImplementation = __newImplementation;
         // verify the proposal right away to avoid deploying a wrong proposal
         if (verifier != address(0)) {
-            require(verifyProposalParams(verifier), "failed verification");
+            //require(verifyProposalParams(verifier), "failed verification");
+            bool ok;
+            string memory message;
+            (ok, message) = verifyProposalParams(verifier);
+            require(ok, message);
         }
     }
 
@@ -35,7 +48,9 @@ contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
 
     function execute_delegatecall(address selfAddr, uint256) external {
         SoftwareUpgradeProposal self = SoftwareUpgradeProposal(selfAddr);
-        Upgradability(self.upgradeableContract()).upgradeTo(self.newImplementation());
+        Upgradability(self.upgradeableContract()).upgradeTo(
+            self.newImplementation()
+        );
         emit SoftwareUpgradeIsDone(self.newImplementation());
     }
 }
