@@ -92,8 +92,9 @@ contract(
           1201,
           this.verifier.address
         ),
-        'failed verification'
+        'max voting duration too long'
       );
+
       await expectRevert(
         PlainTextProposal.new(
           'plaintext',
@@ -106,8 +107,9 @@ contract(
           1201,
           this.verifier.address
         ),
-        'failed verification'
+        'min voting duration too short'
       );
+
       await expectRevert(
         PlainTextProposal.new(
           'plaintext',
@@ -120,8 +122,9 @@ contract(
           1201,
           this.verifier.address
         ),
-        'failed verification'
+        'min voting duration too short'
       );
+
       await expectRevert(
         PlainTextProposal.new(
           'plaintext',
@@ -134,8 +137,9 @@ contract(
           500,
           this.verifier.address
         ),
-        'failed verification'
+        'min end greater than max end'
       );
+
       await expectRevert(
         PlainTextProposal.new(
           'plaintext',
@@ -148,8 +152,9 @@ contract(
           500,
           this.verifier.address
         ),
-        'failed verification'
+        'min end greater than max end'
       );
+
       await expectRevert(
         PlainTextProposal.new(
           'plaintext',
@@ -162,8 +167,9 @@ contract(
           500,
           this.verifier.address
         ),
-        'failed verification'
+        'min end greater than max end'
       );
+
       await expectRevert(
         PlainTextProposal.new(
           'plaintext',
@@ -176,8 +182,9 @@ contract(
           1200,
           this.verifier.address
         ),
-        'failed verification'
+        'quorum too small'
       );
+
       await expectRevert(
         PlainTextProposal.new(
           'plaintext',
@@ -190,8 +197,9 @@ contract(
           1200,
           this.verifier.address
         ),
-        'failed verification'
+        'quorum bigger than 100%'
       );
+
       await PlainTextProposal.new(
         'plaintext',
         'plaintext-descr',
@@ -407,7 +415,7 @@ contract(
         this.gov.createProposal(wrongVotes.address, {
           value: this.proposalFee
         }),
-        'proposal parameters failed verification'
+        'turnout too small'
       );
       await expectRevert(
         this.gov.createProposal(wrongCode.address, { value: this.proposalFee }),
@@ -497,55 +505,59 @@ contract(
       await proposal.setVotingMaxEndTime(maxEnd);
       await proposal.setExecutable(DelegatecallType);
       expect(
-        await proposal.verifyProposalParams.call(this.verifier.address)
+        (await proposal.verifyProposalParams.call(this.verifier.address))[0]
       ).to.equal(true);
 
       await proposal.setVotingStartTime(now - 10); // starts in past
       expect(
-        await proposal.verifyProposalParams.call(this.verifier.address)
-      ).to.equal(false);
+        (await proposal.verifyProposalParams.call(this.verifier.address))[1]
+      ).to.be.equal('starts in the past');
+
       await proposal.setVotingStartTime(start);
 
       await proposal.setVotingMinEndTime(start - 1); // may end before the start
       expect(
-        await proposal.verifyProposalParams.call(this.verifier.address)
-      ).to.equal(false);
+        (await proposal.verifyProposalParams.call(this.verifier.address))[1]
+      ).to.be.equal('start greater than min end');
+
       await proposal.setVotingMinEndTime(minEnd);
 
       await proposal.setVotingMaxEndTime(start - 1); // must end before the start
       expect(
-        await proposal.verifyProposalParams.call(this.verifier.address)
-      ).to.equal(false);
-      await proposal.setVotingMaxEndTime(maxEnd);
+        (await proposal.verifyProposalParams.call(this.verifier.address))[1]
+      ).to.be.equal('min end greater than max end');
 
+      await proposal.setVotingMaxEndTime(maxEnd);
       await proposal.setVotingMaxEndTime(minEnd - 1); // min > max
       expect(
-        await proposal.verifyProposalParams.call(this.verifier.address)
-      ).to.equal(false);
-      await proposal.setVotingMaxEndTime(maxEnd);
+        (await proposal.verifyProposalParams.call(this.verifier.address))[1]
+      ).to.be.equal('min end greater than max end');
 
+      await proposal.setVotingMaxEndTime(maxEnd);
       await proposal.setType(pType - 1); // wrong type
       expect(
-        await proposal.verifyProposalParams.call(this.verifier.address)
-      ).to.equal(false);
-      await proposal.setType(pType);
+        (await proposal.verifyProposalParams.call(this.verifier.address))[1]
+      ).to.be.equal('non-existing template');
 
+      await proposal.setType(pType);
       await proposal.setOpinionScales([]); // wrong scales
       expect(
-        await proposal.verifyProposalParams.call(this.verifier.address)
-      ).to.equal(false);
+        (await proposal.verifyProposalParams.call(this.verifier.address))[1]
+      ).to.be.equal('wrong opinion scales length');
+
       await proposal.setOpinionScales([1]); // wrong scales
       expect(
-        await proposal.verifyProposalParams.call(this.verifier.address)
-      ).to.equal(false);
+        (await proposal.verifyProposalParams.call(this.verifier.address))[1]
+      ).to.be.equal('wrong opinion scales length');
+
       await proposal.setOpinionScales([1, 2, 3, 4, 5]); // wrong scales
       expect(
-        await proposal.verifyProposalParams.call(this.verifier.address)
-      ).to.equal(false);
-      await proposal.setOpinionScales(scales);
+        (await proposal.verifyProposalParams.call(this.verifier.address))[1]
+      ).to.be.equal('wrong opinion scales');
 
+      await proposal.setOpinionScales(scales);
       expect(
-        await proposal.verifyProposalParams.call(this.verifier.address)
+        (await proposal.verifyProposalParams.call(this.verifier.address))[0]
       ).to.equal(true);
     });
 

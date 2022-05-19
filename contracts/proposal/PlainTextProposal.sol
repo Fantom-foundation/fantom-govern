@@ -29,7 +29,6 @@ contract PlainTextProposal is NonExecutableProposal, Cancelable {
         _maxEnd = __maxEnd;
         // verify the proposal right away to avoid deploying a wrong proposal
         if (verifier != address(0)) {
-            //require(verifyProposalParams(verifier), "failed verification");
             bool ok;
             string memory message;
             (ok, message) = verifyProposalParams(verifier);

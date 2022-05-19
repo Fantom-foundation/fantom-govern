@@ -140,15 +140,12 @@ contract ProposalTemplates is
         uint256 maxEnd
     ) external view returns (bool, string memory) {
         if (start < block.timestamp) {
-            // start in the past
-            return (false, "start in the past");
+            return (false, "starts in the past");
         }
         if (minEnd > maxEnd) {
-            // inconsistent data
             return (false, "min end greater than max end");
         }
         if (start > minEnd) {
-            // inconsistent data
             return (false, "start greater than min end");
         }
         //uint256 minDuration = minEnd - start;
@@ -156,39 +153,31 @@ contract ProposalTemplates is
         uint256 startDelay_ = start - block.timestamp;
 
         if (!exists(pType)) {
-            // non-existing template
             return (false, "non-existing template");
         }
 
         ProposalTemplate memory template = proposalTemplates[pType];
         if (executable != template.executable) {
-            // inconsistent executable flag
             return (false, "inconsistent executable flag");
         }
 
         if (minVotes < template.minVotes) {
-            // turnout is too small
-            return (false, "turn out too small");
+            return (false, "turnout too small");
         }
         if (minVotes > Decimal.unit()) {
-            // turnout is bigger than 100%
-            return (false, "turn out bigger than 100%");
+            return (false, "turnout bigger than 100%");
         }
         if (minAgreement < template.minAgreement) {
-            // quorum is too small
             return (false, "quorum too small");
         }
         if (minAgreement > Decimal.unit()) {
-            // quorum is bigger than 100%
             return (false, "quorum bigger than 100%");
         }
         if (opinionScales.length != template.opinionScales.length) {
-            // wrong opinion scales
             return (false, "wrong opinion scales length");
         }
         for (uint256 i = 0; i < opinionScales.length; i++) {
             if (opinionScales[i] != template.opinionScales[i]) {
-                // wrong opinion scales
                 return (false, "wrong opinion scales");
             }
         }

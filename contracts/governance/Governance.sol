@@ -41,6 +41,11 @@ contract Governance is
         uint256 proposalID;
     }
 
+    struct VerifyReturn {
+        bool ok;
+        string message;
+    }
+
     Governable governableContract;
     IProposalVerifier proposalVerifier;
     uint256 public lastProposalID;
@@ -222,7 +227,7 @@ contract Governance is
         require(proposalContract != address(0), "empty proposal address");
         IProposal p = IProposal(proposalContract);
         // capture the parameters once to ensure that contract will not return different values
-        //uint256 pType = p.pType();
+        uint256 pType = p.pType();
         Proposal.ExecType executable = p.executable();
         uint256 minVotes = p.minVotes();
         uint256 minAgreement = p.minAgreement();
@@ -237,12 +242,12 @@ contract Governance is
             "proposal options are empty - nothing to vote for"
         );
         require(options.length <= maxOptions(), "too many options");
-        bool ok;
-        string memory message;
-        //ok = proposalVerifier.verifyProposalParams(pType, executable, minVotes, minAgreement, opinionScales, votingStartTime, votingMinEndTime, votingMaxEndTime);
-        (ok, message) = proposalVerifier.verifyProposalParams(
-            //pType,
-            p.pType(),
+
+        VerifyReturn memory verifyReturn;
+
+        (verifyReturn.ok, verifyReturn.message) = proposalVerifier
+            .verifyProposalParams(
+            pType,
             executable,
             minVotes,
             minAgreement,
@@ -251,18 +256,16 @@ contract Governance is
             votingMinEndTime,
             votingMaxEndTime
         );
-        //require(ok, "proposal parameters failed verification");
-        require(ok, message);
-        //ok = proposalVerifier.verifyProposalContract(pType, proposalContract);
-        ok = proposalVerifier.verifyProposalContract(
-            p.pType(),
+        require(verifyReturn.ok, verifyReturn.message);
+        verifyReturn.ok = proposalVerifier.verifyProposalContract(
+            pType,
             proposalContract
         );
-        require(ok, "proposal contract failed verification");
+
+        require(verifyReturn.ok, "proposal contract failed verification");
         // save the parameters
         ProposalState storage prop = proposals[proposalID];
-        //prop.params.pType = pType;
-        prop.params.pType = p.pType();
+        prop.params.pType = pType;
         prop.params.executable = executable;
         prop.params.minVotes = minVotes;
         prop.params.minAgreement = minAgreement;
