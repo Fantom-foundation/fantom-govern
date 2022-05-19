@@ -505,60 +505,60 @@ contract(
       await proposal.setVotingMaxEndTime(maxEnd);
       await proposal.setExecutable(DelegatecallType);
       expect(
-        (await proposal.verifyProposalParams.call(this.verifier.address))[0]
-      ).to.equal(true);
+        await proposal.verifyProposalParams.call(this.verifier.address)
+      ).to.equal('');
 
       await proposal.setVotingStartTime(now - 10); // starts in past
       expect(
-        (await proposal.verifyProposalParams.call(this.verifier.address))[1]
+        await proposal.verifyProposalParams.call(this.verifier.address)
       ).to.be.equal('starts in the past');
 
       await proposal.setVotingStartTime(start);
 
       await proposal.setVotingMinEndTime(start - 1); // may end before the start
       expect(
-        (await proposal.verifyProposalParams.call(this.verifier.address))[1]
+        await proposal.verifyProposalParams.call(this.verifier.address)
       ).to.be.equal('start greater than min end');
 
       await proposal.setVotingMinEndTime(minEnd);
 
       await proposal.setVotingMaxEndTime(start - 1); // must end before the start
       expect(
-        (await proposal.verifyProposalParams.call(this.verifier.address))[1]
+        await proposal.verifyProposalParams.call(this.verifier.address)
       ).to.be.equal('min end greater than max end');
 
       await proposal.setVotingMaxEndTime(maxEnd);
       await proposal.setVotingMaxEndTime(minEnd - 1); // min > max
       expect(
-        (await proposal.verifyProposalParams.call(this.verifier.address))[1]
+        await proposal.verifyProposalParams.call(this.verifier.address)
       ).to.be.equal('min end greater than max end');
 
       await proposal.setVotingMaxEndTime(maxEnd);
       await proposal.setType(pType - 1); // wrong type
       expect(
-        (await proposal.verifyProposalParams.call(this.verifier.address))[1]
+        await proposal.verifyProposalParams.call(this.verifier.address)
       ).to.be.equal('non-existing template');
 
       await proposal.setType(pType);
       await proposal.setOpinionScales([]); // wrong scales
       expect(
-        (await proposal.verifyProposalParams.call(this.verifier.address))[1]
+        await proposal.verifyProposalParams.call(this.verifier.address)
       ).to.be.equal('wrong opinion scales length');
 
       await proposal.setOpinionScales([1]); // wrong scales
       expect(
-        (await proposal.verifyProposalParams.call(this.verifier.address))[1]
+        await proposal.verifyProposalParams.call(this.verifier.address)
       ).to.be.equal('wrong opinion scales length');
 
       await proposal.setOpinionScales([1, 2, 3, 4, 5]); // wrong scales
       expect(
-        (await proposal.verifyProposalParams.call(this.verifier.address))[1]
+        await proposal.verifyProposalParams.call(this.verifier.address)
       ).to.be.equal('wrong opinion scales');
 
       await proposal.setOpinionScales(scales);
       expect(
-        (await proposal.verifyProposalParams.call(this.verifier.address))[0]
-      ).to.equal(true);
+        await proposal.verifyProposalParams.call(this.verifier.address)
+      ).to.equal('');
     });
 
     const createProposal = async (

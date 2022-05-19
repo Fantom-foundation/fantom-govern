@@ -29,16 +29,20 @@ contract OwnableVerifier is IProposalVerifier, Ownable {
         uint256,
         uint256,
         uint256
-    ) external view returns (bool, string memory) {
-        return (true, "");
+    ) external view returns (string memory) {
+        return ("");
     }
 
     // verifyProposalContract verifies proposal creator
     function verifyProposalContract(uint256, address propAddr)
         external
         view
-        returns (bool)
+        returns (string memory)
     {
-        return propAddr == unlockedFor;
+        if (propAddr == unlockedFor) {
+            return ("");
+        } else {
+            return ("proposal contract failed verification");
+        }
     }
 }

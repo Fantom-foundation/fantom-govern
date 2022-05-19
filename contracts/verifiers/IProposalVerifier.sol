@@ -16,11 +16,11 @@ interface IProposalVerifier {
         uint256 start,
         uint256 minEnd,
         uint256 maxEnd
-    ) external view returns (bool, string memory);
+    ) external view returns (string memory);
 
     // Verifies proposal contract of the specified type and address
     function verifyProposalContract(uint256 pType, address propAddr)
         external
         view
-        returns (bool);
+        returns (string memory);
 }

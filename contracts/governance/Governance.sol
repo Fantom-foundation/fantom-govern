@@ -41,11 +41,6 @@ contract Governance is
         uint256 proposalID;
     }
 
-    struct VerifyReturn {
-        bool ok;
-        string message;
-    }
-
     Governable governableContract;
     IProposalVerifier proposalVerifier;
     uint256 public lastProposalID;
@@ -243,10 +238,9 @@ contract Governance is
         );
         require(options.length <= maxOptions(), "too many options");
 
-        VerifyReturn memory verifyReturn;
+        string memory message;
 
-        (verifyReturn.ok, verifyReturn.message) = proposalVerifier
-            .verifyProposalParams(
+        message = proposalVerifier.verifyProposalParams(
             pType,
             executable,
             minVotes,
@@ -256,13 +250,13 @@ contract Governance is
             votingMinEndTime,
             votingMaxEndTime
         );
-        require(verifyReturn.ok, verifyReturn.message);
-        verifyReturn.ok = proposalVerifier.verifyProposalContract(
+        require(bytes(message).length == 0, message);
+        message = proposalVerifier.verifyProposalContract(
             pType,
             proposalContract
         );
 
-        require(verifyReturn.ok, "proposal contract failed verification");
+        require(bytes(message).length == 0, message);
         // save the parameters
         ProposalState storage prop = proposals[proposalID];
         prop.params.pType = pType;

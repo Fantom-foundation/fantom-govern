@@ -27,7 +27,7 @@ contract BaseProposal is IProposal {
     function verifyProposalParams(address verifier)
         public
         view
-        returns (bool, string memory)
+        returns (string memory)
     {
         IProposalVerifier proposalVerifier = IProposalVerifier(verifier);
         return

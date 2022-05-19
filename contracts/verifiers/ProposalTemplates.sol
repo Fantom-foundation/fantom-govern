@@ -138,69 +138,63 @@ contract ProposalTemplates is
         uint256 start,
         uint256 minEnd,
         uint256 maxEnd
-    ) external view returns (bool, string memory) {
+    ) external view returns (string memory) {
         if (start < block.timestamp) {
-            return (false, "starts in the past");
+            return ("starts in the past");
         }
         if (minEnd > maxEnd) {
-            return (false, "min end greater than max end");
+            return ("min end greater than max end");
         }
         if (start > minEnd) {
-            return (false, "start greater than min end");
+            return ("start greater than min end");
         }
-        //uint256 minDuration = minEnd - start;
+        uint256 minDuration = minEnd - start;
         uint256 maxDuration = maxEnd - start;
         uint256 startDelay_ = start - block.timestamp;
 
         if (!exists(pType)) {
-            return (false, "non-existing template");
+            return ("non-existing template");
         }
 
         ProposalTemplate memory template = proposalTemplates[pType];
         if (executable != template.executable) {
-            return (false, "inconsistent executable flag");
+            return ("inconsistent executable flag");
         }
 
         if (minVotes < template.minVotes) {
-            return (false, "turnout too small");
+            return ("turnout too small");
         }
         if (minVotes > Decimal.unit()) {
-            return (false, "turnout bigger than 100%");
+            return ("turnout bigger than 100%");
         }
         if (minAgreement < template.minAgreement) {
-            return (false, "quorum too small");
+            return ("quorum too small");
         }
         if (minAgreement > Decimal.unit()) {
-            return (false, "quorum bigger than 100%");
+            return ("quorum bigger than 100%");
         }
         if (opinionScales.length != template.opinionScales.length) {
-            return (false, "wrong opinion scales length");
+            return ("wrong opinion scales length");
         }
         for (uint256 i = 0; i < opinionScales.length; i++) {
             if (opinionScales[i] != template.opinionScales[i]) {
-                return (false, "wrong opinion scales");
+                return ("wrong opinion scales");
             }
         }
-        //if (minDuration < template.minVotingDuration) {
-        if (minEnd - start < template.minVotingDuration) {
-            // min. voting duration is too short
-            return (false, "min voting duration too short");
+        if (minDuration < template.minVotingDuration) {
+            return ("min voting duration too short");
         }
         if (maxDuration > template.maxVotingDuration) {
-            // max. voting duration is too long
-            return (false, "max voting duration too long");
+            return ("max voting duration too long");
         }
         if (startDelay_ < template.minStartDelay) {
-            // voting must start later
-            return (false, "voting must start later");
+            return ("voting must start later");
         }
         if (startDelay_ > template.maxStartDelay) {
-            // voting is too distant in future
-            return (false, "voting too distant in future");
+            return ("voting too distant in future");
         }
         if (template.verifier == address(0)) {
-            // template with no additional verifier
-            return (true, "");
+            return ("");
         }
         return
             IProposalVerifier(template.verifier).verifyProposalParams(
@@ -219,16 +213,16 @@ contract ProposalTemplates is
     function verifyProposalContract(uint256 pType, address propAddr)
         external
         view
-        returns (bool)
+        returns (string memory)
     {
         if (!exists(pType)) {
             // non-existing template
-            return false;
+            return ("non-existing template");
         }
         ProposalTemplate memory template = proposalTemplates[pType];
         if (template.verifier == address(0)) {
             // template with no additional verifier
-            return true;
+            return ("");
         }
         return
             IProposalVerifier(template.verifier).verifyProposalContract(

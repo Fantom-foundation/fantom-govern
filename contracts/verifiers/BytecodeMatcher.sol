@@ -26,16 +26,20 @@ contract BytecodeMatcher is IProposalVerifier, Initializable {
         uint256,
         uint256,
         uint256
-    ) external view returns (bool, string memory) {
-        return (true, "");
+    ) external view returns (string memory) {
+        return ("");
     }
 
     // verifyProposalContract verifies proposal code from the specified type and address
     function verifyProposalContract(uint256, address propAddr)
         external
         view
-        returns (bool)
+        returns (string memory)
     {
-        return propAddr.codeHash() == codeHash;
+        if (propAddr.codeHash() == codeHash) {
+            return ("");
+        } else {
+            return ("proposal contract failed verification");
+        }
     }
 }
