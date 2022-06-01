@@ -2313,7 +2313,7 @@ contract(
           value: this.proposalFee,
           from: otherAcc
         }),
-        'proposal contract failed verification'
+        'proposal contract is not allowed'
       );
       await expectRevert(
         ownableVerifier.createProposal(proposal.address, {
@@ -2331,14 +2331,14 @@ contract(
           value: this.proposalFee,
           from: defaultAcc
         }),
-        'proposal contract failed verification'
+        'proposal contract is not allowed'
       );
       await expectRevert(
         this.gov.createProposal(proposal.address, {
           value: this.proposalFee,
           from: otherAcc
         }),
-        'proposal contract failed verification'
+        'proposal contract is not allowed'
       );
       await expectRevert(
         ownableVerifier.createProposal(proposal.address, {
@@ -2355,14 +2355,14 @@ contract(
           value: this.proposalFee,
           from: otherAcc
         }),
-        'proposal contract failed verification'
+        'proposal contract is not allowed'
       );
       await expectRevert(
         this.gov.createProposal(proposal.address, {
           value: this.proposalFee,
           from: defaultAcc
         }),
-        'proposal contract failed verification'
+        'proposal contract is not allowed'
       );
       await expectRevert(
         ownableVerifier.createProposal(proposal.address, {
