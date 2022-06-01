@@ -419,7 +419,7 @@ contract(
       );
       await expectRevert(
         this.gov.createProposal(wrongCode.address, { value: this.proposalFee }),
-        'proposal contract failed verification'
+        'wrong contract bytecode'
       );
       await expectRevert(
         this.gov.createProposal(manyOptions.address),
@@ -2306,7 +2306,7 @@ contract(
           value: this.proposalFee,
           from: defaultAcc
         }),
-        'proposal contract failed verification'
+        'proposal contract is not allowed'
       );
       await expectRevert(
         this.gov.createProposal(proposal.address, {

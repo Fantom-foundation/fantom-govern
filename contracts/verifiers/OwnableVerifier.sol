@@ -42,7 +42,7 @@ contract OwnableVerifier is IProposalVerifier, Ownable {
         if (propAddr == unlockedFor) {
             return ("");
         } else {
-            return ("proposal contract failed verification");
+            return ("proposal contract is not allowed");
         }
     }
 }

@@ -39,7 +39,7 @@ contract BytecodeMatcher is IProposalVerifier, Initializable {
         if (propAddr.codeHash() == codeHash) {
             return ("");
         } else {
-            return ("proposal contract failed verification");
+            return ("wrong contract bytecode");
         }
     }
 }
