@@ -17,12 +17,29 @@ contract BytecodeMatcher is IProposalVerifier, Initializable {
     }
 
     // verifyProposalParams checks proposal code and parameters
-    function verifyProposalParams(uint256, Proposal.ExecType, uint256, uint256, uint256[] calldata, uint256, uint256, uint256) external view returns (bool) {
-        return true;
+    function verifyProposalParams(
+        uint256,
+        Proposal.ExecType,
+        uint256,
+        uint256,
+        uint256[] calldata,
+        uint256,
+        uint256,
+        uint256
+    ) external view returns (string memory) {
+        return ("");
     }
 
     // verifyProposalContract verifies proposal code from the specified type and address
-    function verifyProposalContract(uint256, address propAddr) external view returns (bool) {
-        return propAddr.codeHash() == codeHash;
+    function verifyProposalContract(uint256, address propAddr)
+        external
+        view
+        returns (string memory)
+    {
+        if (propAddr.codeHash() == codeHash) {
+            return ("");
+        } else {
+            return ("wrong contract bytecode");
+        }
     }
 }
