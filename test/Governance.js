@@ -21,10 +21,21 @@ const ExecLoggingProposal = artifacts.require('ExecLoggingProposal');
 const AlteredPlainTextProposal = artifacts.require('AlteredPlainTextProposal');
 const BytecodeMatcher = artifacts.require('BytecodeMatcher');
 const OwnableVerifier = artifacts.require('OwnableVerifier');
+const UnitTestMockSFC = artifacts.require('UnitTestMockSFC');
+const NetworkParameterProposal = artifacts.require('NetworkParameterProposal');
 
 const NonExecutableType = new BN('0');
 const CallType = new BN('1');
 const DelegatecallType = new BN('2');
+
+const MAX_DELEGATION = 'setMaxDelegation(uint256)';
+const VALIDATOR_COMMISSION_FEE = 'setValidatorCommission(uint256)';
+const CONTRACT_COMMISSION_FEE = 'setContractCommission(uint256)';
+const UNLOCKED_REWARD = 'setUnlockedRewardRatio(uint256)';
+const MIN_LOCKUP = 'setMinLockupDuration(uint256)';
+const MAX_LOCKUP = 'setMaxLockupDuration(uint256)';
+const WITHDRAWAL_PERIOD_EPOCH_VALUE = 'setWithdrawalPeriodEpoch(uint256)';
+const WITHDRAWAL_PERIOD_TIME_VALUE = 'setWithdrawalPeriodTime(uint256)';
 
 function ratio(n) {
   return ether(n);
@@ -40,6 +51,14 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
       this.gov = await Governance.new();
       this.gov.initialize(this.govable.address, this.verifier.address);
       this.proposalFee = await this.gov.proposalFee();
+      this.sfc = await UnitTestMockSFC.new({from: defaultAcc});
+      await this.sfc.initialize(defaultAcc, this.gov.address, {from: defaultAcc});
+      await this.sfc.setMaxDelegation(new BN('16'), {from: defaultAcc});
+      await this.sfc.setValidatorCommission(new BN('15'), {from: defaultAcc});
+      await this.sfc.setContractCommission(new BN('30'), {from: defaultAcc});
+      await this.sfc.setUnlockedRewardRatio(new BN('30'), {from: defaultAcc});
+      await this.sfc.setMaxLockupDuration(new BN('86400'), {from: defaultAcc});
+      await this.sfc.setWithdrawalPeriodEpoch(new BN('3'), {from: defaultAcc});
   });
 
   const scales = [0, 2, 3, 4, 5];
@@ -175,6 +194,22 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
       const contract = await ExecLoggingProposal.new('logger', 'logger-descr', options, minVotes, minAgreement, startDelay, minEnd, maxEnd, emptyAddr);
       await contract.setOpinionScales(_scales);
       await contract.setExecutable(_exec);
+
+      await this.gov.createProposal(contract.address, {value: this.proposalFee});
+
+      return {proposalID: await this.gov.lastProposalID(), proposal: contract};
+  };
+
+  const createNetworkParameterProposal = async (optionsList, _exec, optionsNum, minVotes, minAgreement, startDelay = 0, minEnd = 120,  _signature, maxEnd = 1200, _scales = scales) => {
+      if (await this.verifier.exists(15) === false) {
+          await this.verifier.addTemplate(15, 'NetworkParameterProposal', emptyAddr, _exec, ratio('0.0'), ratio('0.0'), _scales, 0, 100000000, 0, 100000000);
+      }
+      const option = web3.utils.fromAscii('99999');
+      const options = [];
+      for (let i = 0; i < optionsNum; i++) {
+          options.push(option);
+      }
+      const contract = await NetworkParameterProposal.new('network', 'network-descr', options, minVotes, minAgreement, startDelay, minEnd, maxEnd, this.sfc.address, emptyAddr, _signature, optionsList, _exec, _scales);
 
       await this.gov.createProposal(contract.address, {value: this.proposalFee});
 
@@ -411,6 +446,67 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
       expect(await proposalContract.executedMsgSender()).to.equal(defaultAcc);
       expect(await proposalContract.executedAs()).to.equal(this.gov.address);
       expect(await proposalContract.executedOption()).to.be.bignumber.equal(new BN(0));
+  });
+
+  it('checking creation of multiple network parameter proposals and their execution', async () => {
+      expect((await this.sfc.activeProposals()).toString()).to.equals('0');
+
+      const optionsNum = 1; // use maximum number of options to test gas usage
+      const choices = [new BN(4)];
+      const optionsList = [new BN(99999)];
+      const maxDelegationProposal = await createNetworkParameterProposal(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, MAX_DELEGATION);
+      const validatorCommissionFeeProposal = await createNetworkParameterProposal(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, VALIDATOR_COMMISSION_FEE);
+      const contractCommissionFeeProposal = await createNetworkParameterProposal(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, CONTRACT_COMMISSION_FEE);
+      const unlockedRewardProposal = await createNetworkParameterProposal(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, UNLOCKED_REWARD);
+      const minLockupProposal = await createNetworkParameterProposal(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, MIN_LOCKUP);
+      const maxLockupProposal = await createNetworkParameterProposal(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, MAX_LOCKUP);
+      const withdrawalPeriodEpochValueProposal = await createNetworkParameterProposal(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, WITHDRAWAL_PERIOD_EPOCH_VALUE);
+      const withdrawalPeriodTimeValueProposal = await createNetworkParameterProposal(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, WITHDRAWAL_PERIOD_TIME_VALUE);
+
+      expect((await this.sfc.activeProposals()).toString()).to.equals('8');
+
+      const { proposalID: proposalIdOne } = maxDelegationProposal;
+      const { proposalID: proposalIdTwo } = validatorCommissionFeeProposal;
+      const { proposalID: proposalIdThree } =contractCommissionFeeProposal;
+      const { proposalID: proposalIdFour } = unlockedRewardProposal;
+      const { proposalID: proposalIdFive } = minLockupProposal;
+      const { proposalID: proposalIdSix } = maxLockupProposal;
+      const { proposalID: proposalIdSeven } = withdrawalPeriodEpochValueProposal;
+      const { proposalID: proposalIdEight } = withdrawalPeriodTimeValueProposal;
+      // make new vote
+      await this.govable.stake(defaultAcc, ether('10.0'));
+
+      await this.gov.vote(defaultAcc, proposalIdOne, choices);
+      await this.gov.vote(defaultAcc, proposalIdTwo, choices);
+      await this.gov.vote(defaultAcc, proposalIdThree, choices);
+      await this.gov.vote(defaultAcc, proposalIdFour, choices);
+      await this.gov.vote(defaultAcc, proposalIdFive, choices);
+      await this.gov.vote(defaultAcc, proposalIdSix, choices);
+      await this.gov.vote(defaultAcc, proposalIdSeven, choices);
+      await this.gov.vote(defaultAcc, proposalIdEight, choices);
+
+      // finalize voting by handling its task
+      evm.advanceTime(120); // wait until min voting end time
+
+      await this.gov.handleTasks(0, 1);
+      await this.gov.handleTasks(0, 2);
+      await this.gov.handleTasks(0, 3);
+      await this.gov.handleTasks(0, 4);
+      await this.gov.handleTasks(0, 5);
+      await this.gov.handleTasks(0, 6);
+      await this.gov.handleTasks(0, 7);
+      await this.gov.handleTasks(0, 8);
+
+      expect((await this.sfc.maxDelegatedRatio()).toString()).to.equals('99999000000000000000000');
+      expect((await this.sfc.validatorCommission()).toString()).to.equals('999990000000000000000');
+      expect((await this.sfc.contractCommission()).toString()).to.equals('999990000000000000000');
+      expect((await this.sfc.unlockedRewardRatio()).toString()).to.equals('999990000000000000000');
+      expect((await this.sfc.minLockupDuration()).toString()).to.equals('1399986');
+      expect((await this.sfc.maxLockupDuration()).toString()).to.equals('36499635');
+      expect((await this.sfc.withdrawalPeriodEpochs()).toString()).to.equals('99999');
+      expect((await this.sfc.withdrawalPeriodTime()).toString()).to.equals('99999');
+
+      expect((await this.sfc.activeProposals()).toString()).to.equals('0');
   });
 
   it('checking proposal rejecting before max voting end is reached', async () => {
