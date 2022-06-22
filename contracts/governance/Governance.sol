@@ -41,6 +41,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     Governable governableContract;
     IProposalVerifier proposalVerifier;
     uint256 public lastProposalID;
+    uint256 public activeProposals;
     Task[] tasks;
 
     mapping(uint256 => ProposalState) proposals;
@@ -123,6 +124,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         burn(proposalBurntFee());
 
         emit ProposalCreated(lastProposalID);
+        activeProposals++;
     }
 
     function _createProposal(uint256 proposalID, address proposalContract) internal {
@@ -171,6 +173,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
 
         prop.status = statusCanceled();
         emit ProposalCanceled(proposalID);
+        activeProposals--;
     }
 
     // handleTasks triggers proposal deadlines processing for a specified range of tasks
@@ -251,6 +254,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
             if (!expired) {
                 prop.status = statusResolved();
                 emit ProposalResolved(proposalID);
+                activeProposals--;
             } else {
                 prop.status = statusExecutionExpired();
                 emit ProposalExecutionExpired(proposalID);
@@ -258,6 +262,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         } else {
             prop.status = statusFailed();
             emit ProposalRejected(proposalID);
+            activeProposals--;
         }
         return true;
     }
@@ -282,7 +287,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         } else {
             (success, result) = propAddr.delegatecall(abi.encodeWithSignature("execute_delegatecall(address,uint256)", propAddr, winnerOptionID));
         }
-        //result;
+        result;
         return (success, false);
     }
 
