@@ -10,12 +10,12 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../ownership/Ownable.sol";
 import "../common/Decimal.sol";
 
-interface Governance {
+interface IGovernance {
     function activeProposals() external view returns (uint256);
 }
 
 contract UnitTestMockSFC is Ownable {
-    Governance internal governance;
+    IGovernance internal governance;
     using SafeMath for uint256;
 
     uint256 public minStakeAmnt;
@@ -118,7 +118,7 @@ contract UnitTestMockSFC is Ownable {
         address _governance
     ) external initializer {
         Ownable.initialize(_owner);
-        governance = Governance(_governance);
+        governance = IGovernance(_governance);
     }
 
     /*
