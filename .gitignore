@@ -5,3 +5,5 @@ coverage
 coverage.json
 artifacts
 cache
+.DS_Store
+.env

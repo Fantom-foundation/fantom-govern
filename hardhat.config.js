@@ -1,9 +1,12 @@
+require('dotenv').config();
 require('@nomiclabs/hardhat-truffle5');
 require('@nomiclabs/hardhat-waffle');
 require('@openzeppelin/hardhat-upgrades');
 require('@openzeppelin/test-helpers');
 require('@nomiclabs/hardhat-ethers');
 require('@nomiclabs/hardhat-web3');
+
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
 module.exports = {
   networks: {
@@ -19,10 +22,8 @@ module.exports = {
     },
     testnet: {
       url: 'https://rpc.testnet.fantom.network',
-      chainID: 4002,
-      accounts: [
-        `0xdf57089febbacf7ba0bc227dafbffa9fc08a93fdc68e1e42411a14efcf23656e`
-      ]
+      chainId: 4002,
+      accounts: [`0x${PRIVATE_KEY}`]
     }
   },
   mocha: {},
