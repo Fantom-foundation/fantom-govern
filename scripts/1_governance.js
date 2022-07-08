@@ -26,6 +26,13 @@ async function main() {
     deployedProposalTemplates.address
   );
 
+  const proposalTemplate = await ethers.getContractAt(
+    'ProposalTemplates',
+    deployedProposalTemplates.address
+  );
+
+  await proposalTemplate.initialize();
+
   const governance = await ethers.getContractAt(
     'Governance',
     deployedGovernance.address
