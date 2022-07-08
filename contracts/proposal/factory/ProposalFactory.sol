@@ -4,10 +4,6 @@ import "../../common/SafeMath.sol";
 import "../../ownership/Ownable.sol";
 import "../../proposal/NetworkParameterProposal.sol";
 
-interface INetworkParameterProposal {
-    function init(address) external;
-}
-
 contract ProposalFactory is Ownable {
     using SafeMath for uint256;
 
@@ -61,8 +57,7 @@ contract ProposalFactory is Ownable {
         exists[_deployedProposal] = true;
 
         lastProposal = _deployedProposal;
-        INetworkParameterProposal prop = INetworkParameterProposal(_deployedProposal);
-        prop.init(verifier);
+        (NetworkParameterProposal(_deployedProposal)).init(verifier);
         
         emit NetworkParameterProposalDeployed(_deployedProposal);
     }
