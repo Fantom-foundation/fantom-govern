@@ -11,7 +11,8 @@ interface INetworkParameterProposal {
 contract ProposalFactory is Ownable {
     using SafeMath for uint256;
 
-    event NewNetworkParameterProposalDeployed(address _address);
+    event NetworkParameterProposalDeployed(address _address);
+    event NetworkParameterProposalDisabled(address _address);
 
     struct Proposals {
         string _name;
@@ -28,6 +29,7 @@ contract ProposalFactory is Ownable {
     }
 
     mapping (address => Proposals) public proposals;
+    mapping (address => bool) public exists;
 
     address public lastProposal;
 
@@ -35,7 +37,7 @@ contract ProposalFactory is Ownable {
         string memory __name, string memory __description, bytes32[] memory __options, 
         uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd,
         address __sfc, address verifier, string memory __signature, uint256[] memory __optionsList, 
-        Proposal.ExecType __exec, uint256[] memory __scales) public {
+        Proposal.ExecType __exec, uint256[] memory __scales) public onlyOwner {
         
         address _deployedProposal = address(new NetworkParameterProposal(__exec, __options, __scales, verifier, __sfc, address(this)));
 
@@ -52,10 +54,43 @@ contract ProposalFactory is Ownable {
         proposal._signature = __signature;
         proposal._optionsList = __optionsList;
 
-        emit NewNetworkParameterProposalDeployed(_deployedProposal);
+        exists[_deployedProposal] = true;
+
         lastProposal = _deployedProposal;
         INetworkParameterProposal prop = INetworkParameterProposal(_deployedProposal);
         prop.init(verifier);
+        
+        emit NetworkParameterProposalDeployed(_deployedProposal);
+    }
+
+    /// @notice Method for registering existing NetworkParameterProposal contract
+    /// @param  proposalContractAddress Address of networkProposal contract
+    function registerProposalContract(address proposalContractAddress)
+        external
+        onlyOwner
+    {
+        require(
+            !exists[proposalContractAddress],
+            "Proposal contract already registered"
+        );
+
+        exists[proposalContractAddress] = true;
+        emit NetworkParameterProposalDeployed(proposalContractAddress);
+    }
+
+    /// @notice Method for disabling existing NetworkParameterProposal contract
+    /// @param  proposalContractAddress Address of networkProposal contract
+    function disableProposalContract(address proposalContractAddress)
+        external
+        onlyOwner
+    {
+        require(
+            exists[proposalContractAddress],
+            "Proposal contract is not registered"
+        );
+        
+        exists[proposalContractAddress] = false;
+        emit NetworkParameterProposalDisabled(proposalContractAddress);
     }
 
     /** Getter Functions */

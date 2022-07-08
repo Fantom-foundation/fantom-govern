@@ -46,7 +46,7 @@ const emptyAddr = '0x0000000000000000000000000000000000000000';
 
 contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondVoterAcc, delegatorAcc]) => {
   beforeEach(async () => {
-      this.factory = await ProposalFactory.new();
+      this.factory = await ProposalFactory.new({from: defaultAcc});
       this.govable = await UnitTestGovernable.new();
       this.verifier = await ProposalTemplates.new();
       this.verifier.initialize();
@@ -227,7 +227,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
     for (let i = 0; i < optionsNum; i++) {
         options.push(option);
     }
-    await this.factory.deployNewNetworkParameterProposal('network', 'network-descr', options, minVotes, minAgreement, startDelay, minEnd, maxEnd, this.sfc.address, emptyAddr, _signature, optionsList, _exec, _scales);
+    await this.factory.deployNewNetworkParameterProposal('network', 'network-descr', options, minVotes, minAgreement, startDelay, minEnd, maxEnd, this.sfc.address, emptyAddr, _signature, optionsList, _exec, _scales, {from: defaultAcc});
     const contract = await this.factory.lastProposal();
     await this.gov.createProposal(contract, {value: this.proposalFee});
 
@@ -526,6 +526,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
 
     expect((await this.sfc.activeProposals()).toString()).to.equals('0');
 });
+
 
   it('checking proposal rejecting before max voting end is reached', async () => {
       const optionsNum = 1; // use maximum number of options to test gas usage
