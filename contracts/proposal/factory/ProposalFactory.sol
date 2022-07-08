@@ -33,6 +33,10 @@ contract ProposalFactory is Ownable {
 
     address public lastProposal;
 
+    function initialize() public initializer {
+        Ownable.initialize(msg.sender);
+    }
+
     function deployNewNetworkParameterProposal(
         string memory __name, string memory __description, bytes32[] memory __options, 
         uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd,
