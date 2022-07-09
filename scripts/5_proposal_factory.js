@@ -4,13 +4,6 @@ async function main() {
   const deployedProposalFactory = await ProposalFactory.deploy();
   await deployedProposalFactory.deployed();
   console.log('ProposalFactory deployed to:', deployedProposalFactory.address);
-
-  const proposalFactory = await ethers.getContractAt(
-    'ProposalFactory',
-    deployedProposalFactory.address
-  );
-
-  await proposalFactory.initialize();
 }
 
 // We recommend this pattern to be able to use async/await everywhere
