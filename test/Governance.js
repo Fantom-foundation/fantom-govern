@@ -51,7 +51,6 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
       this.verifier = await ProposalTemplates.new();
       
       this.verifier.initialize();
-      this.factory.initialize();
 
       this.gov = await Governance.new();
       this.gov.initialize(this.govable.address, this.verifier.address);

@@ -29,15 +29,11 @@ contract ProposalFactory is Ownable {
 
     address public lastProposal;
 
-    function initialize() public initializer {
-        Ownable.initialize(msg.sender);
-    }
-
     function deployNewNetworkParameterProposal(
         string memory __name, string memory __description, bytes32[] memory __options, 
         uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd,
         address __sfc, address verifier, string memory __signature, uint256[] memory __optionsList, 
-        Proposal.ExecType __exec, uint256[] memory __scales) public onlyOwner {
+        Proposal.ExecType __exec, uint256[] memory __scales) public {
         
         address _deployedProposal = address(new NetworkParameterProposal(__exec, __options, __scales, verifier, __sfc, address(this)));
 
