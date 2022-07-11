@@ -44,9 +44,9 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         _exec = __exec;
         _opinionScales = __scales;
         // verify the proposal right away to avoid deploying a wrong proposal
-        if (verifier != address(0)) {
-            require(verifyProposalParams(verifier), "failed verification");
-        }
+        // if (verifier != address(0)) {
+        //     require(verifyProposalParams(verifier), "failed verification");
+        // }
     }
 
     function init(address verifier) external {
