@@ -4,6 +4,11 @@ import "../../common/SafeMath.sol";
 import "../../ownership/Ownable.sol";
 import "../../proposal/NetworkParameterProposal.sol";
 
+interface IGovernance {
+    function createProposal(address proposalAddress) external payable;
+    function proposalFee() external returns (uint256);
+}
+
 contract ProposalFactory is Ownable {
     using SafeMath for uint256;
 
@@ -28,12 +33,23 @@ contract ProposalFactory is Ownable {
     mapping (address => bool) public exists;
 
     address public lastProposal;
+    address public governance;
+
+    constructor(address _governance) public {
+        governance = _governance;
+        initialize(msg.sender);
+    }
 
     function deployNewNetworkParameterProposal(
         string memory __name, string memory __description, bytes32[] memory __options, 
         uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd,
         address __sfc, address verifier, string memory __signature, uint256[] memory __optionsList, 
-        Proposal.ExecType __exec, uint256[] memory __scales) public {
+        Proposal.ExecType __exec, uint256[] memory __scales) public payable {
+
+        require(
+            msg.value >= (IGovernance(governance)).proposalFee(),
+            "insufficient fee"
+        );
         
         address _deployedProposal = address(new NetworkParameterProposal(__exec, __options, __scales, verifier, __sfc, address(this)));
 
@@ -54,6 +70,10 @@ contract ProposalFactory is Ownable {
 
         lastProposal = _deployedProposal;
         (NetworkParameterProposal(_deployedProposal)).init(verifier);
+
+        (IGovernance(governance)).createProposal.value(msg.value)(
+            _deployedProposal
+        );
         
         emit NetworkParameterProposalDeployed(_deployedProposal);
     }
