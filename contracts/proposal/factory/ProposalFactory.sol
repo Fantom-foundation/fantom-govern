@@ -51,9 +51,12 @@ contract ProposalFactory is Ownable {
             "insufficient fee"
         );
         
-        address _deployedProposal = address(new NetworkParameterProposal(__exec, __options, __scales, verifier, __sfc, address(this)));
+        NetworkParameterProposal _deployedProposal = new NetworkParameterProposal(__exec, __options, __scales, verifier, __sfc, address(this));
+        _deployedProposal.transferOwnership(msg.sender);
 
-        Proposals storage proposal = proposals[_deployedProposal];
+        lastProposal = address(_deployedProposal);
+
+        Proposals storage proposal = proposals[lastProposal];
 
         proposal._name = __name;
         proposal._description = __description;
@@ -66,16 +69,15 @@ contract ProposalFactory is Ownable {
         proposal._signature = __signature;
         proposal._optionsList = __optionsList;
 
-        exists[_deployedProposal] = true;
+        exists[lastProposal] = true;
 
-        lastProposal = _deployedProposal;
-        (NetworkParameterProposal(_deployedProposal)).init(verifier);
+        (NetworkParameterProposal(lastProposal)).init(verifier);
 
         (IGovernance(governance)).createProposal.value(msg.value)(
-            _deployedProposal
+            lastProposal
         );
         
-        emit NetworkParameterProposalDeployed(_deployedProposal);
+        emit NetworkParameterProposalDeployed(lastProposal);
     }
 
     /// @notice Method for registering existing NetworkParameterProposal contract
