@@ -3,6 +3,7 @@ pragma solidity ^0.5.0;
 import "../../common/SafeMath.sol";
 import "../../ownership/Ownable.sol";
 import "../../proposal/NetworkParameterProposal.sol";
+import "../../proposal/PlainTextProposal.sol";
 
 interface IGovernance {
     function createProposal(address proposalAddress) external payable;
@@ -13,7 +14,8 @@ contract ProposalFactory is Ownable {
     using SafeMath for uint256;
 
     event NetworkParameterProposalDeployed(address _address);
-    event NetworkParameterProposalDisabled(address _address);
+    event PlaintextProposalDeployed(address _address);
+    event ProposalDisabled(address _address);
 
     struct Proposals {
         string _name;
@@ -32,7 +34,8 @@ contract ProposalFactory is Ownable {
     mapping (address => Proposals) public proposals;
     mapping (address => bool) public exists;
 
-    address public lastProposal;
+    address public lastNetworkProposal;
+    address public lastPlainTextProposal;
     address public governance;
 
     constructor(address _governance) public {
@@ -51,12 +54,12 @@ contract ProposalFactory is Ownable {
             "insufficient fee"
         );
         
-        NetworkParameterProposal _deployedProposal = new NetworkParameterProposal(__exec, __options, __scales, verifier, __sfc, address(this));
+        NetworkParameterProposal _deployedProposal = new NetworkParameterProposal(__exec, __scales, __sfc, address(this));
         _deployedProposal.transferOwnership(msg.sender);
 
-        lastProposal = address(_deployedProposal);
+        lastNetworkProposal = address(_deployedProposal);
 
-        Proposals storage proposal = proposals[lastProposal];
+        Proposals storage proposal = proposals[lastNetworkProposal];
 
         proposal._name = __name;
         proposal._description = __description;
@@ -69,31 +72,39 @@ contract ProposalFactory is Ownable {
         proposal._signature = __signature;
         proposal._optionsList = __optionsList;
 
-        exists[lastProposal] = true;
+        exists[lastNetworkProposal] = true;
 
-        (NetworkParameterProposal(lastProposal)).init(verifier);
+        (NetworkParameterProposal(lastNetworkProposal)).init(verifier);
 
         (IGovernance(governance)).createProposal.value(msg.value)(
-            lastProposal
+            lastNetworkProposal
         );
         
-        emit NetworkParameterProposalDeployed(lastProposal);
+        emit NetworkParameterProposalDeployed(lastNetworkProposal);
     }
 
-    /// @notice Method for registering existing NetworkParameterProposal contract
-    /// @param  proposalContractAddress Address of networkProposal contract
-    function registerProposalContract(address proposalContractAddress)
-        external
-        onlyOwner
-    {
-        require(
-            !exists[proposalContractAddress],
-            "Proposal contract already registered"
-        );
+     function deployNewPlainTextProposal(string calldata __name, string calldata __description, bytes32[] calldata __options,
+         uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd) payable external {
+         // use memory to avoid stack overflow
+         uint256[] memory params = new uint256[](5);
+         params[0] = __minVotes;
+         params[1] = __minAgreement;
+         params[2] = __start;
+         params[3] = __minEnd;
+         params[4] = __maxEnd;
 
-        exists[proposalContractAddress] = true;
-        emit NetworkParameterProposalDeployed(proposalContractAddress);
-    }
+         _create(__name, __description, __options, params);
+     }
+
+     function _create(string memory __name, string memory __description, bytes32[] memory __options, uint256[] memory params) internal {
+         PlainTextProposal proposal = new PlainTextProposal(__name, __description, __options,
+             params[0], params[1], params[2], params[3], params[4], address(0));
+         proposal.transferOwnership(msg.sender);
+
+         (IGovernance(governance)).createProposal.value(msg.value)(address(proposal));
+
+         emit PlaintextProposalDeployed(address(proposal));
+     }
 
     /// @notice Method for disabling existing NetworkParameterProposal contract
     /// @param  proposalContractAddress Address of networkProposal contract
@@ -107,7 +118,7 @@ contract ProposalFactory is Ownable {
         );
         
         exists[proposalContractAddress] = false;
-        emit NetworkParameterProposalDisabled(proposalContractAddress);
+        emit ProposalDisabled(proposalContractAddress);
     }
 
     /** Getter Functions */
