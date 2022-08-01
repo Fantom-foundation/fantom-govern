@@ -141,6 +141,8 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
     await this.verifier.addTemplate(pType, 'plaintext', emptyAddr, NonExecutableType, ratio('0.4'), ratio('0.6'), [0, 1, 2, 3, 4], 120, 1200, 30, 30);
     const option = web3.utils.fromAscii('option');
 
+    await expectRevert(this.factory.deployNewPlainTextProposal('plaintext', 'plaintext-descr', [option], ratio('0.4'), ratio('0.6'), 30, 120, 1200, {from: otherAcc, value: 0}), 'insufficient fee');
+    
     await this.factory.deployNewPlainTextProposal('plaintext', 'plaintext-descr', [option], ratio('0.4'), ratio('0.6'), 30, 120, 1200, {from: otherAcc, value: this.proposalFee});
     const proposalID = await this.gov.lastProposalID();
     const proposalParams = await this.gov.proposalParams(proposalID);

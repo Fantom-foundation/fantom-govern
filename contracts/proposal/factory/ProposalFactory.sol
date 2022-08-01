@@ -85,7 +85,12 @@ contract ProposalFactory is Ownable {
 
      function deployNewPlainTextProposal(string calldata __name, string calldata __description, bytes32[] calldata __options,
          uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd) payable external {
-         // use memory to avoid stack overflow
+
+        require(
+            msg.value >= (IGovernance(governance)).proposalFee(),
+            "insufficient fee"
+        );
+
          uint256[] memory params = new uint256[](5);
          params[0] = __minVotes;
          params[1] = __minAgreement;
