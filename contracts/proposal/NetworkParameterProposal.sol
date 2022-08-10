@@ -38,7 +38,7 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
     string public functionSignature;
     uint256[] public optionsList;
 
-    constructor(Proposal.ExecType __exec, bytes32[] memory __options, uint256[] memory __scales, address verifier, address __sfc, address __proposalFactory) public {
+    constructor(Proposal.ExecType __exec, uint256[] memory __scales, address __sfc, address __proposalFactory) public {
         proposalFactory = IProposalFactory(__proposalFactory);
         sfcAddress = __sfc;
         _exec = __exec;

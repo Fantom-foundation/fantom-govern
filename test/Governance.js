@@ -69,10 +69,10 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
   const scales = [0, 2, 3, 4, 5];
 
   it('checking deployment of a plaintext proposal contract', async () => {
-      const examplePlaintext = await PlainTextProposal.new('example', 'example-descr', [], 0, 0, 0, 0, 0, emptyAddr);
-      const plaintextBytecodeVerifier = await BytecodeMatcher.new();
-      await plaintextBytecodeVerifier.initialize(examplePlaintext.address);
-      this.verifier.addTemplate(1, 'plaintext', plaintextBytecodeVerifier.address, NonExecutableType, ratio('0.4'), ratio('0.6'), [0, 1, 2, 3, 4], 120, 1200, 0, 60);
+    //   const examplePlaintext = await PlainTextProposal.new('example', 'example-descr', [], 0, 0, 0, 0, 0, emptyAddr);
+    //   const plaintextBytecodeVerifier = await BytecodeMatcher.new();
+    //   await plaintextBytecodeVerifier.initialize(examplePlaintext.address);
+      this.verifier.addTemplate(1, 'plaintext', emptyAddr, NonExecutableType, ratio('0.4'), ratio('0.6'), [0, 1, 2, 3, 4], 120, 1200, 0, 60);
       const option = web3.utils.fromAscii('option');
       await expectRevert(PlainTextProposal.new('plaintext', 'plaintext-descr', [option], ratio('0.4'), ratio('0.6'), 0, 120, 1201, this.verifier.address), 'failed verification');
       await expectRevert(PlainTextProposal.new('plaintext', 'plaintext-descr', [option], ratio('0.4'), ratio('0.6'), 0, 119, 1201, this.verifier.address), 'failed verification');
@@ -94,22 +94,22 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
   it('checking creation of a plaintext proposal', async () => {
       const pType = new BN(1);
       const now = await time.latest();
-      const examplePlaintext = await PlainTextProposal.new('example', 'example-descr', [], 0, 0, 0, 0, 0, emptyAddr);
-      const plaintextBytecodeVerifier = await BytecodeMatcher.new();
-      await plaintextBytecodeVerifier.initialize(examplePlaintext.address);
-      this.verifier.addTemplate(pType, 'plaintext', plaintextBytecodeVerifier.address, NonExecutableType, ratio('0.4'), ratio('0.6'), [0, 1, 2, 3, 4], 120, 1200, 0, 60);
+    //   const examplePlaintext = await PlainTextProposal.new('example', 'example-descr', [], 0, 0, 0, 0, 0, emptyAddr);
+    //   const plaintextBytecodeVerifier = await BytecodeMatcher.new();
+    //   await plaintextBytecodeVerifier.initialize(examplePlaintext.address);
+      this.verifier.addTemplate(pType, 'plaintext', emptyAddr, NonExecutableType, ratio('0.4'), ratio('0.6'), [0, 1, 2, 3, 4], 120, 1200, 0, 60);
       const option = web3.utils.fromAscii('option');
       const emptyOptions = await PlainTextProposal.new('plaintext', 'plaintext-descr', [], ratio('0.5'), ratio('0.6'), 30, 121, 1199, this.verifier.address);
       const tooManyOptions = await PlainTextProposal.new('plaintext', 'plaintext-descr', [option, option, option, option, option, option, option, option, option, option, option], ratio('0.5'), ratio('0.6'), 30, 121, 1199, this.verifier.address);
       const wrongVotes = await PlainTextProposal.new('plaintext', 'plaintext-descr', [option], ratio('0.3'), ratio('0.6'), 30, 121, 1199, emptyAddr);
-      const wrongCode = await AlteredPlainTextProposal.new('plaintext', 'plaintext-descr', [option], ratio('0.5'), ratio('0.6'), 30, 121, 1199, emptyAddr);
+    //   const wrongCode = await AlteredPlainTextProposal.new('plaintext', 'plaintext-descr', [option], ratio('0.5'), ratio('0.6'), 30, 121, 1199, emptyAddr);
       const manyOptions = await PlainTextProposal.new('plaintext', 'plaintext-descr', [option, option, option, option, option, option, option, option, option, option], ratio('0.5'), ratio('0.6'), 30, 121, 1199, this.verifier.address);
       const oneOption = await PlainTextProposal.new('plaintext', 'plaintext-descr', [option], ratio('0.51'), ratio('0.6'), 30, 122, 1198, this.verifier.address);
 
       await expectRevert(this.gov.createProposal(emptyOptions.address, {value: this.proposalFee}), 'proposal options are empty - nothing to vote for');
       await expectRevert(this.gov.createProposal(tooManyOptions.address, {value: this.proposalFee}), 'too many options');
       await expectRevert(this.gov.createProposal(wrongVotes.address, {value: this.proposalFee}), 'proposal parameters failed verification');
-      await expectRevert(this.gov.createProposal(wrongCode.address, {value: this.proposalFee}), 'proposal contract failed verification');
+    //   await expectRevert(this.gov.createProposal(wrongCode.address, {value: this.proposalFee}), 'proposal contract failed verification');
       await expectRevert(this.gov.createProposal(manyOptions.address), 'paid proposal fee is wrong');
       await expectRevert(this.gov.createProposal(manyOptions.address, {value: this.proposalFee.add(new BN(1))}), 'paid proposal fee is wrong');
       await this.gov.createProposal(manyOptions.address, {value: this.proposalFee});
@@ -136,10 +136,26 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
       expect(infoOneOption.votingMaxEndTime).to.be.bignumber.equal(infoOneOption.votingStartTime.add(new BN(1198)));
   });
 
+  it('checking creation with a factory', async () => {
+    const pType = new BN(1);
+    await this.verifier.addTemplate(pType, 'plaintext', emptyAddr, NonExecutableType, ratio('0.4'), ratio('0.6'), [0, 1, 2, 3, 4], 120, 1200, 30, 30);
+    const option = web3.utils.fromAscii('option');
+
+    await expectRevert(this.factory.deployNewPlainTextProposal('plaintext', 'plaintext-descr', [option], ratio('0.4'), ratio('0.6'), 30, 120, 1200, {from: otherAcc, value: 0}), 'insufficient fee');
+    
+    await this.factory.deployNewPlainTextProposal('plaintext', 'plaintext-descr', [option], ratio('0.4'), ratio('0.6'), 30, 120, 1200, {from: otherAcc, value: this.proposalFee});
+    const proposalID = await this.gov.lastProposalID();
+    const proposalParams = await this.gov.proposalParams(proposalID);
+    const proposal = await PlainTextProposal.at(proposalParams.proposalContract);
+    expect(await proposal.owner()).to.equal(otherAcc);
+    expect(await proposal.name()).to.equal('plaintext');
+    expect(await proposal.description()).to.equal('plaintext-descr');
+})
+
   it('checking proposal verification with explicit timestamps and opinions', async () => {
       // check code which can be checked only by explicitly setting timestamps and opinions
       const pType = 999; // non-standard proposal type
-      this.verifier.addTemplate(pType, 'custom', emptyAddr, DelegatecallType, ratio('0.4'), ratio('0.6'), scales, 1000, 10000, 400, 2000);
+      await this.verifier.addTemplate(pType, 'custom', emptyAddr, DelegatecallType, ratio('0.4'), ratio('0.6'), scales, 1000, 10000, 400, 2000);
       const now = await time.latest();
       const start = now.add(new BN(500));
       const minEnd = start.add(new BN(1000));
@@ -231,7 +247,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         options.push(option);
     }
     await this.factory.deployNewNetworkParameterProposal('network', 'network-descr', options, minVotes, minAgreement, startDelay, minEnd, maxEnd, this.sfc.address, this.verifier.address, _signature, optionsList, _exec, _scales, {value: this.proposalFee, from: defaultAcc});
-    const contract = await this.factory.lastProposal();
+    const contract = await this.factory.lastNetworkProposal();
 
     return {proposalID: await this.gov.lastProposalID(), proposal: contract};
 };
