@@ -1,4 +1,4 @@
-const { EMPTY_ADDRESS } = require('./constants');
+const { EMPTY_ADDRESS } = require('../constants');
 
 async function main() {
   const BytecodeMatcher = await ethers.getContractFactory('BytecodeMatcher');

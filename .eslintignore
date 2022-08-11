@@ -3,4 +3,4 @@ build/**
 node_modules/**
 contracts/**
 truffle.js
-
+scripts/
