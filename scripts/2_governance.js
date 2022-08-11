@@ -1,19 +1,15 @@
+const { SFC_GOVERNABLE } = require('./constants');
+
 async function main() {
   const [deployer] = await ethers.getSigners();
   const deployerAddress = await deployer.getAddress();
   console.log('Deployer Address: ', deployerAddress);
 
   const Governance = await ethers.getContractFactory('Governance');
-  const UnitTestGovernable = await ethers.getContractFactory(
-    'UnitTestGovernable'
-  );
+
   const ProposalTemplates = await ethers.getContractFactory(
     'ProposalTemplates'
   );
-
-  const deployedGovernable = await UnitTestGovernable.deploy();
-  await deployedGovernable.deployed();
-  console.log('Governable deployed to:', deployedGovernable.address);
 
   const deployedGovernance = await Governance.deploy();
   await deployedGovernance.deployed();
@@ -39,7 +35,7 @@ async function main() {
   );
 
   await governance.initialize(
-    deployedGovernable.address,
+    SFC_GOVERNABLE,
     deployedProposalTemplates.address
   );
 }
