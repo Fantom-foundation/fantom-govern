@@ -4,7 +4,7 @@ const {
   SFC_ADDRESS,
   PROPOSAL_TEMPLATES,
   SET_WITHDRAWAL_PERIOD_EPOCH
-} = require('./constants');
+} = require('../constants');
 
 async function main() {
   const [deployer] = await ethers.getSigners();

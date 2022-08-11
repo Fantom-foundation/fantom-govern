@@ -5,7 +5,7 @@ async function main() {
   const deployerAddress = await deployer.getAddress();
   console.log('Deployer Address: ', deployerAddress);
 
-  const Governance = await ethers.getContractFactory('Governance');
+  const Governance = await ethers.getContractFactory('UnitTestGovernance'); //only for testing
 
   const ProposalTemplates = await ethers.getContractFactory(
     'ProposalTemplates'
