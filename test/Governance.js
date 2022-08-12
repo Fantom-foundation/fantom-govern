@@ -136,7 +136,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
       expect(infoOneOption.votingMaxEndTime).to.be.bignumber.equal(infoOneOption.votingStartTime.add(new BN(1198)));
   });
 
-  it('checking creation with a factory', async () => {
+  it('checking plaintext creation with a factory', async () => {
     const pType = new BN(1);
     await this.verifier.addTemplate(pType, 'plaintext', emptyAddr, NonExecutableType, ratio('0.4'), ratio('0.6'), [0, 1, 2, 3, 4], 120, 1200, 30, 30);
     const option = web3.utils.fromAscii('option');
@@ -147,6 +147,9 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
     const proposalID = await this.gov.lastProposalID();
     const proposalParams = await this.gov.proposalParams(proposalID);
     const proposal = await PlainTextProposal.at(proposalParams.proposalContract);
+    const lastPlaintextProposal = await this.factory.proposals(await this.factory.lastPlainTextProposal());
+    expect(await lastPlaintextProposal[0]).to.equal('plaintext');
+    expect(await lastPlaintextProposal[1]).to.equal('plaintext-descr');
     expect(await proposal.owner()).to.equal(otherAcc);
     expect(await proposal.name()).to.equal('plaintext');
     expect(await proposal.description()).to.equal('plaintext-descr');

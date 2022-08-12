@@ -102,13 +102,27 @@ contract ProposalFactory is Ownable {
      }
 
      function _create(string memory __name, string memory __description, bytes32[] memory __options, uint256[] memory params) internal {
-         PlainTextProposal proposal = new PlainTextProposal(__name, __description, __options,
+         PlainTextProposal _deployedProposal = new PlainTextProposal(__name, __description, __options,
              params[0], params[1], params[2], params[3], params[4], address(0));
-         proposal.transferOwnership(msg.sender);
+         _deployedProposal.transferOwnership(msg.sender);
+         lastPlainTextProposal = address(_deployedProposal);
 
-         (IGovernance(governance)).createProposal.value(msg.value)(address(proposal));
+         Proposals storage proposal = proposals[lastPlainTextProposal];
 
-         emit PlaintextProposalDeployed(address(proposal));
+         proposal._name = __name;
+         proposal._description = __description;
+         proposal._options = __options;
+         proposal._minVotes = params[0];
+         proposal._minAgreement = params[1];
+         proposal._start = params[2];
+         proposal._minEnd = params[3];
+         proposal._maxEnd = params[4];
+
+         exists[lastPlainTextProposal] = true;
+
+         (IGovernance(governance)).createProposal.value(msg.value)(address(_deployedProposal));
+
+         emit PlaintextProposalDeployed(address(_deployedProposal));
      }
 
     /// @notice Method for disabling existing NetworkParameterProposal contract
