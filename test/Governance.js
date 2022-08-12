@@ -54,8 +54,9 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
       this.gov = await Governance.new();
       this.gov.initialize(this.govable.address, this.verifier.address);
       this.proposalFee = await this.gov.proposalFee();
-      this.factory = await ProposalFactory.new(this.gov.address);
       this.sfc = await UnitTestMockSFC.new({from: defaultAcc});
+      this.factory = await ProposalFactory.new(this.gov.address, this.sfc.address);
+      
       
       await this.sfc.initialize(defaultAcc, this.gov.address, {from: defaultAcc});
       await this.sfc.setMaxDelegation(new BN('16'), {from: defaultAcc});
@@ -249,7 +250,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
     for (let i = 0; i < optionsNum; i++) {
         options.push(option);
     }
-    await this.factory.deployNewNetworkParameterProposal('network', 'network-descr', options, minVotes, minAgreement, startDelay, minEnd, maxEnd, this.sfc.address, this.verifier.address, _signature, optionsList, _exec, _scales, {value: this.proposalFee, from: defaultAcc});
+    await this.factory.deployNewNetworkParameterProposal('network', 'network-descr', options, minVotes, minAgreement, startDelay, minEnd, maxEnd, this.verifier.address, _signature, optionsList, _exec, _scales, {value: this.proposalFee, from: defaultAcc});
     const contract = await this.factory.lastNetworkProposal();
 
     return {proposalID: await this.gov.lastProposalID(), proposal: contract};
