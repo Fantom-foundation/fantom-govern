@@ -7,6 +7,7 @@ import "../../proposal/PlainTextProposal.sol";
 
 interface IGovernance {
     function createProposal(address proposalAddress) external payable;
+
     function proposalFee() external returns (uint256);
 }
 
@@ -31,30 +32,43 @@ contract ProposalFactory is Ownable {
         bool _deployed;
     }
 
-    mapping (address => Proposals) public proposals;
-    mapping (address => bool) public exists;
+    mapping(address => Proposals) public proposals;
+    mapping(address => bool) public exists;
 
     address public lastNetworkProposal;
     address public lastPlainTextProposal;
     address public governance;
+    address public sfc;
 
-    constructor(address _governance) public {
+    constructor(address _governance, address _sfc) public {
         governance = _governance;
+        sfc = _sfc;
         initialize(msg.sender);
     }
 
     function deployNewNetworkParameterProposal(
-        string memory __name, string memory __description, bytes32[] memory __options, 
-        uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd,
-        address __sfc, address verifier, string memory __signature, uint256[] memory __optionsList, 
-        Proposal.ExecType __exec, uint256[] memory __scales) public payable {
-
+        string memory __name,
+        string memory __description,
+        bytes32[] memory __options,
+        uint256 __minVotes,
+        uint256 __minAgreement,
+        uint256 __start,
+        uint256 __minEnd,
+        uint256 __maxEnd,
+        address verifier,
+        string memory __signature,
+        uint256[] memory __optionsList,
+        Proposal.ExecType __exec,
+        uint256[] memory __scales
+    ) public payable {
         require(
             msg.value >= (IGovernance(governance)).proposalFee(),
             "insufficient fee"
         );
-        
-        NetworkParameterProposal _deployedProposal = new NetworkParameterProposal(__exec, __scales, __sfc, address(this));
+
+
+            NetworkParameterProposal _deployedProposal
+         = new NetworkParameterProposal(__exec, __scales, sfc, address(this));
         _deployedProposal.transferOwnership(msg.sender);
 
         lastNetworkProposal = address(_deployedProposal);
@@ -79,51 +93,74 @@ contract ProposalFactory is Ownable {
         (IGovernance(governance)).createProposal.value(msg.value)(
             lastNetworkProposal
         );
-        
+
         emit NetworkParameterProposalDeployed(lastNetworkProposal);
     }
 
-     function deployNewPlainTextProposal(string calldata __name, string calldata __description, bytes32[] calldata __options,
-         uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd) payable external {
-
+    function deployNewPlainTextProposal(
+        string calldata __name,
+        string calldata __description,
+        bytes32[] calldata __options,
+        uint256 __minVotes,
+        uint256 __minAgreement,
+        uint256 __start,
+        uint256 __minEnd,
+        uint256 __maxEnd
+    ) external payable {
         require(
             msg.value >= (IGovernance(governance)).proposalFee(),
             "insufficient fee"
         );
 
-         uint256[] memory params = new uint256[](5);
-         params[0] = __minVotes;
-         params[1] = __minAgreement;
-         params[2] = __start;
-         params[3] = __minEnd;
-         params[4] = __maxEnd;
+        uint256[] memory params = new uint256[](5);
+        params[0] = __minVotes;
+        params[1] = __minAgreement;
+        params[2] = __start;
+        params[3] = __minEnd;
+        params[4] = __maxEnd;
 
-         _create(__name, __description, __options, params);
-     }
+        _create(__name, __description, __options, params);
+    }
 
-     function _create(string memory __name, string memory __description, bytes32[] memory __options, uint256[] memory params) internal {
-         PlainTextProposal _deployedProposal = new PlainTextProposal(__name, __description, __options,
-             params[0], params[1], params[2], params[3], params[4], address(0));
-         _deployedProposal.transferOwnership(msg.sender);
-         lastPlainTextProposal = address(_deployedProposal);
+    function _create(
+        string memory __name,
+        string memory __description,
+        bytes32[] memory __options,
+        uint256[] memory params
+    ) internal {
+        PlainTextProposal _deployedProposal = new PlainTextProposal(
+            __name,
+            __description,
+            __options,
+            params[0],
+            params[1],
+            params[2],
+            params[3],
+            params[4],
+            address(0)
+        );
+        _deployedProposal.transferOwnership(msg.sender);
+        lastPlainTextProposal = address(_deployedProposal);
 
-         Proposals storage proposal = proposals[lastPlainTextProposal];
+        Proposals storage proposal = proposals[lastPlainTextProposal];
 
-         proposal._name = __name;
-         proposal._description = __description;
-         proposal._options = __options;
-         proposal._minVotes = params[0];
-         proposal._minAgreement = params[1];
-         proposal._start = params[2];
-         proposal._minEnd = params[3];
-         proposal._maxEnd = params[4];
+        proposal._name = __name;
+        proposal._description = __description;
+        proposal._options = __options;
+        proposal._minVotes = params[0];
+        proposal._minAgreement = params[1];
+        proposal._start = params[2];
+        proposal._minEnd = params[3];
+        proposal._maxEnd = params[4];
 
-         exists[lastPlainTextProposal] = true;
+        exists[lastPlainTextProposal] = true;
 
-         (IGovernance(governance)).createProposal.value(msg.value)(address(_deployedProposal));
+        (IGovernance(governance)).createProposal.value(msg.value)(
+            address(_deployedProposal)
+        );
 
-         emit PlaintextProposalDeployed(address(_deployedProposal));
-     }
+        emit PlaintextProposalDeployed(address(_deployedProposal));
+    }
 
     /// @notice Method for disabling existing NetworkParameterProposal contract
     /// @param  proposalContractAddress Address of networkProposal contract
@@ -135,50 +172,90 @@ contract ProposalFactory is Ownable {
             exists[proposalContractAddress],
             "Proposal contract is not registered"
         );
-        
+
         exists[proposalContractAddress] = false;
         emit ProposalDisabled(proposalContractAddress);
     }
 
     /** Getter Functions */
 
-    function getProposalName(address _address) external view returns(string memory) {
-        return(proposals[_address]._name);
+    function getProposalName(address _address)
+        external
+        view
+        returns (string memory)
+    {
+        return (proposals[_address]._name);
     }
 
-    function getProposalDescription(address _address) external view returns(string memory) {
-        return(proposals[_address]._description);
+    function getProposalDescription(address _address)
+        external
+        view
+        returns (string memory)
+    {
+        return (proposals[_address]._description);
     }
 
-    function getProposalSignature(address _address) external view returns(string memory) {
-        return(proposals[_address]._signature);
+    function getProposalSignature(address _address)
+        external
+        view
+        returns (string memory)
+    {
+        return (proposals[_address]._signature);
     }
 
-    function getProposalMinVotes(address _address) external view returns(uint256) {
-        return(proposals[_address]._minVotes);
+    function getProposalMinVotes(address _address)
+        external
+        view
+        returns (uint256)
+    {
+        return (proposals[_address]._minVotes);
     }
 
-    function getProposalMinAgreement(address _address) external view returns(uint256) {
-        return(proposals[_address]._minAgreement);
+    function getProposalMinAgreement(address _address)
+        external
+        view
+        returns (uint256)
+    {
+        return (proposals[_address]._minAgreement);
     }
 
-    function getProposalStart(address _address) external view returns(uint256) {
-        return(proposals[_address]._start);
+    function getProposalStart(address _address)
+        external
+        view
+        returns (uint256)
+    {
+        return (proposals[_address]._start);
     }
 
-    function getProposalMinEnd(address _address) external view returns(uint256) {
-        return(proposals[_address]._minEnd);
+    function getProposalMinEnd(address _address)
+        external
+        view
+        returns (uint256)
+    {
+        return (proposals[_address]._minEnd);
     }
 
-    function getProposalMaxEnd(address _address) external view returns(uint256) {
-        return(proposals[_address]._maxEnd);
+    function getProposalMaxEnd(address _address)
+        external
+        view
+        returns (uint256)
+    {
+        return (proposals[_address]._maxEnd);
     }
 
-    function getProposalOptions(address _address) external view returns(bytes32[] memory) {
-        return(proposals[_address]._options);
+    function getProposalOptions(address _address)
+        external
+        view
+        returns (bytes32[] memory)
+    {
+        return (proposals[_address]._options);
     }
 
-    function getProposalOptionsList(address _address) external view returns(uint256[] memory) {
-        return(proposals[_address]._optionsList);
+    function getProposalOptionsList(address _address)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        return (proposals[_address]._optionsList);
     }
 }

@@ -1,9 +1,9 @@
-const { GOVERNANCE } = require("./constants");
+const { GOVERNANCE, SFC_ADDRESS } = require("./constants");
 
 async function main() {
   const ProposalFactory = await ethers.getContractFactory('ProposalFactory');
 
-  const deployedProposalFactory = await ProposalFactory.deploy(GOVERNANCE);
+  const deployedProposalFactory = await ProposalFactory.deploy(GOVERNANCE, SFC_ADDRESS);
   await deployedProposalFactory.deployed();
   console.log('ProposalFactory deployed to:', deployedProposalFactory.address);
 }
