@@ -5,8 +5,11 @@ require('@openzeppelin/hardhat-upgrades');
 require('@openzeppelin/test-helpers');
 require('@nomiclabs/hardhat-ethers');
 require('@nomiclabs/hardhat-web3');
+require("@nomiclabs/hardhat-etherscan");
+require('hardhat-contract-sizer');
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
+const API_KEY = process.env.API_KEY;
 
 module.exports = {
   networks: {
@@ -26,6 +29,16 @@ module.exports = {
       accounts: [`0x${PRIVATE_KEY}`]
     }
   },
+
+  etherscan: {
+    apiKey: {
+      ftmTestnet: `${API_KEY}`
+    }
+  },
+  contractSizer: {
+    runOnCompile: true,
+  },
+
   mocha: {},
   abiExporter: {
     path: './build/contracts',
