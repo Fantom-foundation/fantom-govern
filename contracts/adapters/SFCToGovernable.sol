@@ -14,7 +14,7 @@ interface SFC {
 }
 
 contract SFCToGovernable is Governable {
-    SFC internal sfc = SFC(address(0xA87c1a650D8aCEfcf017b3Ef480ece942E1BF02b));
+    SFC internal sfc = SFC(address(0x62d5Eb7AFe345881970D269447e59e48BaB2b79C));
 
     // Gets the total weight of voters
     function getTotalWeight() external view returns (uint256) {
