@@ -41,6 +41,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     Governable governableContract;
     IProposalVerifier proposalVerifier;
     uint256 public lastProposalID;
+    uint256 public activeProposals;
     Task[] tasks;
 
     mapping(uint256 => ProposalState) proposals;
@@ -104,7 +105,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
 
         require(prop.params.proposalContract != address(0), "proposal with a given ID doesnt exist");
         require(isInitialStatus(prop.status), "proposal isn't active");
-        require(block.timestamp >= prop.params.deadlines.votingStartTime, "proposal voting has't begun");
+        require(block.timestamp >= prop.params.deadlines.votingStartTime, "proposal voting hasn't begun");
         require(_votes[msg.sender][delegatedTo][proposalID].weight == 0, "vote already exists");
         require(choices.length == prop.params.options.length, "wrong number of choices");
 
@@ -123,6 +124,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         burn(proposalBurntFee());
 
         emit ProposalCreated(lastProposalID);
+        activeProposals++;
     }
 
     function _createProposal(uint256 proposalID, address proposalContract) internal {
@@ -171,6 +173,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
 
         prop.status = statusCanceled();
         emit ProposalCanceled(proposalID);
+        activeProposals--;
     }
 
     // handleTasks triggers proposal deadlines processing for a specified range of tasks
@@ -251,6 +254,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
             if (!expired) {
                 prop.status = statusResolved();
                 emit ProposalResolved(proposalID);
+                activeProposals--;
             } else {
                 prop.status = statusExecutionExpired();
                 emit ProposalExecutionExpired(proposalID);
@@ -258,6 +262,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         } else {
             prop.status = statusFailed();
             emit ProposalRejected(proposalID);
+            activeProposals--;
         }
         return true;
     }
