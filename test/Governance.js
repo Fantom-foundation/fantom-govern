@@ -19,6 +19,8 @@ const OwnableVerifier = artifacts.require('OwnableVerifier');
 const SlashingRefundProposal = artifacts.require('SlashingRefundProposal');
 const NetworkParameterProposalFactory = artifacts.require('NetworkParameterProposalFactory');
 const UnitTestMockSFC = artifacts.require('UnitTestMockSFC');
+const VotesBookKeeper = artifacts.require('VotesBookKeeper');
+const FakeVoteRecounter = artifacts.require('FakeVoteRecounter');
 
 const NonExecutableType = new BN('0');
 const CallType = new BN('1');
@@ -40,13 +42,196 @@ function ratio(n) {
 
 const emptyAddr = '0x0000000000000000000000000000000000000000';
 
+function arrayBNEqual(a, b) {
+    expect(a.length).to.equal(b.length);
+    for (let i = 0; i < a.length; i++) {
+        expect(a[i]).to.be.bignumber.equal(b[i]);
+    }
+}
+
+contract('VoteBookKeeper test', async ([defaultAcc, otherAcc]) => {
+
+    it('checking votes bookkeeper indexes', async () => {
+        const votebook = await VotesBookKeeper.new();
+        const fakeGov = await FakeVoteRecounter.new();
+        await votebook.initialize(defaultAcc, fakeGov.address, 1000);
+        expect(await votebook.owner()).to.equal(defaultAcc);
+
+        {
+            await votebook.onVoted(defaultAcc, defaultAcc, 1);
+            arrayBNEqual(await votebook.getProposalIDs.call(defaultAcc, defaultAcc), [ new BN(1) ]);
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 1)).to.be.bignumber.equal(new BN(1));
+            // duplicate vote
+            await votebook.onVoted(defaultAcc, defaultAcc, 1);
+            arrayBNEqual(await votebook.getProposalIDs.call(defaultAcc, defaultAcc), [ new BN(1) ]);
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 1)).to.be.bignumber.equal(new BN(1));
+
+            await votebook.onVoteCanceled(defaultAcc, defaultAcc, 1);
+            arrayBNEqual(await votebook.getProposalIDs.call(defaultAcc, defaultAcc), []);
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 1)).to.be.bignumber.equal(new BN(0));
+            // duplicate cancelling
+            await votebook.onVoteCanceled(defaultAcc, defaultAcc, 1);
+            arrayBNEqual(await votebook.getProposalIDs.call(defaultAcc, defaultAcc), []);
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 1)).to.be.bignumber.equal(new BN(0));
+        }
+
+        {
+            await votebook.onVoted(defaultAcc, defaultAcc, 1);
+            await votebook.onVoted(defaultAcc, defaultAcc, 2);
+            await votebook.onVoted(defaultAcc, defaultAcc, 3);
+            arrayBNEqual(await votebook.getProposalIDs.call(defaultAcc, defaultAcc), [new BN(1), new BN(2), new BN(3)]);
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 1)).to.be.bignumber.equal(new BN(1));
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 2)).to.be.bignumber.equal(new BN(2));
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 3)).to.be.bignumber.equal(new BN(3));
+
+            // in straight order
+            await votebook.onVoteCanceled(defaultAcc, defaultAcc, 1);
+            arrayBNEqual(await votebook.getProposalIDs.call(defaultAcc, defaultAcc), [new BN(3), new BN(2)]);
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 1)).to.be.bignumber.equal(new BN(0));
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 2)).to.be.bignumber.equal(new BN(2));
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 3)).to.be.bignumber.equal(new BN(1));
+            await votebook.onVoteCanceled(defaultAcc, defaultAcc, 2);
+            await votebook.onVoteCanceled(defaultAcc, defaultAcc, 3);
+            arrayBNEqual(await votebook.getProposalIDs.call(defaultAcc, defaultAcc), []);
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 1)).to.be.bignumber.equal(new BN(0));
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 2)).to.be.bignumber.equal(new BN(0));
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 3)).to.be.bignumber.equal(new BN(0));
+        }
+
+        {
+            await votebook.onVoted(defaultAcc, defaultAcc, 1);
+            await votebook.onVoted(defaultAcc, defaultAcc, 2);
+            await votebook.onVoted(defaultAcc, defaultAcc, 3);
+            arrayBNEqual(await votebook.getProposalIDs.call(defaultAcc, defaultAcc), [new BN(1), new BN(2), new BN(3)]);
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 1)).to.be.bignumber.equal(new BN(1));
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 2)).to.be.bignumber.equal(new BN(2));
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 3)).to.be.bignumber.equal(new BN(3));
+
+            // in reverse order
+            await votebook.onVoteCanceled(defaultAcc, defaultAcc, 3);
+            arrayBNEqual(await votebook.getProposalIDs.call(defaultAcc, defaultAcc), [new BN(1), new BN(2)]);
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 1)).to.be.bignumber.equal(new BN(1));
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 2)).to.be.bignumber.equal(new BN(2));
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 3)).to.be.bignumber.equal(new BN(0));
+            await votebook.onVoteCanceled(defaultAcc, defaultAcc, 2);
+            await votebook.onVoteCanceled(defaultAcc, defaultAcc, 1);
+            arrayBNEqual(await votebook.getProposalIDs.call(defaultAcc, defaultAcc), []);
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 1)).to.be.bignumber.equal(new BN(0));
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 2)).to.be.bignumber.equal(new BN(0));
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 3)).to.be.bignumber.equal(new BN(0));
+        }
+
+        {
+            // different accounts
+            await votebook.onVoted(defaultAcc, defaultAcc, 1);
+            await votebook.onVoted(defaultAcc, otherAcc, 2);
+            await votebook.onVoted(otherAcc, defaultAcc, 3);
+            arrayBNEqual(await votebook.getProposalIDs.call(defaultAcc, defaultAcc), [ new BN(1) ]);
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 1)).to.be.bignumber.equal(new BN(1));
+            arrayBNEqual(await votebook.getProposalIDs.call(defaultAcc, otherAcc), [ new BN(2) ]);
+            expect(await votebook.getVoteIndex.call(defaultAcc, otherAcc, 1)).to.be.bignumber.equal(new BN(0));
+            expect(await votebook.getVoteIndex.call(defaultAcc, otherAcc, 2)).to.be.bignumber.equal(new BN(1));
+            arrayBNEqual(await votebook.getProposalIDs.call(otherAcc, defaultAcc), [ new BN(3) ]);
+            expect(await votebook.getVoteIndex.call(otherAcc, defaultAcc, 3)).to.be.bignumber.equal(new BN(1));
+
+            await votebook.onVoteCanceled(defaultAcc, defaultAcc, 1);
+            await votebook.onVoteCanceled(defaultAcc, otherAcc, 2);
+            await votebook.onVoteCanceled(otherAcc, defaultAcc, 3);
+            arrayBNEqual(await votebook.getProposalIDs.call(defaultAcc, defaultAcc), []);
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 1)).to.be.bignumber.equal(new BN(0));
+            arrayBNEqual(await votebook.getProposalIDs.call(defaultAcc, otherAcc), []);
+            expect(await votebook.getVoteIndex.call(defaultAcc, otherAcc, 1)).to.be.bignumber.equal(new BN(0));
+            arrayBNEqual(await votebook.getProposalIDs.call(defaultAcc, otherAcc), []);
+            expect(await votebook.getVoteIndex.call(otherAcc, defaultAcc, 1)).to.be.bignumber.equal(new BN(0));
+        }
+    });
+
+    it('checking votekeeper pruning outdated votes', async () => {
+        const votebook = await VotesBookKeeper.new();
+        const fakeGov = await FakeVoteRecounter.new();
+        await votebook.initialize(defaultAcc, fakeGov.address, 1000);
+        expect(await votebook.owner()).to.equal(defaultAcc);
+
+        {
+            await votebook.onVoted(defaultAcc, defaultAcc, 1);
+            await votebook.onVoted(defaultAcc, defaultAcc, 2);
+            await votebook.onVoted(defaultAcc, defaultAcc, 3);
+
+            await fakeGov.reset(defaultAcc, defaultAcc);
+            await votebook.recountVotes(defaultAcc, defaultAcc);
+            expect(await fakeGov.failed.call()).to.equal(false);
+            arrayBNEqual(await votebook.getProposalIDs.call(defaultAcc, defaultAcc), [ new BN(1), new BN(2), new BN(3) ]);
+            arrayBNEqual(await fakeGov.getRecounted.call(), [ new BN(1), new BN(2), new BN(3) ]);
+
+            await fakeGov.reset(defaultAcc, defaultAcc);
+            await fakeGov.setOutdatedProposals([2]);
+            await votebook.recountVotes(defaultAcc, defaultAcc);
+            expect(await fakeGov.failed.call()).to.equal(false);
+            arrayBNEqual(await votebook.getProposalIDs.call(defaultAcc, defaultAcc), [ new BN(1), new BN(3) ]);
+            arrayBNEqual(await fakeGov.getRecounted.call(), [ new BN(1), new BN(3) ]);
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 1)).to.be.bignumber.equal(new BN(1));
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 2)).to.be.bignumber.equal(new BN(0));
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 3)).to.be.bignumber.equal(new BN(2));
+
+            await fakeGov.reset(defaultAcc, defaultAcc);
+            await fakeGov.setOutdatedProposals([1, 3]);
+            await votebook.recountVotes(defaultAcc, defaultAcc);
+            expect(await fakeGov.failed.call()).to.equal(false);
+            arrayBNEqual(await votebook.getProposalIDs.call(defaultAcc, defaultAcc), []);
+            arrayBNEqual(await fakeGov.getRecounted.call(), []);
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 1)).to.be.bignumber.equal(new BN(0));
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 2)).to.be.bignumber.equal(new BN(0));
+            expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 3)).to.be.bignumber.equal(new BN(0));
+        }
+    });
+
+    it('checking votekeeper proposals cap', async () => {
+        const votebook = await VotesBookKeeper.new();
+        const fakeGov = await FakeVoteRecounter.new();
+        await votebook.initialize(defaultAcc, fakeGov.address, 1);
+        expect(await votebook.owner()).to.equal(defaultAcc);
+
+        await fakeGov.reset(defaultAcc, defaultAcc);
+        await votebook.onVoted(defaultAcc, defaultAcc, 1);
+        await expectRevert(votebook.onVoted(defaultAcc, defaultAcc, 2), 'too many votes');
+        await votebook.onVoted(defaultAcc, defaultAcc, 1);
+        await votebook.setMaxProposalsPerVoter(2);
+        await votebook.onVoted(defaultAcc, defaultAcc, 2);
+        await expectRevert(votebook.onVoted(defaultAcc, defaultAcc, 3), 'too many votes');
+
+        await fakeGov.reset(defaultAcc, defaultAcc);
+        await fakeGov.setOutdatedProposals([2]);
+        await votebook.onVoted(defaultAcc, defaultAcc, 3);
+
+        expect(await fakeGov.failed.call()).to.equal(false);
+        arrayBNEqual(await votebook.getProposalIDs.call(defaultAcc, defaultAcc), [ new BN(1), new BN(3) ]);
+        arrayBNEqual(await fakeGov.getRecounted.call(), [ new BN(1) ]);
+        expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 1)).to.be.bignumber.equal(new BN(1));
+        expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 2)).to.be.bignumber.equal(new BN(0));
+        expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 3)).to.be.bignumber.equal(new BN(2));
+
+        await fakeGov.reset(defaultAcc, defaultAcc);
+        await fakeGov.setOutdatedProposals([1]);
+        await votebook.onVoted(defaultAcc, defaultAcc, 2);
+
+        expect(await fakeGov.failed.call()).to.equal(false);
+        arrayBNEqual(await votebook.getProposalIDs.call(defaultAcc, defaultAcc), [ new BN(3), new BN(2) ]);
+        arrayBNEqual(await fakeGov.getRecounted.call(), [ new BN(3) ]);
+        expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 1)).to.be.bignumber.equal(new BN(0));
+        expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 2)).to.be.bignumber.equal(new BN(2));
+        expect(await votebook.getVoteIndex.call(defaultAcc, defaultAcc, 3)).to.be.bignumber.equal(new BN(1));
+    });
+});
+
 contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondVoterAcc, delegatorAcc]) => {
     beforeEach(async () => {
         this.govable = await UnitTestGovernable.new();
         this.verifier = await ProposalTemplates.new();
-        this.verifier.initialize();
+        await this.verifier.initialize();
+        this.votebook = await VotesBookKeeper.new();
         this.gov = await Governance.new();
-        this.gov.initialize(this.govable.address, this.verifier.address);
+        await this.votebook.initialize(defaultAcc, this.gov.address, 1000);
+        await this.gov.initialize(this.govable.address, this.verifier.address, this.votebook.address);
         this.proposalFee = await this.gov.proposalFee();
         this.sfc = await UnitTestMockSFC.new({from: defaultAcc});
         this.factory = await NetworkParameterProposalFactory.new(this.gov.address, this.sfc.address);
@@ -386,6 +571,14 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         it('cancel vote via recounting', async () => {
             this.govable.unstake(defaultAcc, ether('10.0'));
             await this.gov.recountVote(defaultAcc, defaultAcc, proposalID, {from: otherAcc});
+            await expectRevert(this.gov.recountVote(defaultAcc, defaultAcc, proposalID, {from: otherAcc}), "doesn't exist");
+            // vote should be erased, checked by afterEach
+        });
+
+        it('cancel vote via recounting from votebook', async () => {
+            this.govable.unstake(defaultAcc, ether('10.0'));
+            await this.votebook.recountVotes(defaultAcc, defaultAcc, {from: otherAcc});
+            arrayBNEqual(await this.votebook.getProposalIDs.call(defaultAcc, defaultAcc), []);
             await expectRevert(this.gov.recountVote(defaultAcc, defaultAcc, proposalID, {from: otherAcc}), "doesn't exist");
             // vote should be erased, checked by afterEach
         });

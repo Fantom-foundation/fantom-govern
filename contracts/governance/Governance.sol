@@ -11,6 +11,7 @@ import "./Constants.sol";
 import "./GovernanceSettings.sol";
 import "./LRC.sol";
 import "../version/Version.sol";
+import "../votebook/votebook.sol";
 
 contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Version {
     using SafeMath for uint256;
@@ -47,6 +48,8 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     mapping(address => mapping(uint256 => uint256)) public overriddenWeight; // voter address, proposalID -> weight
     mapping(address => mapping(address => mapping(uint256 => Vote))) _votes; // voter, delegationReceiver, proposalID -> Vote
 
+    VotesBookKeeper votebook;
+
     event ProposalCreated(uint256 proposalID);
     event ProposalResolved(uint256 proposalID);
     event ProposalRejected(uint256 proposalID);
@@ -59,10 +62,11 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     event Voted(address voter, address delegatedTo, uint256 proposalID, uint256[] choices, uint256 weight);
     event VoteCanceled(address voter, address delegatedTo, uint256 proposalID);
 
-    function initialize(address _governableContract, address _proposalVerifier) public initializer {
+    function initialize(address _governableContract, address _proposalVerifier, address _votebook) public initializer {
         ReentrancyGuard.initialize();
         governableContract = Governable(_governableContract);
         proposalVerifier = IProposalVerifier(_proposalVerifier);
+        votebook = VotesBookKeeper(_votebook);
     }
 
     function proposalParams(uint256 proposalID) public view returns (uint256 pType, Proposal.ExecType executable, uint256 minVotes, uint256 minAgreement, uint256[] memory opinionScales, bytes32[] memory options, address proposalContract, uint256 votingStartTime, uint256 votingMinEndTime, uint256 votingMaxEndTime) {
@@ -341,12 +345,20 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         removeChoicesFromProp(proposalID, v.choices, v.weight);
         delete _votes[voter][delegatedTo][proposalID];
 
+        if (address(votebook) != address(0)) {
+            votebook.onVoteCanceled(voter, delegatedTo, proposalID);
+        }
+
         emit VoteCanceled(voter, delegatedTo, proposalID);
     }
 
     function makeVote(uint256 proposalID, address voter, address delegatedTo, uint256[] memory choices, uint256 weight) internal {
         _votes[voter][delegatedTo][proposalID] = Vote(weight, choices);
         addChoicesToProp(proposalID, choices, weight);
+
+        if (address(votebook) != address(0)) {
+            votebook.onVoted(voter, delegatedTo, proposalID);
+        }
 
         emit Voted(voter, delegatedTo, proposalID, choices, weight);
     }
@@ -465,5 +477,10 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         require(prop.params.executable == Proposal.ExecType.NONE, "proposal is executable");
         require(prop.winnerOptionID == 0, "winner ID is correct");
         (, prop.winnerOptionID) = _calculateVotingTally(prop);
+    }
+
+    function setVoteBook(address v) external {
+        require(address(votebook) == address(0), "already set");
+        votebook = VotesBookKeeper(v);
     }
 }
