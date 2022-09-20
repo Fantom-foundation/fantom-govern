@@ -47,10 +47,9 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         _opinionScales = [0, 2, 3, 4, 5];
         _exec = __exec;
         sfc = SFC(__sfc);
-
-         if (verifier != address(0)) {
-            string memory errMessage = verifyProposalParams(verifier);
-            require(bytes(errMessage).length == 0, errMessage);
+        // verify the proposal right away to avoid deploying a wrong proposal
+        if (verifier != address(0)) {
+            require(verifyProposalParams(verifier), "failed verification");
         }
     }
 
