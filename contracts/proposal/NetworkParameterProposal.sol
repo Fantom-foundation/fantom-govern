@@ -22,11 +22,12 @@ interface SFC {
 contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable {
     Proposal.ExecType _exec;
     SFC public sfc;
-    string public functionSignature;
+    uint8 public functionSignature;
     uint256[] public optionsList;
 
     constructor(
         string[] memory __strings,
+        uint8 __functionSignature,
         bytes32[] memory __options,
         uint256[] memory __params,
         uint256[] memory __optionsList,
@@ -36,7 +37,7 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
     ) public {
         _name = __strings[0];
         _description = __strings[1];
-        functionSignature = __strings[2];
+        functionSignature = __functionSignature;
         _options = __options;
         _minVotes = __params[0];
         _minAgreement = __params[1];
@@ -68,50 +69,22 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
     {
         NetworkParameterProposal self = NetworkParameterProposal(selfAddr);
 
-        if (
-            keccak256(abi.encodePacked(self.functionSignature())) ==
-            keccak256(abi.encodePacked("del"))
-        ) {
+        if (self.functionSignature() == 1) {
             self.sfc().setMaxDelegation(self.optionsList(winnerOptionID));
-        } else if (
-            keccak256(abi.encodePacked(self.functionSignature())) ==
-            keccak256(abi.encodePacked("val"))
-        ) {
+        } else if (self.functionSignature() == 2) {
             self.sfc().setValidatorCommission(self.optionsList(winnerOptionID));
-        } else if (
-            keccak256(abi.encodePacked(self.functionSignature())) ==
-            keccak256(abi.encodePacked("con"))
-        ) {
+        } else if (self.functionSignature() == 3) {
             self.sfc().setContractCommission(self.optionsList(winnerOptionID));
-        } else if (
-            keccak256(abi.encodePacked(self.functionSignature())) ==
-            keccak256(abi.encodePacked("rew"))
-        ) {
+        } else if (self.functionSignature() == 4) {
             self.sfc().setUnlockedRewardRatio(self.optionsList(winnerOptionID));
-        } else if (
-            keccak256(abi.encodePacked(self.functionSignature())) ==
-            keccak256(abi.encodePacked("min"))
-        ) {
+        } else if (self.functionSignature() == 5) {
             self.sfc().setMinLockupDuration(self.optionsList(winnerOptionID));
-        } else if (
-            keccak256(abi.encodePacked(self.functionSignature())) ==
-            keccak256(abi.encodePacked("max"))
-        ) {
+        } else if (self.functionSignature() == 6) {
             self.sfc().setMaxLockupDuration(self.optionsList(winnerOptionID));
-        } else if (
-            keccak256(abi.encodePacked(self.functionSignature())) ==
-            keccak256(abi.encodePacked("eph"))
-        ) {
-            self.sfc().setWithdrawalPeriodEpoch(
-                self.optionsList(winnerOptionID)
-            );
-        } else if (
-            keccak256(abi.encodePacked(self.functionSignature())) ==
-            keccak256(abi.encodePacked("tme"))
-        ) {
-            self.sfc().setWithdrawalPeriodTime(
-                self.optionsList(winnerOptionID)
-            );
+        } else if (self.functionSignature() == 7) {
+            self.sfc().setWithdrawalPeriodEpoch(self.optionsList(winnerOptionID));
+        } else if (self.functionSignature() == 8) {
+            self.sfc().setWithdrawalPeriodTime(self.optionsList(winnerOptionID));
         } else {
             self.sfc().setMinSelfStake(self.optionsList(winnerOptionID));
         }

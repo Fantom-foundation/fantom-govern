@@ -24,15 +24,15 @@ const NonExecutableType = new BN('0');
 const CallType = new BN('1');
 const DelegatecallType = new BN('2');
 
-const MAX_DELEGATION = 'del';
-const VALIDATOR_COMMISSION_FEE = 'val';
-const CONTRACT_COMMISSION_FEE = 'con';
-const UNLOCKED_REWARD = 'rew';
-const MIN_LOCKUP = 'min';
-const MAX_LOCKUP = 'max';
-const WITHDRAWAL_PERIOD_EPOCH_VALUE = 'eph';
-const WITHDRAWAL_PERIOD_TIME_VALUE = 'tme';
-const MIN_SELF_STAKE = 'stk';
+const MAX_DELEGATION = 1;
+const VALIDATOR_COMMISSION_FEE = 2;
+const CONTRACT_COMMISSION_FEE = 3;
+const UNLOCKED_REWARD = 4;
+const MIN_LOCKUP = 5;
+const MAX_LOCKUP = 6;
+const WITHDRAWAL_PERIOD_EPOCH_VALUE = 7;
+const WITHDRAWAL_PERIOD_TIME_VALUE = 8;
+const MIN_SELF_STAKE = 9;
 
 function ratio(n) {
     return ether(n);
@@ -219,9 +219,10 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
       for (let i = 0; i < optionsNum; i++) {
           options.push(option);
       }
-      const _strings = ['network', 'network-descr', _signature]
+      const _strings = ['network', 'network-descr']
+      const functionSignature = _signature;
       const _params = [minVotes, minAgreement, startDelay, minEnd, maxEnd]
-      await this.factory.create(_strings, options, _params, optionsList, _exec, this.verifier.address, {value: this.proposalFee, from: defaultAcc});
+      await this.factory.create(_strings, functionSignature, options, _params, optionsList, _exec, this.verifier.address, {value: this.proposalFee, from: defaultAcc});
       const contract = await this.factory.lastNetworkProposal();
   
       return {proposalID: await this.gov.lastProposalID(), proposal: contract};
@@ -243,7 +244,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
 
     const { proposalID: proposalIdOne } = maxDelegationProposal;
     const { proposalID: proposalIdTwo } = validatorCommissionFeeProposal;
-    const { proposalID: proposalIdThree } =contractCommissionFeeProposal;
+    const { proposalID: proposalIdThree } = contractCommissionFeeProposal;
     const { proposalID: proposalIdFour } = unlockedRewardProposal;
     const { proposalID: proposalIdFive } = minLockupProposal;
     const { proposalID: proposalIdSix } = maxLockupProposal;
@@ -267,14 +268,14 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
     evm.advanceTime(120); // wait until min voting end time
 
     await this.gov.handleTasks(0, 1);
-    await this.gov.handleTasks(0, 2);
-    await this.gov.handleTasks(0, 3);
-    await this.gov.handleTasks(0, 4);
-    await this.gov.handleTasks(0, 5);
-    await this.gov.handleTasks(0, 6);
-    await this.gov.handleTasks(0, 7);
-    await this.gov.handleTasks(0, 8);
-    await this.gov.handleTasks(0, 9);
+    await this.gov.handleTasks(1, 1);
+    await this.gov.handleTasks(2, 1);
+    await this.gov.handleTasks(3, 1);
+    await this.gov.handleTasks(4, 1);
+    await this.gov.handleTasks(5, 1);
+    await this.gov.handleTasks(6, 1);
+    await this.gov.handleTasks(7, 1);
+    await this.gov.handleTasks(8, 1);
 
     expect((await this.sfc.maxDelegatedRatio()).toString()).to.equals('99999000000000000000000');
     expect((await this.sfc.minStakeAmnt()).toString()).to.equals('99999');

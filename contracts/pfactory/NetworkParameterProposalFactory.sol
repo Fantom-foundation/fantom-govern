@@ -19,6 +19,7 @@ contract NetworkParameterProposalFactory is ScopedVerifier {
 
     function create(
         string[] memory __strings,
+        uint8 __functionSignature,
         bytes32[] memory __options,
         uint256[] memory __params,
         uint256[] memory __optionsList,
@@ -27,11 +28,12 @@ contract NetworkParameterProposalFactory is ScopedVerifier {
     ) public payable {
         require(msg.value >= gov.proposalFee(), "insufficient fee");
 
-        _create(__strings, __options, __params, __optionsList, __exec, verifier);
+        _create(__strings, __functionSignature, __options, __params, __optionsList, __exec, verifier);
     }
 
     function _create(
         string[] memory __strings,
+        uint8 __functionSignature,
         bytes32[] memory __options,
         uint256[] memory __params,
         uint256[] memory __optionsList,
@@ -40,6 +42,7 @@ contract NetworkParameterProposalFactory is ScopedVerifier {
     ) internal {
         NetworkParameterProposal proposal = new NetworkParameterProposal(
             __strings, 
+            __functionSignature,
             __options, 
             __params, 
             __optionsList, 
@@ -49,7 +52,9 @@ contract NetworkParameterProposalFactory is ScopedVerifier {
         proposal.transferOwnership(msg.sender);
         lastNetworkProposal = address(proposal);
 
+        unlockedFor = address(proposal);
         gov.createProposal.value(msg.value)(address(proposal));
+        unlockedFor = address(0);
     }
 
 }
