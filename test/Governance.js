@@ -6,6 +6,7 @@ const {
     balance,
 } = require('openzeppelin-test-helpers');
 const {expect} = require('chai');
+const {evm} = require('./test-utils');
 
 const Governance = artifacts.require('UnitTestGovernance');
 const ProposalTemplates = artifacts.require('ProposalTemplates');
@@ -16,10 +17,22 @@ const ExecLoggingProposal = artifacts.require('ExecLoggingProposal');
 const PlainTextProposalFactory = artifacts.require('PlainTextProposalFactory');
 const OwnableVerifier = artifacts.require('OwnableVerifier');
 const SlashingRefundProposal = artifacts.require('SlashingRefundProposal');
+const NetworkParameterProposalFactory = artifacts.require('NetworkParameterProposalFactory');
+const UnitTestMockSFC = artifacts.require('UnitTestMockSFC');
 
 const NonExecutableType = new BN('0');
 const CallType = new BN('1');
 const DelegatecallType = new BN('2');
+
+const MAX_DELEGATION = 1;
+const VALIDATOR_COMMISSION_FEE = 2;
+const CONTRACT_COMMISSION_FEE = 3;
+const UNLOCKED_REWARD = 4;
+const MIN_LOCKUP = 5;
+const MAX_LOCKUP = 6;
+const WITHDRAWAL_PERIOD_EPOCH_VALUE = 7;
+const WITHDRAWAL_PERIOD_TIME_VALUE = 8;
+const MIN_SELF_STAKE = 9;
 
 function ratio(n) {
     return ether(n);
@@ -35,6 +48,17 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         this.gov = await Governance.new();
         this.gov.initialize(this.govable.address, this.verifier.address);
         this.proposalFee = await this.gov.proposalFee();
+        this.sfc = await UnitTestMockSFC.new({from: defaultAcc});
+        this.factory = await NetworkParameterProposalFactory.new(this.gov.address, this.sfc.address);
+
+        await this.sfc.initialize(defaultAcc, this.gov.address, {from: defaultAcc});
+        await this.sfc.setMinSelfStake(new BN('500000'), {from: defaultAcc});
+        await this.sfc.setMaxDelegation(new BN('16'), {from: defaultAcc});
+        await this.sfc.setValidatorCommission(new BN('15'), {from: defaultAcc});
+        await this.sfc.setContractCommission(new BN('30'), {from: defaultAcc});
+        await this.sfc.setUnlockedRewardRatio(new BN('30'), {from: defaultAcc});
+        await this.sfc.setMaxLockupDuration(new BN('86400'), {from: defaultAcc});
+        await this.sfc.setWithdrawalPeriodEpoch(new BN('3'), {from: defaultAcc});
     });
 
     const scales = [0, 2, 3, 4, 5];
@@ -185,6 +209,84 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
 
         return {proposalID: await this.gov.lastProposalID(), proposal: contract};
     };
+  
+    const createNetworkParameterProposalViaFactory = async (optionsList, _exec, optionsNum, minVotes, minAgreement, startDelay = 0, minEnd = 120,  _signature, maxEnd = 1200, _scales = scales) => {
+      if (await this.verifier.exists(15) === false) {
+          await this.verifier.addTemplate(15, 'NetworkParameterProposal', emptyAddr, _exec, ratio('0.0'), ratio('0.0'), _scales, 0, 100000000, 0, 100000000);
+      }
+      const option = web3.utils.fromAscii('99999');
+      const options = [];
+      for (let i = 0; i < optionsNum; i++) {
+          options.push(option);
+      }
+      const _strings = ['network', 'network-descr']
+      const functionSignature = _signature;
+      const _params = [minVotes, minAgreement, startDelay, minEnd, maxEnd]
+      await this.factory.create(_strings, functionSignature, options, _params, optionsList, _exec, this.verifier.address, {value: this.proposalFee, from: defaultAcc});
+      const contract = await this.factory.lastNetworkProposal();
+  
+      return {proposalID: await this.gov.lastProposalID(), proposal: contract};
+  };
+
+  it('checking creation of multiple network parameter proposals and their execution via proposal factory', async () => {
+    const optionsNum = 1; // use maximum number of options to test gas usage
+    const choices = [new BN(4)];
+    const optionsList = [new BN(99999)];
+    const maxDelegationProposal = await createNetworkParameterProposalViaFactory(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, MAX_DELEGATION);
+    const validatorCommissionFeeProposal = await createNetworkParameterProposalViaFactory(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, VALIDATOR_COMMISSION_FEE);
+    const contractCommissionFeeProposal = await createNetworkParameterProposalViaFactory(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, CONTRACT_COMMISSION_FEE);
+    const unlockedRewardProposal = await createNetworkParameterProposalViaFactory(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, UNLOCKED_REWARD);
+    const minLockupProposal = await createNetworkParameterProposalViaFactory(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, MIN_LOCKUP);
+    const maxLockupProposal = await createNetworkParameterProposalViaFactory(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, MAX_LOCKUP);
+    const withdrawalPeriodEpochValueProposal = await createNetworkParameterProposalViaFactory(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, WITHDRAWAL_PERIOD_EPOCH_VALUE);
+    const withdrawalPeriodTimeValueProposal = await createNetworkParameterProposalViaFactory(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, WITHDRAWAL_PERIOD_TIME_VALUE);
+    const minSelfStakeProposal = await createNetworkParameterProposalViaFactory(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, MIN_SELF_STAKE);
+
+    const { proposalID: proposalIdOne } = maxDelegationProposal;
+    const { proposalID: proposalIdTwo } = validatorCommissionFeeProposal;
+    const { proposalID: proposalIdThree } = contractCommissionFeeProposal;
+    const { proposalID: proposalIdFour } = unlockedRewardProposal;
+    const { proposalID: proposalIdFive } = minLockupProposal;
+    const { proposalID: proposalIdSix } = maxLockupProposal;
+    const { proposalID: proposalIdSeven } = withdrawalPeriodEpochValueProposal;
+    const { proposalID: proposalIdEight } = withdrawalPeriodTimeValueProposal;
+    const { proposalID: proposalIdNine } = minSelfStakeProposal;
+    // make new vote
+    await this.govable.stake(defaultAcc, ether('10.0'));
+
+    await this.gov.vote(defaultAcc, proposalIdOne, choices);
+    await this.gov.vote(defaultAcc, proposalIdTwo, choices);
+    await this.gov.vote(defaultAcc, proposalIdThree, choices);
+    await this.gov.vote(defaultAcc, proposalIdFour, choices);
+    await this.gov.vote(defaultAcc, proposalIdFive, choices);
+    await this.gov.vote(defaultAcc, proposalIdSix, choices);
+    await this.gov.vote(defaultAcc, proposalIdSeven, choices);
+    await this.gov.vote(defaultAcc, proposalIdEight, choices);
+    await this.gov.vote(defaultAcc, proposalIdNine, choices);
+
+    // finalize voting by handling its task
+    evm.advanceTime(120); // wait until min voting end time
+
+    await this.gov.handleTasks(0, 1);
+    await this.gov.handleTasks(1, 1);
+    await this.gov.handleTasks(2, 1);
+    await this.gov.handleTasks(3, 1);
+    await this.gov.handleTasks(4, 1);
+    await this.gov.handleTasks(5, 1);
+    await this.gov.handleTasks(6, 1);
+    await this.gov.handleTasks(7, 1);
+    await this.gov.handleTasks(8, 1);
+
+    expect((await this.sfc.maxDelegatedRatio()).toString()).to.equals('99999000000000000000000');
+    expect((await this.sfc.minStakeAmnt()).toString()).to.equals('99999');
+    expect((await this.sfc.validatorCommission()).toString()).to.equals('999990000000000000000');
+    expect((await this.sfc.contractCommission()).toString()).to.equals('999990000000000000000');
+    expect((await this.sfc.unlockedRewardRatio()).toString()).to.equals('999990000000000000000');
+    expect((await this.sfc.minLockupDuration()).toString()).to.equals('1399986');
+    expect((await this.sfc.maxLockupDuration()).toString()).to.equals('36499635');
+    expect((await this.sfc.withdrawalPeriodEpochs()).toString()).to.equals('99999');
+    expect((await this.sfc.withdrawalPeriodTime()).toString()).to.equals('99999');
+});
 
     it('checking self-vote creation', async () => {
         const optionsNum = 3;
