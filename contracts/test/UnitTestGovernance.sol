@@ -8,12 +8,12 @@ contract UnitTestGovernance is Governance {
         return proposalBurntFee() + taskHandlingReward() + taskErasingReward();
     }
     function proposalBurntFee() public pure returns (uint256) {
-        return 0.5 * 1e18;
+        return 0.05 * 1e18;
     }
     function taskHandlingReward() public pure returns (uint256) {
-        return 0.4 * 1e18;
+        return 0.04 * 1e18;
     }
     function taskErasingReward() public pure returns (uint256) {
-        return 0.1 * 1e18;
+        return 0.01 * 1e18;
     }
 }
