@@ -1,5 +1,4 @@
 pragma solidity ^0.5.0;
-pragma experimental ABIEncoderV2;
 
 import "../common/SafeMath.sol";
 import "../governance/Governance.sol";
@@ -18,7 +17,8 @@ contract NetworkParameterProposalFactory is ScopedVerifier {
     }
 
     function create(
-        string[] memory __strings,
+        string memory __name,
+        string memory __description,
         uint8 __functionSignature,
         bytes32[] memory __options,
         uint256[] memory __params,
@@ -28,11 +28,12 @@ contract NetworkParameterProposalFactory is ScopedVerifier {
     ) public payable {
         require(msg.value >= gov.proposalFee(), "insufficient fee");
 
-        _create(__strings, __functionSignature, __options, __params, __optionsList, __exec, verifier);
+        _create(__name, __description, __functionSignature, __options, __params, __optionsList, __exec, verifier);
     }
 
     function _create(
-        string[] memory __strings,
+        string memory __name,
+        string memory __description,
         uint8 __functionSignature,
         bytes32[] memory __options,
         uint256[] memory __params,
@@ -41,7 +42,8 @@ contract NetworkParameterProposalFactory is ScopedVerifier {
         address verifier
     ) internal {
         NetworkParameterProposal proposal = new NetworkParameterProposal(
-            __strings, 
+            __name,
+            __description,
             __functionSignature,
             __options, 
             __params, 

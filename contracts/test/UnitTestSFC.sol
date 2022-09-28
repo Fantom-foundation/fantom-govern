@@ -125,7 +125,7 @@ contract UnitTestMockSFC is Ownable {
     Governable functions
     */
 
-    function _onlyGovernance(address _sender) internal {
+    function _onlyGovernance(address _sender) internal view {
         require((_sender == getGovernance() || _sender == owner()), "SFC: this function is controlled by the owner and governance contract");
     }
 

@@ -404,10 +404,9 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
       for (let i = 0; i < optionsNum; i++) {
           options.push(option);
       }
-      const _strings = ['network', 'network-descr']
       const functionSignature = _signature;
       const _params = [minVotes, minAgreement, startDelay, minEnd, maxEnd]
-      await this.factory.create(_strings, functionSignature, options, _params, optionsList, _exec, this.verifier.address, {value: this.proposalFee, from: defaultAcc});
+      await this.factory.create('network', 'network-descr', functionSignature, options, _params, optionsList, _exec, this.verifier.address, {value: this.proposalFee, from: defaultAcc});
       const contract = await this.factory.lastNetworkProposal();
   
       return {proposalID: await this.gov.lastProposalID(), proposal: contract};

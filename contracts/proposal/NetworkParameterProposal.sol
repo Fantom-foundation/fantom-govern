@@ -1,5 +1,4 @@
 pragma solidity ^0.5.0;
-pragma experimental ABIEncoderV2;
 
 import "./base/Cancelable.sol";
 import "./base/DelegatecallExecutableProposal.sol";
@@ -26,7 +25,8 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
     uint256[] public optionsList;
 
     constructor(
-        string[] memory __strings,
+        string memory __name,
+        string memory __description,
         uint8 __functionSignature,
         bytes32[] memory __options,
         uint256[] memory __params,
@@ -35,8 +35,8 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         address __sfc,
         address verifier
     ) public {
-        _name = __strings[0];
-        _description = __strings[1];
+        _name = __name;
+        _description = __description;
         functionSignature = __functionSignature;
         _options = __options;
         _minVotes = __params[0];
