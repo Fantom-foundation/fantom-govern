@@ -45,9 +45,9 @@ contract NetworkParameterProposalFactory is ScopedVerifier {
             __name,
             __description,
             __functionSignature,
-            __options, 
-            __params, 
-            __optionsList, 
+            __options,
+            __params,
+            __optionsList,
             __exec,
             sfc,
             verifier);
