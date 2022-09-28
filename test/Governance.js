@@ -1,12 +1,15 @@
+const { time } = require('openzeppelin-test-helpers');
 const {
     BN,
     ether,
     expectRevert,
-    time,
     balance,
-} = require('openzeppelin-test-helpers');
-const {expect} = require('chai');
-const {evm} = require('./test-utils');
+} = require('@openzeppelin/test-helpers');
+const chai = require('chai');
+const chaiAsPromised = require('chai-as-promised');
+const { expect } = require('chai');
+const { evm } = require('./test-utils');
+chai.use(chaiAsPromised);
 
 const Governance = artifacts.require('UnitTestGovernance');
 const ProposalTemplates = artifacts.require('ProposalTemplates');
