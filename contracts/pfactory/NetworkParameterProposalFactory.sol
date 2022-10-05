@@ -8,38 +8,34 @@ import "../verifiers/ScopedVerifier.sol";
 contract NetworkParameterProposalFactory is ScopedVerifier {
     using SafeMath for uint256;
     Governance internal gov;
-    address internal sfc;
+    address internal constsAddress;
 
-    constructor(address _governance, address _sfc) public {
+    constructor(address _governance, address _constsAddress) public {
         gov = Governance(_governance);
-        sfc = _sfc;
+        constsAddress = _constsAddress;
     }
 
     function create(
-        string memory __name,
         string memory __description,
-        uint8 __functionSignature,
-        bytes32[] memory __options,
-        uint256[] memory __params,
-        uint256[] memory __optionsList,
-        Proposal.ExecType __exec,
-        address verifier
+        uint8 __methodID,
+        uint256[] memory __optionVals,
+        uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd
     ) public payable {
         NetworkParameterProposal proposal = new NetworkParameterProposal(
-            __name,
             __description,
-            __functionSignature,
-            __options,
-            __params,
-            __optionsList,
-            __exec,
-            sfc,
-            verifier);
+            __methodID,
+            __optionVals,
+            constsAddress,
+            __minVotes,
+            __minAgreement,
+            __start,
+            __minEnd,
+            __maxEnd,
+            address(0));
         proposal.transferOwnership(msg.sender);
 
         unlockedFor = address(proposal);
         gov.createProposal.value(msg.value)(address(proposal));
         unlockedFor = address(0);
     }
-
 }
