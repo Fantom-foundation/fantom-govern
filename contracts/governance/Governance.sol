@@ -479,8 +479,13 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         (, prop.winnerOptionID) = _calculateVotingTally(prop);
     }
 
-    function setVoteBook(address v) external {
+    function upgrade(address _votebook) external {
         require(address(votebook) == address(0), "already set");
-        votebook = VotesBookKeeper(v);
+        votebook = VotesBookKeeper(_votebook);
+        // erase leftovers from upgradeability proxy
+        assembly {
+            sstore(0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103, 0)
+            sstore(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc, 0)
+        }
     }
 }
