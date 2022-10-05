@@ -19,7 +19,7 @@ contract SlashingRefundProposal is DelegatecallExecutableProposal, Cancelable {
     constructor(uint256 __validatorID, string memory __description,
         uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd,
         address __sfc, address verifier) public {
-        _name = strConcat("Refund for Slashed Validator #", uint256ToStr(__validatorID));
+        _name = string(abi.encodePacked("Refund for Slashed Validator #", uint256ToStr(__validatorID)));
         _description = __description;
         _options.push(bytes32("0%"));
         _options.push(bytes32("20%"));
@@ -73,21 +73,5 @@ contract SlashingRefundProposal is DelegatecallExecutableProposal, Cancelable {
             strIdx--;
         }
         return string(bstr);
-    }
-
-    function strConcat(string memory _a, string memory _b) internal pure returns (string memory) {
-        bytes memory _ba = bytes(_a);
-        bytes memory _bb = bytes(_b);
-        string memory ab = new string(_ba.length + _bb.length);
-        bytes memory bab = bytes(ab);
-        uint k = 0;
-        uint i = 0;
-        for (i = 0; i < _ba.length; i++) {
-            bab[k++] = _ba[i];
-        }
-        for (i = 0; i < _bb.length; i++) {
-            bab[k++] = _bb[i];
-        }
-        return string(bab);
     }
 }
