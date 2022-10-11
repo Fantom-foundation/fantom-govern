@@ -412,7 +412,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
       if (await this.verifier.exists(6003) === false) {
           await this.verifier.addTemplate(6003, 'NetworkParameterProposal', emptyAddr, _exec, ratio('0.0'), ratio('0.0'), _scales, 0, 100000000, 0, 100000000);
       }
-      const option = web3.utils.fromAscii('99999');
+      const option = new BN('99999');
       const optionsVals = [];
       for (let i = 0; i < optionsNum; i++) {
         optionsVals.push(option);
@@ -442,7 +442,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
 
     await this.gov.handleTasks(0, 1);
 
-    expect((await this.sfc.minSelfStake()).toString()).to.equals('99999000000000000000000');
+    expect((await this.sfc.minSelfStake()).toString()).to.equals('99999');
 });
 
     it('checking self-vote creation', async () => {
