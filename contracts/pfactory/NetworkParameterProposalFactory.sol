@@ -9,6 +9,7 @@ contract NetworkParameterProposalFactory is ScopedVerifier {
     using SafeMath for uint256;
     Governance internal gov;
     address internal constsAddress;
+    address public lastNetworkProposal;
 
     constructor(address _governance, address _constsAddress) public {
         gov = Governance(_governance);
@@ -33,6 +34,7 @@ contract NetworkParameterProposalFactory is ScopedVerifier {
             __maxEnd,
             address(0));
         proposal.transferOwnership(msg.sender);
+        lastNetworkProposal = address(proposal);
 
         unlockedFor = address(proposal);
         gov.createProposal.value(msg.value)(address(proposal));
