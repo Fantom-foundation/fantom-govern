@@ -1,10 +1,10 @@
+const { time } = require('openzeppelin-test-helpers');
 const {
     BN,
     ether,
     expectRevert,
-    time,
     balance,
-} = require('openzeppelin-test-helpers');
+} = require('@openzeppelin/test-helpers');
 const {expect} = require('chai');
 const {evm} = require('./test-utils');
 
@@ -18,7 +18,7 @@ const PlainTextProposalFactory = artifacts.require('PlainTextProposalFactory');
 const OwnableVerifier = artifacts.require('OwnableVerifier');
 const SlashingRefundProposal = artifacts.require('SlashingRefundProposal');
 const NetworkParameterProposalFactory = artifacts.require('NetworkParameterProposalFactory');
-const UnitTestMockSFC = artifacts.require('UnitTestMockSFC');
+const UnitTestConstantsManager = artifacts.require('UnitTestConstantsManager');
 const VotesBookKeeper = artifacts.require('VotesBookKeeper');
 const FakeVoteRecounter = artifacts.require('FakeVoteRecounter');
 
@@ -26,15 +26,21 @@ const NonExecutableType = new BN('0');
 const CallType = new BN('1');
 const DelegatecallType = new BN('2');
 
-const MAX_DELEGATION = 1;
-const VALIDATOR_COMMISSION_FEE = 2;
-const CONTRACT_COMMISSION_FEE = 3;
-const UNLOCKED_REWARD = 4;
-const MIN_LOCKUP = 5;
-const MAX_LOCKUP = 6;
-const WITHDRAWAL_PERIOD_EPOCH_VALUE = 7;
-const WITHDRAWAL_PERIOD_TIME_VALUE = 8;
-const MIN_SELF_STAKE = 9;
+const UPDATE_MIN_SELF_STAKE = 1;
+const UPDATE_MAXIMUM_DELEGATED_STAKE_RATIO = 2;
+const UPDATE_VALIDATOR_REWARDS_COMMISSION = 3;
+const UPDATE_BURNT_FEE_SHARE = 4;
+const UPDATE_TREASURY_FEE_SHARE = 5;
+const UPDATE_UNLOCKED_REWARD_RATIO = 6;
+const UPDATE_MINIMUM_LOCKUP_DURATION = 7;
+const UPDATE_MAXIMUM_LOCKUP_DURATION = 8;
+const UPDATE_NUMBER_EPOCHS_OF_WITHDRAWAL_PERIOD = 9;
+const UPDATE_WITHDRAWAL_PERIOD = 10;
+const UPDATE_BASE_REWARD_PER_SECOND = 11;
+const UPDATE_TIME_THRESHOLD_FOR_OFFLINE_PENALTY = 12;
+const UPDATE_BLOCKS_THRESHOLD_FOR_OFFLINE_PENALTY = 13;
+const UPDATE_TARGET_GAS_POWER_SECOND = 14;
+const UPDATE_GAS_PRICE_BALANCING_PERIOD = 15;
 
 function ratio(n) {
     return ether(n);
@@ -233,17 +239,6 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         await this.votebook.initialize(defaultAcc, this.gov.address, 1000);
         await this.gov.initialize(this.govable.address, this.verifier.address, this.votebook.address);
         this.proposalFee = await this.gov.proposalFee();
-        this.sfc = await UnitTestMockSFC.new({from: defaultAcc});
-        this.factory = await NetworkParameterProposalFactory.new(this.gov.address, this.sfc.address);
-
-        await this.sfc.initialize(defaultAcc, this.gov.address, {from: defaultAcc});
-        await this.sfc.setMinSelfStake(new BN('500000'), {from: defaultAcc});
-        await this.sfc.setMaxDelegation(new BN('16'), {from: defaultAcc});
-        await this.sfc.setValidatorCommission(new BN('15'), {from: defaultAcc});
-        await this.sfc.setContractCommission(new BN('30'), {from: defaultAcc});
-        await this.sfc.setUnlockedRewardRatio(new BN('30'), {from: defaultAcc});
-        await this.sfc.setMaxLockupDuration(new BN('86400'), {from: defaultAcc});
-        await this.sfc.setWithdrawalPeriodEpoch(new BN('3'), {from: defaultAcc});
     });
 
     const scales = [0, 2, 3, 4, 5];
@@ -394,84 +389,66 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
 
         return {proposalID: await this.gov.lastProposalID(), proposal: contract};
     };
+
+    const initConsts = async () => {
+        const consts = await UnitTestConstantsManager.new({from: defaultAcc});
+        await consts.initialize();
+        await consts.updateMinSelfStake(new BN('317500000000000000'), {from: defaultAcc});
+        await consts.updateMaxDelegatedRatio(new BN('16000000000000000000'), {from: defaultAcc});
+        await consts.updateBurntFeeShare(new BN('2'), {from: defaultAcc});
+        await consts.updateTreasuryFeeShare(new BN('10'), {from: defaultAcc});
+        await consts.updateUnlockedRewardRatio(new BN('30'), {from: defaultAcc});
+        await consts.updateMinLockupDuration(new BN('1209600'), {from: defaultAcc});
+        await consts.updateMaxLockupDuration(new BN('31536000'), {from: defaultAcc});
+        await consts.updateWithdrawalPeriodEpochs(new BN('3'), {from: defaultAcc});
+        await consts.updateWithdrawalPeriodTime(new BN('604800'), {from: defaultAcc});
+        await consts.updateBaseRewardPerSecond(new BN('32'), {from: defaultAcc});
+        await consts.updateOfflinePenaltyThresholdTime(new BN('3600'), {from: defaultAcc});
+        await consts.updateOfflinePenaltyThresholdBlocksNum(new BN('10'), {from: defaultAcc});
+        await consts.updateTargetGasPowerPerSecond(new BN('1000'), {from: defaultAcc});
+        await consts.updateGasPriceBalancingCounterweight(new BN('1'), {from: defaultAcc});
+        return consts;
+    };
   
-    const createNetworkParameterProposalViaFactory = async (optionsList, _exec, optionsNum, minVotes, minAgreement, startDelay = 0, minEnd = 120,  _signature, maxEnd = 1200, _scales = scales) => {
-      if (await this.verifier.exists(15) === false) {
-          await this.verifier.addTemplate(15, 'NetworkParameterProposal', emptyAddr, _exec, ratio('0.0'), ratio('0.0'), _scales, 0, 100000000, 0, 100000000);
-      }
-      const option = web3.utils.fromAscii('99999');
-      const options = [];
-      for (let i = 0; i < optionsNum; i++) {
-          options.push(option);
-      }
-      const _strings = ['network', 'network-descr']
-      const functionSignature = _signature;
-      const _params = [minVotes, minAgreement, startDelay, minEnd, maxEnd]
-      await this.factory.create(_strings, functionSignature, options, _params, optionsList, _exec, this.verifier.address, {value: this.proposalFee, from: defaultAcc});
-      const contract = await this.factory.lastNetworkProposal();
-  
-      return {proposalID: await this.gov.lastProposalID(), proposal: contract};
-  };
+    const createNetworkParameterProposalViaFactory = async (factory, _exec, optionsNum, minVotes, minAgreement, startDelay = 0, minEnd = 120, methodID, maxEnd = 1200, _scales = scales) => {
+        if (await this.verifier.exists(6003) === false) {
+            await this.verifier.addTemplate(6003, 'NetworkParameterProposal', emptyAddr, _exec, ratio('0.0'), ratio('0.0'), _scales, 0, 100000000, 0, 100000000);
+        }
+        const option = new BN('99999');
+        const optionsVals = [];
+        for (let i = 0; i < optionsNum; i++) {
+            optionsVals.push(option);
+        }
+        await factory.create('Network', methodID, optionsVals, minVotes, minAgreement, startDelay, minEnd, maxEnd, {value: this.proposalFee, from: defaultAcc});
+        const contract = await factory.lastNetworkProposal();
 
-  it('checking creation of multiple network parameter proposals and their execution via proposal factory', async () => {
-    const optionsNum = 1; // use maximum number of options to test gas usage
-    const choices = [new BN(4)];
-    const optionsList = [new BN(99999)];
-    const maxDelegationProposal = await createNetworkParameterProposalViaFactory(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, MAX_DELEGATION);
-    const validatorCommissionFeeProposal = await createNetworkParameterProposalViaFactory(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, VALIDATOR_COMMISSION_FEE);
-    const contractCommissionFeeProposal = await createNetworkParameterProposalViaFactory(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, CONTRACT_COMMISSION_FEE);
-    const unlockedRewardProposal = await createNetworkParameterProposalViaFactory(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, UNLOCKED_REWARD);
-    const minLockupProposal = await createNetworkParameterProposalViaFactory(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, MIN_LOCKUP);
-    const maxLockupProposal = await createNetworkParameterProposalViaFactory(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, MAX_LOCKUP);
-    const withdrawalPeriodEpochValueProposal = await createNetworkParameterProposalViaFactory(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, WITHDRAWAL_PERIOD_EPOCH_VALUE);
-    const withdrawalPeriodTimeValueProposal = await createNetworkParameterProposalViaFactory(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, WITHDRAWAL_PERIOD_TIME_VALUE);
-    const minSelfStakeProposal = await createNetworkParameterProposalViaFactory(optionsList, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, MIN_SELF_STAKE);
+        return {proposalID: await this.gov.lastProposalID(), proposal: contract};
+    };
 
-    const { proposalID: proposalIdOne } = maxDelegationProposal;
-    const { proposalID: proposalIdTwo } = validatorCommissionFeeProposal;
-    const { proposalID: proposalIdThree } = contractCommissionFeeProposal;
-    const { proposalID: proposalIdFour } = unlockedRewardProposal;
-    const { proposalID: proposalIdFive } = minLockupProposal;
-    const { proposalID: proposalIdSix } = maxLockupProposal;
-    const { proposalID: proposalIdSeven } = withdrawalPeriodEpochValueProposal;
-    const { proposalID: proposalIdEight } = withdrawalPeriodTimeValueProposal;
-    const { proposalID: proposalIdNine } = minSelfStakeProposal;
-    // make new vote
-    await this.govable.stake(defaultAcc, ether('10.0'));
+    it('checking creation and execution of network parameter proposals via proposal factory', async () => {
+        const optionsNum = 1; // use maximum number of options to test gas usage
+        const choices = [new BN(4)];
 
-    await this.gov.vote(defaultAcc, proposalIdOne, choices);
-    await this.gov.vote(defaultAcc, proposalIdTwo, choices);
-    await this.gov.vote(defaultAcc, proposalIdThree, choices);
-    await this.gov.vote(defaultAcc, proposalIdFour, choices);
-    await this.gov.vote(defaultAcc, proposalIdFive, choices);
-    await this.gov.vote(defaultAcc, proposalIdSix, choices);
-    await this.gov.vote(defaultAcc, proposalIdSeven, choices);
-    await this.gov.vote(defaultAcc, proposalIdEight, choices);
-    await this.gov.vote(defaultAcc, proposalIdNine, choices);
+        const consts = await initConsts();
+        expect((await consts.minSelfStake()).toString()).to.equals('317500000000000000');
 
-    // finalize voting by handling its task
-    evm.advanceTime(120); // wait until min voting end time
+        const factory = await NetworkParameterProposalFactory.new(this.gov.address, consts.address);
 
-    await this.gov.handleTasks(0, 1);
-    await this.gov.handleTasks(1, 1);
-    await this.gov.handleTasks(2, 1);
-    await this.gov.handleTasks(3, 1);
-    await this.gov.handleTasks(4, 1);
-    await this.gov.handleTasks(5, 1);
-    await this.gov.handleTasks(6, 1);
-    await this.gov.handleTasks(7, 1);
-    await this.gov.handleTasks(8, 1);
+        const updateMinSelfStake = await createNetworkParameterProposalViaFactory(factory, DelegatecallType, optionsNum, ratio('0.5'), ratio('0.6'), 0, 120, UPDATE_MIN_SELF_STAKE);
 
-    expect((await this.sfc.maxDelegatedRatio()).toString()).to.equals('99999000000000000000000');
-    expect((await this.sfc.minStakeAmnt()).toString()).to.equals('99999');
-    expect((await this.sfc.validatorCommission()).toString()).to.equals('999990000000000000000');
-    expect((await this.sfc.contractCommission()).toString()).to.equals('999990000000000000000');
-    expect((await this.sfc.unlockedRewardRatio()).toString()).to.equals('999990000000000000000');
-    expect((await this.sfc.minLockupDuration()).toString()).to.equals('1399986');
-    expect((await this.sfc.maxLockupDuration()).toString()).to.equals('36499635');
-    expect((await this.sfc.withdrawalPeriodEpochs()).toString()).to.equals('99999');
-    expect((await this.sfc.withdrawalPeriodTime()).toString()).to.equals('99999');
-});
+        const { proposalID: proposalIdOne } = updateMinSelfStake;
+        // make new vote
+        await this.govable.stake(defaultAcc, ether('10.0'));
+
+        await this.gov.vote(defaultAcc, proposalIdOne, choices);
+
+        // finalize voting by handling its task
+        evm.advanceTime(120); // wait until min voting end time
+
+        await this.gov.handleTasks(0, 1);
+
+        expect((await consts.minSelfStake()).toString()).to.equals('99999');
+    });
 
     it('checking self-vote creation', async () => {
         const optionsNum = 3;
