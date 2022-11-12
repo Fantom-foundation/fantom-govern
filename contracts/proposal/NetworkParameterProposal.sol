@@ -108,7 +108,7 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         _minEnd = __minEnd;
         _maxEnd = __maxEnd;
         getOptionVal = __optionsVals;
-        _opinionScales = [0, 2, 3, 4, 5];
+        _opinionScales = [0, 1, 2, 3, 4];
         consts = ConstsI(__consts);
         // verify the proposal right away to avoid deploying a wrong proposal
         if (verifier != address(0)) {

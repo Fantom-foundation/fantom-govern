@@ -410,7 +410,7 @@ contract('Governance test', async ([defaultAcc, otherAcc, firstVoterAcc, secondV
         return consts;
     };
   
-    const createNetworkParameterProposalViaFactory = async (factory, _exec, optionsNum, minVotes, minAgreement, startDelay = 0, minEnd = 120, methodID, maxEnd = 1200, _scales = scales) => {
+    const createNetworkParameterProposalViaFactory = async (factory, _exec, optionsNum, minVotes, minAgreement, startDelay = 0, minEnd = 120, methodID, maxEnd = 1200, _scales = [0, 1, 2, 3, 4]) => {
         if (await this.verifier.exists(6003) === false) {
             await this.verifier.addTemplate(6003, 'NetworkParameterProposal', emptyAddr, _exec, ratio('0.0'), ratio('0.0'), _scales, 0, 100000000, 0, 100000000);
         }
