@@ -2,6 +2,7 @@ pragma solidity ^0.5.0;
 
 import "../model/Governable.sol";
 
+// todo maybe rename to MockGovernable
 contract UnitTestGovernable is Governable {
     mapping(address => mapping(address => uint256)) delegations; // from, to -> amount
     mapping(address => uint256) rcvDelegations;

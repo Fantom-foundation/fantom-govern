@@ -83,23 +83,8 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
     }
 
     // verifyProposalParams checks proposal parameters
+    // Each proposal type has a template to which the data in proposal must correspond.
     function verifyProposalParams(uint256 pType, Proposal.ExecType executable, uint256 minVotes, uint256 minAgreement, uint256[] calldata opinionScales, uint256 start, uint256 minEnd, uint256 maxEnd) external view returns (bool) {
-        if (start < block.timestamp) {
-            // start in the past
-            return false;
-        }
-        if (minEnd > maxEnd) {
-            // inconsistent data
-            return false;
-        }
-        if (start > minEnd) {
-            // inconsistent data
-            return false;
-        }
-        uint256 minDuration = minEnd - start;
-        uint256 maxDuration = maxEnd - start;
-        uint256 startDelay_ = start - block.timestamp;
-
         if (!exists(pType)) {
             // non-existing template
             return false;
@@ -135,6 +120,22 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
                 return false;
             }
         }
+        if (start < block.timestamp) {
+            // start in the past
+            return false;
+        }
+        if (start > minEnd) {
+            // inconsistent data
+            return false;
+        }
+        if (minEnd > maxEnd) {
+            // inconsistent data
+            return false;
+        }
+
+        uint256 minDuration = minEnd - start;
+        uint256 maxDuration = maxEnd - start;
+        uint256 startDelay_ = start - block.timestamp;
         if (minDuration < template.minVotingDuration) {
             // min. voting duration is too short
             return false;

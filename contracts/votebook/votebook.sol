@@ -2,6 +2,8 @@ pragma solidity ^0.5.0;
 
 import "../ownership/Ownable.sol";
 
+// todo remove dependency on Governance
+// todo create proposal contract
 interface GovernanceI {
     function recountVote(address voterAddr, address delegatedTo, uint256 proposalID) external;
 

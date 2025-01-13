@@ -12,24 +12,34 @@ import "./GovernanceSettings.sol";
 import "./LRC.sol";
 import "../version/Version.sol";
 import "../votebook/votebook.sol";
+import "hardhat/console.sol";
 
 contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Version {
     using SafeMath for uint256;
     using LRC for LRC.Option;
 
     struct Vote {
+        // Weight of the vote - depends on stake
         uint256 weight;
+        // Votes Choices are bound to Proposal Options
+        // Length of choices must be equal to length of options
         uint256[] choices;
     }
 
     struct ProposalState {
         Proposal.Parameters params;
 
-        // voting state
+        // voting state OptionID => LRC.Option
         mapping(uint256 => LRC.Option) options;
         uint256 winnerOptionID;
         uint256 votes; // total weight of votes
 
+        // Refer to Constants.sol
+        // 0 == STATUS_INITIAL
+        // 1 = STATUS_RESOLVED
+        // 1 << 1 == STATUS_FAILED
+        // 1 << 2 == STATUS_CANCELED
+        // 1 << 3 == STATUS_EXECUTION_EXPIRED
         uint256 status;
     }
 
@@ -39,9 +49,11 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         uint256 proposalID;
     }
 
+    // SFC to Governable adapter
     Governable governableContract;
     IProposalVerifier proposalVerifier;
     uint256 public lastProposalID;
+    // todo what is task?
     Task[] tasks;
 
     mapping(uint256 => ProposalState) proposals;
@@ -108,7 +120,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
 
         require(prop.params.proposalContract != address(0), "proposal with a given ID doesnt exist");
         require(isInitialStatus(prop.status), "proposal isn't active");
-        require(block.timestamp >= prop.params.deadlines.votingStartTime, "proposal voting has't begun");
+        require(block.timestamp >= prop.params.deadlines.votingStartTime, "proposal voting hasn't begun");
         require(_votes[msg.sender][delegatedTo][proposalID].weight == 0, "vote already exists");
         require(choices.length == prop.params.options.length, "wrong number of choices");
 
@@ -151,6 +163,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         ok = proposalVerifier.verifyProposalContract(pType, proposalContract);
         require(ok, "proposal contract failed verification");
         // save the parameters
+        // todo seems like we should check whether we are overwriting already existing proposal
         ProposalState storage prop = proposals[proposalID];
         prop.params.pType = pType;
         prop.params.executable = executable;
@@ -290,9 +303,12 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         return (success, false);
     }
 
+    // todo rename to findOptionWinner
+    // _calculateVotingTally finds which option won from a single proposal
     function _calculateVotingTally(ProposalState storage prop) internal view returns (bool, uint256) {
         uint256 minVotesAbs = minVotesAbsolute(governableContract.getTotalWeight(), prop.params.minVotes);
         uint256 mostAgreement = 0;
+        // todo rewrite with bool condition instead of winnerID overflow
         uint256 winnerID = prop.params.options.length;
         if (prop.votes < minVotesAbs) {
             return (false, winnerID);
@@ -355,18 +371,18 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     function makeVote(uint256 proposalID, address voter, address delegatedTo, uint256[] memory choices, uint256 weight) internal {
         _votes[voter][delegatedTo][proposalID] = Vote(weight, choices);
         addChoicesToProp(proposalID, choices, weight);
-
         if (address(votebook) != address(0)) {
             votebook.onVoted(voter, delegatedTo, proposalID);
         }
-
         emit Voted(voter, delegatedTo, proposalID, choices, weight);
     }
 
     function _processNewVote(uint256 proposalID, address voterAddr, address delegatedTo, uint256[] memory choices) internal returns (uint256) {
         if (delegatedTo == voterAddr) {
             // voter isn't a delegator
+            // todo voter is validator ?
             uint256 weight = governableContract.getReceivedWeight(voterAddr);
+            // todo overridden
             uint256 overridden = overriddenWeight[voterAddr][proposalID];
             if (weight > overridden) {
                 weight -= overridden;
@@ -419,6 +435,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         return _processNewVote(proposalID, voterAddr, delegatedTo, origChoices);
     }
 
+    // todo what is DelegationWeight
     function overrideDelegationWeight(address delegatedTo, uint256 proposalID, uint256 weight) internal {
         uint256 overridden = overriddenWeight[delegatedTo][proposalID];
         overridden = overridden.add(weight);

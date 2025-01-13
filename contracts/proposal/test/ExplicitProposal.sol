@@ -2,6 +2,7 @@ pragma solidity ^0.5.0;
 
 import "../base/BaseProposal.sol";
 
+// todo maybe rename to MockProposal
 contract ExplicitProposal is BaseProposal {
     using SafeMath for uint256;
 
@@ -72,6 +73,7 @@ contract ExplicitProposal is BaseProposal {
         return _maxEnd;
     }
 
+    // todo what is differennce
     function execute_delegatecall(address, uint256) external {}
     function execute_call(uint256) external {}
 }

@@ -17,8 +17,12 @@ contract BaseProposal is IProposal {
 
     uint256 _minVotes;
     uint256 _minAgreement;
+    // Static scale for front end
+    // i.e. [1, 2, 3, 4] will result in the scale being divided into 4 parts
+    // where 1 means the least agreement and 4 means the most
     uint256[] _opinionScales;
 
+    // timestamp
     uint256 _start;
     uint256 _minEnd;
     uint256 _maxEnd;
@@ -56,14 +60,17 @@ contract BaseProposal is IProposal {
     }
 
     function votingStartTime() public view returns (uint256) {
+        // todo should be initialized as const on creation of the contract
         return block.timestamp + _start;
     }
 
     function votingMinEndTime() public view returns (uint256) {
+        // todo should be initialized as const on creation of the contract
         return votingStartTime() + _minEnd;
     }
 
     function votingMaxEndTime() public view returns (uint256) {
+        // todo should be initialized as const on creation of the contract
         return votingStartTime() + _maxEnd;
     }
 
