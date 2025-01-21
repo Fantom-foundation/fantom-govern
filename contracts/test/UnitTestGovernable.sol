@@ -2,7 +2,7 @@ pragma solidity ^0.5.0;
 
 import "../model/Governable.sol";
 
-// todo maybe rename to MockGovernable
+/// @dev UnitTestGovernable is a contract for managing stakes and for unit tests
 contract UnitTestGovernable is Governable {
     mapping(address => mapping(address => uint256)) delegations; // from, to -> amount
     mapping(address => uint256) rcvDelegations;

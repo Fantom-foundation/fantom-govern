@@ -3,8 +3,8 @@ pragma solidity ^0.5.0;
 import "./BaseProposal.sol";
 import "../../governance/Proposal.sol";
 
+/// @dev A base for any proposal that can be executed with delegatecall
 contract DelegatecallExecutableProposal is BaseProposal {
-    // Returns execution type
     function executable() public view returns (Proposal.ExecType) {
         return Proposal.ExecType.DELEGATECALL;
     }

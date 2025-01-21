@@ -125,16 +125,6 @@ describe("Governance - vote()", function (){
         await expect(this.governance.vote(this.proposalAddress, 0, []))
             .to.be.revertedWith("proposal with a given ID doesnt exist");
     });
-    it("Should revert when proposal has been canceled", async function () {
-        // todo finish - figure out how to fund signer
-        // await this.governance.createProposal(this.proposalAddress, { value: await this.governance.proposalFee() })
-        // const signer = await ethers.getImpersonatedSigner(this.proposalAddress);
-        // await this.governance.connect(signer).cancelProposal(1)
-        // ethers.provider.
-        // await expect(this.governance.vote(this.proposalAddress, 1, []))
-        //     .to.be.revertedWith("proposal isn't active");
-    });
-
     it("Should revert when voting for proposal which voting has not yet begun", async function () {
         // Extract current block time
         const blockNumBefore = await ethers.provider.getBlockNumber();
@@ -224,25 +214,11 @@ describe("Governance - cancelVote()", function () {
     });
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
 // OLD TESTS
 
 describe("VoteBookKeeper test", function () {
     beforeEach("Deploy governance", async function (){
         [this.defaultAcc, this.otherAcc] = await ethers.getSigners();
-         // = signers[0];
-         // = signers[1];
         this.votebook = await ethers.deployContract("VotesBookKeeper");
         this.fakeGov =await ethers.deployContract("FakeVoteRecounter");
     })

@@ -3,18 +3,20 @@ pragma solidity ^0.5.0;
 import "../common/Decimal.sol";
 import "../common/SafeMath.sol";
 
-/**
- * @dev LRC implements the "least resistant consensus" paper. More detailed description can be found in Fantom's docs.
- */
+
+/// @dev LRC implements the "least resistant consensus" paper. More detailed description can be found in Sonic's docs.
 library LRC {
     using SafeMath for uint256;
 
+    // Option represents a single option in the proposal
     struct Option {
         uint256 votes;
         uint256 agreement;
     }
 
-    // agreementRatio is a ratio of option agreement (higher -> option is less supported)
+    /// @dev ratio of option agreement (higher -> option is less supported)
+    /// @param self The option for which the agreement will be calculated
+    /// @return agreement ratio
     function agreementRatio(Option storage self) internal view returns (uint256) {
         if (self.votes == 0) {
             // avoid division by zero
@@ -23,10 +25,18 @@ library LRC {
         return self.agreement.mul(Decimal.unit()).div(self.votes);
     }
 
+    /// @dev maxAgreementScale returns the maximum agreement scale
+    /// @param opinionScales The opinion scales
+    /// @return max agreement scale
     function maxAgreementScale(uint256[] storage opinionScales) internal view returns (uint256) {
         return opinionScales[opinionScales.length - 1];
     }
 
+    /// @dev addVote adds a vote to the option
+    /// @param self The option to which the vote will be added
+    /// @param opinionID The voted opinion ID
+    /// @param weight The weight of the vote
+    /// @param opinionScales The opinion scales
     function addVote(Option storage self, uint256 opinionID, uint256 weight, uint256[] storage opinionScales) internal {
         require(opinionID < opinionScales.length, "wrong opinion ID");
 
@@ -36,6 +46,11 @@ library LRC {
         self.agreement = self.agreement.add(weight.mul(scale).div(maxAgreementScale(opinionScales)));
     }
 
+    /// @dev removeVote removes a vote from the option
+    /// @param self The option from which the vote will be removed
+    /// @param opinionID The voted opinion ID
+    /// @param weight The weight of the vote
+    /// @param opinionScales The opinion scales
     function removeVote(Option storage self, uint256 opinionID, uint256 weight, uint256[] storage opinionScales) internal {
         require(opinionID < opinionScales.length, "wrong opinion ID");
 

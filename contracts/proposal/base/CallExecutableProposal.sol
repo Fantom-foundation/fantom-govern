@@ -3,6 +3,7 @@ pragma solidity ^0.5.0;
 import "./BaseProposal.sol";
 import "../../governance/Proposal.sol";
 
+/// @dev A base for any proposal that can be executed
 contract CallExecutableProposal is BaseProposal {
     // Returns execution type
     function executable() public view returns (Proposal.ExecType) {

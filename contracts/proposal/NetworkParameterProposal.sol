@@ -35,9 +35,7 @@ interface ConstsI {
     function updateGasPriceBalancingCounterweight(uint256 v) external; // 15
 }
 
-/**
- * @dev NetworkParameterProposal proposal
- */
+/// @dev A proposal to update network parameters
 contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable {
     using SafeMath for uint256;
     Proposal.ExecType _exec;
@@ -126,6 +124,10 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
 
     event NetworkParameterUpgradeIsDone(uint256 newValue);
 
+    /// @dev Execute the proposal
+    /// @dev Depending on the methodID, the corresponding network parameter will be updated
+    /// @param selfAddr The address of the proposal
+    /// @param winnerOptionID The winning option ID
     function execute_delegatecall(address selfAddr, uint256 winnerOptionID) external {
         NetworkParameterProposal self = NetworkParameterProposal(selfAddr);
         uint256 __methodID = self.methodID();
@@ -174,6 +176,9 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         return decimals;
     }
 
+    /// @dev Convert a uint256 to a bytes
+    /// @param num The number to be converted
+    /// @return The converted bytes
     function uint256ToB(uint256 num) internal pure returns (bytes memory) {
         if (num == 0) {
             return bytes("0");
@@ -189,10 +194,17 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         return bstr;
     }
 
+    /// @dev Convert a uint256 to a string
+    /// @param num The number to be converted
+    /// @return The converted string
     function uint256ToStr(uint256 num) internal pure returns (string memory) {
         return string(uint256ToB(num));
     }
 
+    /// @dev Convert a decimal to a string
+    /// @param interger The interger part of the decimal
+    /// @param fractional The fractional part of the decimal
+    /// @return The converted string
     function decimalToStr(uint256 interger, uint256 fractional) internal pure returns (string memory) {
         bytes memory intStr = uint256ToB(interger);
         bytes memory fraStr = uint256ToB(fractional);
@@ -201,12 +213,19 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         return string(abi.encodePacked(intStr, fraStr));
     }
 
+    /// @dev Unpack a decimal number
+    /// @param num The number to be unpacked
+    /// @param unit The unit of the number
     function unpackDecimal(uint256 num, uint256 unit) internal pure returns (uint256 interger, uint256 fractional) {
+        // todo maybe use require
         assert(unit <= 1e18);
         fractional = (num % unit).mul(1e18).div(unit);
         return (num / unit, trimFractional(1e18 + fractional));
     }
 
+    /// @dev Trim the fractional part of a decimal
+    /// @param fractional The decimal to be trimmed
+    /// @return The trimmed decimal
     function trimFractional(uint256 fractional) internal pure returns (uint256) {
         if (fractional == 0) {
             return 0;
@@ -217,6 +236,10 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         return fractional;
     }
 
+    /// @dev Convert an array of uint256 to an array of strings
+    /// @param vals The array of uint256 to be converted
+    /// @param unit The unit of the numbers
+    /// @param symbol The symbol of the numbers
     function uintsToStrs(uint256[] memory vals, uint256 unit, string memory symbol) internal pure returns (bytes32[] memory) {
         bytes32[] memory res = new bytes32[](vals.length);
         for (uint256 i = 0; i < vals.length; i++) {
@@ -230,6 +253,9 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         return res;
     }
 
+    /// @dev Convert a string to a bytes32
+    /// @param str The string to be converted
+    /// @return The converted bytes32
     function strToB32(string memory str) internal pure returns (bytes32 result) {
         bytes memory tempEmptyStringTest = bytes(str);
         require(tempEmptyStringTest.length <= 32, "string is too long");

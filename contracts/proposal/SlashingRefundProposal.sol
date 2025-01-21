@@ -3,15 +3,14 @@ pragma solidity ^0.5.0;
 import "./base/DelegatecallExecutableProposal.sol";
 import "./base/Cancelable.sol";
 
-/**
- * @dev An interface to update slashing penalty ratio
- */
+/// @dev An interface to update slashing penalty ratio
 interface SFC {
     function updateSlashingRefundRatio(uint256 validatorID, uint256 ratio) external;
 
     function isSlashed(uint256 validatorID) external returns(bool);
 }
 
+/// @dev A proposal to refund a slashed validator
 contract SlashingRefundProposal is DelegatecallExecutableProposal, Cancelable {
     uint256 public validatorID;
     address public sfc;
