@@ -5,17 +5,27 @@ import "../governance/Governance.sol";
 import "../proposal/NetworkParameterProposal.sol";
 import "../verifiers/ScopedVerifier.sol";
 
+/// @dev NetworkParameterProposalFactory is a factory contract to create NetworkParameterProposal
 contract NetworkParameterProposalFactory is ScopedVerifier {
     using SafeMath for uint256;
     Governance internal gov;
-    address internal constsAddress;
-    address public lastNetworkProposal;
+    address internal constsAddress; // address of the Constants contract
+    address public lastNetworkProposal; // address of the last created NetworkParameterProposal
 
     constructor(address _governance, address _constsAddress) public {
         gov = Governance(_governance);
         constsAddress = _constsAddress;
     }
 
+    /// @dev create creates a new NetworkParameterProposal
+    /// @param __description The description of the proposal
+    /// @param __methodID The method ID of the proposal
+    /// @param __optionVals The option values of the proposal
+    /// @param __minVotes The minimum number of votes required
+    /// @param __minAgreement The minimum agreement required
+    /// @param __start The start time
+    /// @param __minEnd The minimum end time
+    /// @param __maxEnd The maximum end time
     function create(
         string memory __description,
         uint8 __methodID,

@@ -3,6 +3,7 @@ pragma solidity ^0.5.0;
 import "./BaseProposal.sol";
 import "../../governance/Proposal.sol";
 
+/// @dev A base for any non-executable proposal
 contract NonExecutableProposal is BaseProposal {
     function pType() public view returns (uint256) {
         return uint256(StdProposalTypes.UNKNOWN_NON_EXECUTABLE);

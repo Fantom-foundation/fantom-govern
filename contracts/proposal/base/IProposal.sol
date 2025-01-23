@@ -2,43 +2,66 @@ pragma solidity ^0.5.0;
 
 import "../../governance/Proposal.sol";
 
-/**
- * @dev An abstract proposal
- */
+/// @dev An abstract proposal
 contract IProposal {
-    // Get type of proposal (e.g. plaintext, software upgrade)
+
+    /// @dev Get type of proposal (e.g. plaintext, software upgrade)
+    /// If BaseProposal.sol is used, must be overridden
+    /// @return Proposal type
     function pType() external view returns (uint256);
-    // Proposal execution type when proposal gets resolved
+
+    /// @dev Proposal execution type when proposal gets resolved
+    /// If BaseProposal.sol is used, must be overridden
+    /// @return Proposal execution type
     function executable() external view returns (Proposal.ExecType);
-    // Get min. turnout (ratio)
+
+    /// @dev Get min. turnout (ratio)
+    /// @return Minimal necessary votes
     function minVotes() external view returns (uint256);
-    // Get min. agreement for options (ratio)
+
+    /// @dev Get min. agreement for options (ratio)
+    /// @return Minimal agreement threshold for options
     function minAgreement() external view returns (uint256);
-    // Get scales for opinions
+
+    /// @dev Get scales for opinions
+    /// @return Scales for opinions
     function opinionScales() external view returns (uint256[] memory);
-    // Get options to choose from
+
+    /// @dev Get options to choose from
+    /// @return Options to choose from
     function options() external view returns (bytes32[] memory);
-    // Get date when the voting starts
+
+    /// @dev Get date when the voting starts
+    /// @return Timestamp when the voting starts
     function votingStartTime() external view returns (uint256);
-    // Get date of earliest possible voting end
+
+    /// @dev Get date of earliest possible voting end
+    /// @return Timestamp of earliest possible voting end
     function votingMinEndTime() external view returns (uint256);
-    // Get date of latest possible voting end
+
+    /// @dev Get date of latest possible voting end
+    /// @return Timestamp of latest possible voting end
     function votingMaxEndTime() external view returns (uint256);
 
-    // execute proposal logic on approval (if executable == call)
-    // Called via call opcode from governance contract
+    /// @dev execute proposal logic on approval (if executable == call)
+    /// @dev Called via call opcode from governance contract
+    /// @param optionID The index of the option to execute
     function execute_call(uint256 optionID) external;
 
-    // execute proposal logic on approval (if executable == delegatecall)
-    // Called via delegatecall opcode from governance contract, hence selfAddress is provided
+    /// @dev execute proposal logic on approval (if executable == delegatecall)
+    /// @dev Called via delegatecall opcode from governance contract, hence selfAddress is provided
+    /// @param selfAddress The address of the proposal contract
+    /// @param optionID The index of the option to execute
     function execute_delegatecall(address selfAddress, uint256 optionID) external;
 
-    // Get human-readable name
+    /// @dev Get human-readable name
+    /// @return Human-readable name
     function name() external view returns (string memory);
-    // Get human-readable description
+    /// @dev Get human-readable description
+    /// @return Human-readable description
     function description() external view returns (string memory);
 
-    // Standard proposal types. The standard may be outdated, actual proposal templates may differ
+    /// @dev Standard proposal types. The standard may be outdated, actual proposal templates may differ
     enum StdProposalTypes {
         NOT_INIT,
         UNKNOWN_NON_EXECUTABLE,

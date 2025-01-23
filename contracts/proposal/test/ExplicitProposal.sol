@@ -2,6 +2,8 @@ pragma solidity ^0.5.0;
 
 import "../base/BaseProposal.sol";
 
+/// @dev A proposal with all parameters explicitly set
+/// @dev Used for testing purposes
 contract ExplicitProposal is BaseProposal {
     using SafeMath for uint256;
 

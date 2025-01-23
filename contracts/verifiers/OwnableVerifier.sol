@@ -4,7 +4,7 @@ import "../ownership/Ownable.sol";
 import "../governance/Governance.sol";
 import "./ScopedVerifier.sol";
 
-
+/// @dev OwnableVerifier is a verifier that only allows the owner to create proposals
 contract OwnableVerifier is ScopedVerifier, Ownable {
     constructor(address govAddress) public {
         Ownable.initialize(msg.sender);

@@ -2,6 +2,7 @@ pragma solidity ^0.5.0;
 
 import "../ownership/Ownable.sol";
 
+/// @dev RelayProxy is a contract for relaying calls to another contract
 contract RelayProxy {
     address public __destination;
     address public __owner;
@@ -11,35 +12,35 @@ contract RelayProxy {
         __destination = _destination;
     }
 
+    /// @dev Emitted when ownership of the contract is transferred.
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    /// @dev Emitted when ownership of the contract is transferred.
     event DestinationChanged(address indexed previousRelay, address indexed newRelay);
 
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Can only be called by the current owner.
-     */
+    /// @dev Transfers ownership of the contract to a new account. - Can only be called by the current owner.
+    /// @param newOwner The address to transfer ownership to.
     function __transferOwnership(address newOwner) public onlyOwner {
         require(newOwner != address(0), "Relay: new owner is the zero address");
         emit OwnershipTransferred(__owner, newOwner);
         __owner = newOwner;
     }
 
+    /// @dev Sets the destination of the relay.
+    /// @param newDestination The address to relay calls to.
     function __setDestination(address newDestination) public onlyOwner {
         require(newDestination != address(0), "new owner address is the zero address");
         emit OwnershipTransferred(__destination, newDestination);
         __destination = newDestination;
     }
 
-    /**
-     * @dev Returns true if the caller is the current owner.
-     */
+
+    /// @dev Returns true if the caller is the current owner.
     function isOwner() internal view returns (bool) {
         return msg.sender == __owner;
     }
 
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
+
+    /// @dev Throws if called by any account other than the owner.
     modifier onlyOwner() {
         require(isOwner(), "Relay: caller is not the owner");
         _;
