@@ -1,6 +1,7 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
-import "../ownership/Ownable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import "../common/Decimal.sol";
 
 /// @dev UnitTestConstantsManager is a contract for managing constants for unit tests
@@ -32,9 +33,7 @@ contract UnitTestConstantsManager is Ownable {
     uint256 public targetGasPowerPerSecond;
     uint256 public gasPriceBalancingCounterweight;
 
-    function initialize() external initializer {
-        Ownable.initialize(msg.sender);
-    }
+    constructor() Ownable(msg.sender) {}
 
     function updateMinSelfStake(uint256 v) external {
         require(v <= 1000000000 * 1e18, "too large value");

@@ -1,4 +1,5 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
 import "../common/Decimal.sol";
 import "../common/SafeMath.sol";
@@ -45,7 +46,7 @@ contract GovernanceSettings is Constants {
         return _maxOptions;
     }
 
-    /// maxExecutionPeriod is maximum time for which proposal is executable after maximum voting end date
+    /// @dev maxExecutionPeriod is maximum time for which proposal is executable after maximum voting end date
     /// @return maximum execution period
     function maxExecutionPeriod() public pure returns (uint256) {
         return _maxExecutionPeriod;

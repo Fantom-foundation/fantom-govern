@@ -1,20 +1,16 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
 import "../common/Decimal.sol";
 import "../proposal/base/IProposal.sol";
 import "./IProposalVerifier.sol";
-import "../ownership/Ownable.sol";
 import "../version/Version.sol";
-import "../common/Initializable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // @dev A storage of current proposal templates. Any new proposal will be verified against the stored template of its type. 
 // Verification checks for parameters and calls additional verifier (if any).
 // Supposed to be owned by the governance contract
-contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version {
-    function initialize() public initializer {
-        Ownable.initialize(msg.sender);
-    }
-
+contract ProposalTemplates is IProposalVerifier, Ownable, Version {
     /// @dev Event emitted when a new template is added
     /// @param id The ID of the template
     event AddedTemplate(uint256 id);
@@ -38,6 +34,8 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
 
     // templates library
     mapping(uint256 => ProposalTemplate) proposalTemplates; // proposal id => ProposalTemplate
+
+    constructor() Ownable(msg.sender) {}
 
     // exists returns true if proposal template is present
     function exists(uint256 id) public view returns (bool) {
@@ -64,7 +62,7 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
     /// @param maxStartDelay The maximum start delay
     function addTemplate(
         uint256 id,
-        string calldata name,
+        string memory name,
         address verifier,
         Proposal.ExecType executable,
         uint256 minVotes,

@@ -1,4 +1,5 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
 import "../governance/Governance.sol";
 import "../proposal/SlashingRefundProposal.sol";
@@ -31,7 +32,7 @@ contract SlashingRefundProposalFactory is ScopedVerifier {
         proposal.transferOwnership(msg.sender);
 
         unlockedFor = address(proposal);
-        gov.createProposal.value(msg.value)(address(proposal));
+        gov.createProposal{value: msg.value}(address(proposal));
         unlockedFor = address(0);
     }
 }

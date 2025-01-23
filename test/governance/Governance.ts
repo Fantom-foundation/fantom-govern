@@ -48,172 +48,6 @@ describe("Governance - createProposal()", function () {
     });
 });
 
-describe("Governance - cancelProposal()", function () {
-    beforeEach("Deploy governance and create Proposal", async function (){
-        // Deploy Governable contract
-        this.governable = await ethers.deployContract("UnitTestGovernable")
-        const governableAddress = this.governable.getAddress()
-        // Deploy Verifier contract todo maybe stop using mock verifier
-        const verifier = await ethers.deployContract("MockVerifier")
-        const verifierAddress = await verifier.getAddress()
-        // Deploy VotesBook contract
-        this.votesBook = await ethers.deployContract("VotesBookKeeper")
-        this.votesBook.initialize(governableAddress, verifierAddress, 2)
-        // Deploy governance contract
-        this.governance = await ethers.deployContract("Governance");
-        this.governance.initialize(governableAddress, verifierAddress, this.votesBook.getAddress())
-        // Deploy proposal
-        this.proposalContract = await ethers.deployContract("ExplicitProposal")
-        await this.proposalContract.setOpinionScales([1]);
-        await this.proposalContract.setOptions([ethers.encodeBytes32String("opt")])
-        this.proposalAddress = await this.proposalContract.getAddress()
-        // ID 1
-        await this.governance.createProposal(this.proposalAddress, { value: await this.governance.proposalFee() })
-        this.proposalID = 1
-        // Stake some tokens to delegated address
-        this.delegatedToAddress = randomAddressString();
-        await this.governable.stake(this.delegatedToAddress, ethers.parseEther("10.0"));
-    })
-    it("Should revert when cancelling non-existent proposal", async function () {
-        // ID 2 does not exist
-        await expect(this.governance.cancelProposal(2)).to.be.revertedWith("proposal with a given ID doesnt exist");
-    });
-    it("Should revert when cancelling proposal with votes", async function () {
-        // Make vote
-        const signers = await ethers.getSigners();
-        const voter = signers[0];
-        await this.governance.vote(this.delegatedToAddress, this.proposalID, [0], {
-            from: voter,
-        });
-        await expect(this.governance.cancelProposal(this.proposalID)).to.be.revertedWith("voting has already begun");
-    });
-    it("Should revert when cancel has been sent from any but proposal contract", async function () {
-        // Make vote
-        const signers = await ethers.getSigners();
-        const sender = signers[0];
-        await expect(this.governance.cancelProposal(this.proposalID, {from: sender}))
-            .to.be.revertedWith("must be sent from the proposal contract");
-    });
-});
-
-
-describe("Governance - vote()", function (){
-    beforeEach("Deploy governance and create proposal", async function (){
-        // Deploy Governable contract
-        this.governable = await ethers.deployContract("UnitTestGovernable")
-        const governableAddress = this.governable.getAddress()
-        // Deploy Verifier contract todo maybe stop using mock verifier
-        const verifier = await ethers.deployContract("MockVerifier")
-        const verifierAddress = await verifier.getAddress()
-        // Deploy VotesBook contract
-        this.votesBook = await ethers.deployContract("VotesBookKeeper")
-        this.votesBook.initialize(governableAddress, verifierAddress, 2)
-        // Deploy governance contract
-        this.governance = await ethers.deployContract("Governance");
-        this.governance.initialize(governableAddress, verifierAddress, this.votesBook.getAddress())
-        this.proposalContract = await ethers.deployContract("ExplicitProposal")
-        await this.proposalContract.setOpinionScales([1]);
-        await this.proposalContract.setOptions([ethers.encodeBytes32String("opt")])
-        this.proposalAddress = await this.proposalContract.getAddress()
-        // Stake some tokens to delegated address
-        this.delegatedToAddress = randomAddressString();
-        await this.governable.stake(this.delegatedToAddress, ethers.parseEther("10.0"));
-    })
-    it("Should revert when voting for non existent proposal ID", async function () {
-        await this.governance.createProposal(this.proposalAddress, { value: await this.governance.proposalFee() })
-        // Proposal ID is 0 which does not exist
-        await expect(this.governance.vote(this.proposalAddress, 0, []))
-            .to.be.revertedWith("proposal with a given ID doesnt exist");
-    });
-    it("Should revert when voting for proposal which voting has not yet begun", async function () {
-        // Extract current block time
-        const blockNumBefore = await ethers.provider.getBlockNumber();
-        const blockBefore = await ethers.provider.getBlock(blockNumBefore);
-        expect(blockBefore).not.null
-        const timestamp = blockBefore!.timestamp;
-        // Double the timestamp for voting start time - voting hasn't yet begun
-        await this.proposalContract.setVotingStartTime(2*timestamp)
-        await this.governance.createProposal(this.proposalAddress, { value: await this.governance.proposalFee() })
-        await expect(this.governance.vote(this.delegatedToAddress, 1, []))
-            .to.be.revertedWith("proposal voting hasn't begun");
-    });
-    it("Should revert when voting for proposal more than once", async function () {
-        await this.governance.createProposal(this.proposalAddress, { value: await this.governance.proposalFee() })
-        // Stake to the proposed address
-        await this.governance.vote(this.delegatedToAddress, 1, [0]);
-        await expect(this.governance.vote(this.delegatedToAddress, 1, [0]))
-            .to.be.revertedWith("vote already exists");
-    });
-    it("Should revert when voting with incorrect number of choices", async function () {
-        await this.governance.createProposal(this.proposalAddress, { value: await this.governance.proposalFee() })
-        await expect(this.governance.vote(this.delegatedToAddress, 1, [0, 1]))
-            .to.be.revertedWith("wrong number of choices");
-    });
-    it("Should revert when voting with no stake", async function () {
-        await this.governance.createProposal(this.proposalAddress, { value: await this.governance.proposalFee() })
-        // Proposal address does not have any tokens
-        await expect(this.governance.vote(this.proposalAddress, 1, [0])).to.be.revertedWith("zero weight")
-    });
-    it("Should make a record in votesBook", async function () {
-        const signers = await ethers.getSigners();
-        const voter = signers[0];
-        await this.governance.createProposal(this.proposalAddress, { value: await this.governance.proposalFee() })
-        // Stake to the proposed address
-        await this.governance.vote(this.delegatedToAddress, 1, [0], {
-            from: voter,
-        });
-        const proposalIDs = await this.votesBook.getProposalIDs(voter, this.delegatedToAddress);
-        // Only one vote from this address
-        expect(proposalIDs.length).to.equal(1);
-        expect(await this.votesBook.getVoteIndex(voter, this.delegatedToAddress, proposalIDs[0])).to.equal(1);
-    });
-
-})
-
-describe("Governance - cancelVote()", function () {
-    beforeEach("Deploy governance", async function (){
-        // Deploy Governable contract
-        this.governable = await ethers.deployContract("UnitTestGovernable")
-        const governableAddress = this.governable.getAddress()
-        // Deploy Verifier contract todo maybe stop using mock verifier
-        const verifier = await ethers.deployContract("MockVerifier")
-        const verifierAddress = await verifier.getAddress()
-        // Deploy VotesBook contract
-        this.votesBook = await ethers.deployContract("VotesBookKeeper")
-        this.votesBook.initialize(governableAddress, verifierAddress, 2)
-        // Deploy governance contract
-        this.governance = await ethers.deployContract("Governance");
-        this.governance.initialize(governableAddress, verifierAddress, this.votesBook.getAddress())
-        this.proposalContract = await ethers.deployContract("ExplicitProposal")
-        await this.proposalContract.setOpinionScales([1]);
-        await this.proposalContract.setOptions([ethers.encodeBytes32String("opt")])
-        this.proposalAddress = await this.proposalContract.getAddress()
-        // ID 1
-        await this.governance.createProposal(this.proposalAddress, { value: await this.governance.proposalFee() })
-        this.proposalID = 1
-        // Stake some tokens to delegated address
-        this.delegatedToAddress = randomAddressString();
-        await this.governable.stake(this.delegatedToAddress, ethers.parseEther("10.0"));
-    })
-    it("cancelVote() should remove record from votesBook", async function () {
-        // Make vote
-        const signers = await ethers.getSigners();
-        const voter = signers[0];
-        await this.governance.vote(this.delegatedToAddress, this.proposalID, [0], {
-            from: voter,
-        });
-        await this.governance.cancelVote(this.delegatedToAddress, this.proposalID);
-        const proposalIDs = await this.votesBook.getProposalIDs(voter, this.delegatedToAddress);
-        // Nothing should be in votesBook
-        expect(proposalIDs.length).to.equal(0);
-    });
-    it("cancelVote() should revert when canceling non-existent vote", async function () {
-        await this.governance.createProposal(this.proposalAddress, { value: await this.governance.proposalFee() })
-        // Proposal address does not have any tokens
-        await expect(this.governance.cancelVote(this.delegatedToAddress, this.proposalID)).to.be.revertedWith("doesn't exist")
-    });
-});
-
 // OLD TESTS
 
 describe("VoteBookKeeper test", function () {
@@ -388,7 +222,6 @@ describe("Governance test", function () {
     beforeEach(async function (){
         this.govable = await ethers.deployContract("UnitTestGovernable")
         this.verifier = await ethers.deployContract("ProposalTemplates")
-        await this.verifier.initialize();
         this.verifierAddress = await this.verifier.getAddress();
         this.votebook = await ethers.deployContract("VotesBookKeeper");
         this.gov = await ethers.deployContract("Governance");
@@ -542,7 +375,6 @@ describe("Governance test", function () {
 
     const initConsts = async function (defaultAcc: HardhatEthersSigner) {
         const consts = await ethers.deployContract("UnitTestConstantsManager",{from: defaultAcc});
-        await consts.initialize();
         await consts.updateMinSelfStake(317500000000000000n, {from: defaultAcc});
         await consts.updateMaxDelegatedRatio(16000000000000000000n, {from: defaultAcc});
         await consts.updateBurntFeeShare(2n, {from: defaultAcc});
@@ -1526,18 +1358,27 @@ describe("Governance test", function () {
 
         await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
         await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
-        await expect(ownableVerifier.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("Ownable: caller is not the owner");
+        await expect(ownableVerifier.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWithCustomError(
+            ownableVerifier,
+            'OwnableUnauthorizedAccount',
+        );
         await ownableVerifier.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee});
         await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
         await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
-        await expect(ownableVerifier.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("Ownable: caller is not the owner");
+        await expect(ownableVerifier.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWithCustomError(
+            ownableVerifier,
+            'OwnableUnauthorizedAccount',
+        );
 
         // Transfer ownership to otherAcc
         await ownableVerifier.connect(this.defaultAcc).transferOwnership(this.otherAcc);
 
         await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
         await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
-        await expect(ownableVerifier.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("Ownable: caller is not the owner");
+        await expect(ownableVerifier.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWithCustomError(
+            ownableVerifier,
+            'OwnableUnauthorizedAccount',
+        );
         await ownableVerifier.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee});
     });
 

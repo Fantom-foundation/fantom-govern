@@ -1,4 +1,5 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
 import "../common/SafeMath.sol";
 import "../governance/Governance.sol";
@@ -37,7 +38,7 @@ contract NetworkParameterProposalFactory is ScopedVerifier {
         lastNetworkProposal = address(proposal);
 
         unlockedFor = address(proposal);
-        gov.createProposal.value(msg.value)(address(proposal));
+        gov.createProposal{value: msg.value}(address(proposal));
         unlockedFor = address(0);
     }
 }

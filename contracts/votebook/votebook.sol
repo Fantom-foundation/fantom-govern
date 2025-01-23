@@ -1,6 +1,7 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
-import "../ownership/Ownable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /// @dev Interface for the governance contract
 interface GovernanceI {
@@ -10,7 +11,7 @@ interface GovernanceI {
 }
 
 /// @dev A contract that keeps track of votes
-contract VotesBookKeeper is Initializable, Ownable {
+contract VotesBookKeeper is OwnableUpgradeable {
     address gov; // Address of the governance contract
 
     uint256 public maxProposalsPerVoter; // Maximum number of proposals a voter can vote on
@@ -25,9 +26,9 @@ contract VotesBookKeeper is Initializable, Ownable {
     /// @param _gov The address of the governance contract
     /// @param _maxProposalsPerVoter The maximum number of proposals a voter can vote on
     function initialize(address _owner, address _gov, uint256 _maxProposalsPerVoter) public initializer {
-        Ownable.initialize(_owner);
         gov = _gov;
         maxProposalsPerVoter = _maxProposalsPerVoter;
+        __Ownable_init(_owner);
     }
 
     function getProposalIDs(address voter, address delegatedTo) public view returns (uint256[] memory) {
@@ -110,11 +111,11 @@ contract VotesBookKeeper is Initializable, Ownable {
         uint256 len = list.length;
         if (len == idx) {
             // last element
-            list.length--;
+            list.pop();
         } else {
             uint256 last = list[len - 1];
             list[idx - 1] = last;
-            list.length--;
+            list.pop();
             votesIndex[voter][delegatedTo][last] = idx;
         }
     }

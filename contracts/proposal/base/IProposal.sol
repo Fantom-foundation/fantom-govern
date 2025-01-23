@@ -1,10 +1,10 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
 import "../../governance/Proposal.sol";
 
-/// @dev An abstract proposal
-contract IProposal {
-
+/// @dev Interface for any type of proposals
+interface IProposal {
     /// @dev Get type of proposal (e.g. plaintext, software upgrade)
     /// If BaseProposal.sol is used, must be overridden
     /// @return Proposal type
@@ -29,7 +29,7 @@ contract IProposal {
 
     /// @dev Get options to choose from
     /// @return Options to choose from
-    function options() external view returns (bytes32[] memory);
+    function options() external view returns (bytes[] memory);
 
     /// @dev Get date when the voting starts
     /// @return Timestamp when the voting starts
