@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "../../common/SafeMath.sol";
 import "./IProposal.sol";
 import "../../verifiers/IProposalVerifier.sol";
 import "../../governance/Proposal.sol";
 
 /// @dev A base for any proposal
 contract BaseProposal is IProposal {
-    using SafeMath for uint256;
-
     string _name;
     string _description;
     bytes[] _options;

@@ -39,7 +39,6 @@ interface ConstsI {
 
 /// @dev A proposal to update network parameters
 contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable {
-    using SafeMath for uint256;
     Proposal.ExecType _exec;
     ConstsI public consts;
     uint8 public methodID;
@@ -210,7 +209,7 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
     function unpackDecimal(uint256 num, uint256 unit) internal pure returns (uint256 interger, uint256 fractional) {
         // todo maybe use require
         assert(unit <= 1e18);
-        fractional = (num % unit).mul(1e18).div(unit);
+        fractional = (num % unit) * 1e18 / unit;
         return (num / unit, trimFractional(1e18 + fractional));
     }
 

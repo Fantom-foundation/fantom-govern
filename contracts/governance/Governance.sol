@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "../common/SafeMath.sol";
 import "../model/Governable.sol";
 import "../proposal/SoftwareUpgradeProposal.sol";
 import "../proposal/base/IProposal.sol";
@@ -16,7 +15,6 @@ import {ReentrancyGuardTransient} from "@openzeppelin/contracts/utils/Reentrancy
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettings, Version {
-    using SafeMath for uint256;
     using LRC for LRC.Option;
 
     struct Vote {
@@ -324,7 +322,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
 
         emit TasksHandled(startIdx, i, handled);
         // reward the sender
-        payable(msg.sender).transfer(handled.mul(taskHandlingReward()));
+        payable(msg.sender).transfer(handled * taskHandlingReward());
     }
 
     /// @dev Clean up inactive tasks.
@@ -343,7 +341,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         require(erased > 0, "no tasks erased");
         emit TasksErased(erased);
         // reward the sender
-        payable(msg.sender).transfer(erased.mul(taskErasingReward()));
+        payable(msg.sender).transfer(erased*taskErasingReward());
     }
 
     /// @dev Handle a single specific task.
@@ -613,11 +611,11 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @param weight The weight of the vote.
     function overrideDelegationWeight(address delegatedTo, uint256 proposalID, uint256 weight) internal {
         uint256 overridden = overriddenWeight[delegatedTo][proposalID];
-        overridden = overridden.add(weight);
+        overridden = overridden + weight;
         overriddenWeight[delegatedTo][proposalID] = overridden;
         Vote storage v = _votes[delegatedTo][delegatedTo][proposalID];
         if (v.choices.length > 0) {
-            v.weight = v.weight.sub(weight);
+            v.weight = v.weight - weight;
             removeChoicesFromProp(proposalID, v.choices, weight);
         }
         emit VoteWeightOverridden(delegatedTo, weight);
@@ -630,11 +628,11 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @param weight The weight of the vote.
     function unOverrideDelegationWeight(address delegatedTo, uint256 proposalID, uint256 weight) internal {
         uint256 overridden = overriddenWeight[delegatedTo][proposalID];
-        overridden = overridden.sub(weight);
+        overridden = overridden - weight;
         overriddenWeight[delegatedTo][proposalID] = overridden;
         Vote storage v = _votes[delegatedTo][delegatedTo][proposalID];
         if (v.choices.length > 0) {
-            v.weight = v.weight.add(weight);
+            v.weight = v.weight + weight;
             addChoicesToProp(proposalID, v.choices, weight);
         }
         emit VoteWeightUnOverridden(delegatedTo, weight);
@@ -647,7 +645,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     function addChoicesToProp(uint256 proposalID, uint256[] memory choices, uint256 weight) internal {
         ProposalState storage prop = proposals[proposalID];
 
-        prop.votes = prop.votes.add(weight);
+        prop.votes = prop.votes + weight;
 
         for (uint256 i = 0; i < prop.params.options.length; i++) {
             prop.options[i].addVote(choices[i], weight, prop.params.opinionScales);
@@ -661,7 +659,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     function removeChoicesFromProp(uint256 proposalID, uint256[] memory choices, uint256 weight) internal {
         ProposalState storage prop = proposals[proposalID];
 
-        prop.votes = prop.votes.sub(weight);
+        prop.votes = prop.votes - weight;
 
         for (uint256 i = 0; i < prop.params.options.length; i++) {
             prop.options[i].removeVote(choices[i], weight, prop.params.opinionScales);

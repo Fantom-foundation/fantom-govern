@@ -2,7 +2,6 @@
 pragma solidity 0.8.27;
 
 import "../common/Decimal.sol";
-import "../common/SafeMath.sol";
 import "../model/Governable.sol";
 import "../proposal/SoftwareUpgradeProposal.sol";
 import "./Constants.sol";

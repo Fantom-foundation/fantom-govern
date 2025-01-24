@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "../common/SafeMath.sol";
 import "../common/Decimal.sol";
 
 contract StatusConstants {
@@ -47,8 +46,6 @@ contract StatusConstants {
 }
 
 contract Constants is StatusConstants {
-    using SafeMath for uint256;
-
     function minVotesAbsolute(uint256 totalWeight, uint256 minVotesRatio) public pure returns (uint256) {
         return totalWeight * minVotesRatio / Decimal.unit();
     }

@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "../common/SafeMath.sol";
 import "../governance/Governance.sol";
 import "../proposal/NetworkParameterProposal.sol";
 import "../verifiers/ScopedVerifier.sol";
 
 contract NetworkParameterProposalFactory is ScopedVerifier {
-    using SafeMath for uint256;
     Governance internal gov;
     address internal constsAddress;
     address public lastNetworkProposal;

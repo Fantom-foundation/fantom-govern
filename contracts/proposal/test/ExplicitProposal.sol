@@ -7,8 +7,6 @@ import "../base/BaseProposal.sol";
 /// @dev A proposal with all parameters explicitly set
 /// @dev Used for testing purposes
 contract ExplicitProposal is BaseProposal {
-    using SafeMath for uint256;
-
     uint256 _pType;
     Proposal.ExecType _exec;
 
