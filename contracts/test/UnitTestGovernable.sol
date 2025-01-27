@@ -5,8 +5,8 @@ import "../model/Governable.sol";
 
 /// @dev UnitTestGovernable is a contract for managing stakes and for unit tests
 contract UnitTestGovernable is Governable {
-    mapping(address => mapping(address => uint256)) delegations; // from, to -> amount
-    mapping(address => uint256) rcvDelegations;
+    mapping(address => mapping(address => uint256)) public delegations; // from, to -> amount
+    mapping(address => uint256) public rcvDelegations;
     uint256 public totalStake;
 
     function stake(address to, uint256 amount) external {

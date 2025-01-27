@@ -8,8 +8,8 @@ import "../base/BaseProposal.sol";
 contract ExplicitProposal is BaseProposal {
     using SafeMath for uint256;
 
-    uint256 _pType;
-    Proposal.ExecType _exec;
+    uint256 private _pType;
+    Proposal.ExecType private _exec;
 
     function setType(uint256 v) public {
         _pType = v;

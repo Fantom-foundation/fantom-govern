@@ -12,6 +12,9 @@ import "../common/Initializable.sol";
 // Verification checks for parameters and calls additional verifier (if any).
 // Supposed to be owned by the governance contract
 contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version {
+    // templates library
+    mapping(uint256 => ProposalTemplate) public proposalTemplates; // proposal type => ProposalTemplate
+
     function initialize() public initializer {
         Ownable.initialize(msg.sender);
     }
@@ -37,8 +40,6 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
         uint256 maxStartDelay; // maximum delay of the voting (i.e. must start sooner)
     }
 
-    // templates library
-    mapping(uint256 => ProposalTemplate) proposalTemplates; // proposal type => ProposalTemplate
 
     // exists returns true if proposal template is present
     function exists(uint256 pType) public view returns (bool) {
@@ -150,6 +151,18 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
         uint256 minEnd,
         uint256 maxEnd
     ) external view returns (bool) {
+        if (start < block.timestamp) {
+            // start in the past
+            return false;
+        }
+        if (minEnd > maxEnd) {
+            // inconsistent data
+            return false;
+        }
+        if (start > minEnd) {
+            // inconsistent data
+            return false;
+        }
         if (!exists(pType)) {
             // non-existing template
             return false;
@@ -185,22 +198,11 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
                 return false;
             }
         }
-        if (start < block.timestamp) {
-            // start in the past
-            return false;
-        }
-        if (start > minEnd) {
-            // inconsistent data
-            return false;
-        }
-        if (minEnd > maxEnd) {
-            // inconsistent data
-            return false;
-        }
 
         uint256 minDuration = minEnd - start;
         uint256 maxDuration = maxEnd - start;
         uint256 startDelay_ = start - block.timestamp;
+
         if (minDuration < template.minVotingDuration) {
             // min. voting duration is too short
             return false;

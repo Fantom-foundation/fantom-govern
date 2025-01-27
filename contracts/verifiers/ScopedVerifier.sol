@@ -8,7 +8,16 @@ contract ScopedVerifier is IProposalVerifier {
     address internal unlockedFor;
 
     // verifyProposalParams checks proposal parameters
-    function verifyProposalParams(uint256, Proposal.ExecType, uint256, uint256, uint256[] calldata, uint256, uint256, uint256) external pure returns (bool) {
+    function verifyProposalParams(
+        uint256,
+        Proposal.ExecType,
+        uint256,
+        uint256,
+        uint256[] calldata,
+        uint256,
+        uint256,
+        uint256
+    ) external pure returns (bool) {
         return true;
     }
 

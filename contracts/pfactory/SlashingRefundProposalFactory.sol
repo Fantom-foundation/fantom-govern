@@ -15,25 +15,49 @@ contract SlashingRefundProposalFactory is ScopedVerifier {
     }
 
     /// @notice create a new SlashingRefundProposal
-    /// @param __validatorID The ID of the validator
-    /// @param __description The description of the proposal
-    /// @param __minVotes The minimum number of votes required
-    /// @param __minAgreement The minimum agreement required
-    /// @param __start The start time
-    /// @param __minEnd The minimum end time
-    /// @param __maxEnd The maximum end time
-    function create(uint256 __validatorID, string calldata __description,
-        uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd) payable external {
+    /// @param validatorID The ID of the validator
+    /// @param description The description of the proposal
+    /// @param minVotes The minimum number of votes required
+    /// @param minAgreement The minimum agreement required
+    /// @param start The start time
+    /// @param minEnd The minimum end time
+    /// @param maxEnd The maximum end time
+    function create(
+        uint256 validatorID,
+        string calldata description,
+        uint256 minVotes,
+        uint256 minAgreement,
+        uint256 start,
+        uint256 minEnd,
+        uint256 maxEnd
+    ) payable external {
         // use memory to avoid stack overflow
         uint256[] memory params = new uint256[](5);
-        params[0] = __minVotes;
-        params[1] = __minAgreement;
-        params[2] = __start;
-        params[3] = __minEnd;
-        params[4] = __maxEnd;
-        require(SFC(sfcAddress).isSlashed(__validatorID), "validator isn't slashed");
-        SlashingRefundProposal proposal = new SlashingRefundProposal(__validatorID, __description,
-            params[0], params[1], params[2], params[3], params[4], sfcAddress, address(0));
+        params[0] = minVotes;
+        params[1] = minAgreement;
+        params[2] = start;
+        params[3] = minEnd;
+        params[4] = maxEnd;
+        _create(validatorID, description, params);
+    }
+
+    function _create(
+        uint256 validatorID,
+        string memory description,
+        uint256[] memory params
+    ) internal {
+        require(SFC(sfcAddress).isSlashed(validatorID), "validator isn't slashed");
+        SlashingRefundProposal proposal = new SlashingRefundProposal(
+            validatorID,
+            description,
+            params[0],
+            params[1],
+            params[2],
+            params[3],
+            params[4],
+            sfcAddress,
+            address(0)
+        );
         proposal.transferOwnership(msg.sender);
 
         unlockedFor = address(proposal);

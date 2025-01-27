@@ -35,23 +35,23 @@ interface SFC {
 
 // @dev SFCToGovernable is an adapter allowing to use the network SFC contract as Governable (governance votes weights provider).
 contract SFCToGovernable is Governable {
-    SFC internal sfc = SFC(address(0xFC00FACE00000000000000000000000000000000));
+    SFC internal _sfc = SFC(address(0xFC00FACE00000000000000000000000000000000));
 
     /// @dev Retrieves the total active stake across all validators.
     /// @return The sum of all active delegated stakes.
     function getTotalWeight() external view returns (uint256) {
-        return sfc.getTotalActiveStake();
+        return _sfc.getTotalActiveStake();
     }
 
     /// @dev Retrieves the total delegated stake received by a specific validator.
     /// @param validator The address of the validator whose received stake is being queried.
     /// @return The total amount of stake delegated to the specified validator.
     function getReceivedWeight(address validator) external view returns (uint256) {
-        uint256 validatorID = sfc.getValidatorID(validator);
+        uint256 validatorID = _sfc.getValidatorID(validator);
         if (validatorID == 0) {
             return 0;
         }
-        (uint256 status, uint256 receivedStake, , , , ,) = sfc.getValidator(validatorID);
+        (uint256 status, uint256 receivedStake, , , , ,) = _sfc.getValidator(validatorID);
         if (status != 0) {
             return 0;
         }
@@ -63,14 +63,14 @@ contract SFCToGovernable is Governable {
     /// @param validator The address of the validator to whom the stake is delegated.
     /// @return The voting weight (stake) of the delegator for the specified validator.
     function getWeight(address delegator, address validator) external view returns (uint256) {
-        uint256 toValidatorID = sfc.getValidatorID(validator);
+        uint256 toValidatorID = _sfc.getValidatorID(validator);
         if (toValidatorID == 0) {
             return 0;
         }
-        (uint256 status, , , , , ,) = sfc.getValidator(toValidatorID);
+        (uint256 status, , , , , ,) = _sfc.getValidator(toValidatorID);
         if (status != 0) {
             return 0;
         }
-        return sfc.getStake(delegator, toValidatorID);
+        return _sfc.getStake(delegator, toValidatorID);
     }
 }

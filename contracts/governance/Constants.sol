@@ -18,33 +18,32 @@ contract StatusConstants {
     uint256 constant STATUS_FAILED = 1 << 1;
     uint256 constant STATUS_CANCELED = 1 << 2;
     uint256 constant STATUS_EXECUTION_EXPIRED = 1 << 3;
+    // task assignments
+    uint256 constant TASK_VOTING = 1;
 
-    function statusInitial() internal pure returns (uint256) {
+    function _statusInitial() internal pure returns (uint256) {
         return STATUS_INITIAL;
     }
 
-    function statusExecutionExpired() internal pure returns (uint256) {
+    function _statusExecutionExpired() internal pure returns (uint256) {
         return STATUS_EXECUTION_EXPIRED;
     }
 
-    function statusFailed() internal pure returns (uint256) {
+    function _statusFailed() internal pure returns (uint256) {
         return STATUS_FAILED;
     }
 
-    function statusCanceled() internal pure returns (uint256) {
+    function _statusCanceled() internal pure returns (uint256) {
         return STATUS_CANCELED;
     }
 
-    function statusResolved() internal pure returns (uint256) {
+    function _statusResolved() internal pure returns (uint256) {
         return STATUS_RESOLVED;
     }
 
-    function isInitialStatus(uint256 status) internal pure returns (bool) {
+    function _isInitialStatus(uint256 status) internal pure returns (bool) {
         return status == STATUS_INITIAL;
     }
-
-    // task assignments
-    uint256 constant TASK_VOTING = 1;
 }
 
 /// @dev Constants is a contract for managing constants

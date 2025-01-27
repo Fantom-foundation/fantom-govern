@@ -18,7 +18,7 @@ library LRC {
     /// @dev ratio of option agreement (higher -> option is less supported)
     /// @param self The option for which the agreement will be calculated
     /// @return agreement ratio
-    function agreementRatio(Option storage self) internal view returns (uint256) {
+    function _agreementRatio(Option storage self) internal view returns (uint256) {
         if (self.votes == 0) {
             // avoid division by zero
             return 0;
@@ -29,7 +29,7 @@ library LRC {
     /// @dev maxAgreementScale returns the maximum agreement scale
     /// @param opinionScales The opinion scales
     /// @return max agreement scale
-    function maxAgreementScale(uint256[] storage opinionScales) internal view returns (uint256) {
+    function _maxAgreementScale(uint256[] storage opinionScales) internal view returns (uint256) {
         return opinionScales[opinionScales.length - 1];
     }
 
@@ -38,13 +38,13 @@ library LRC {
     /// @param opinionID The voted opinion ID
     /// @param weight The weight of the vote
     /// @param opinionScales The opinion scales
-    function addVote(Option storage self, uint256 opinionID, uint256 weight, uint256[] storage opinionScales) internal {
+    function _addVote(Option storage self, uint256 opinionID, uint256 weight, uint256[] storage opinionScales) internal {
         require(opinionID < opinionScales.length, "wrong opinion ID");
 
         uint256 scale = opinionScales[opinionID];
 
         self.votes = self.votes.add(weight);
-        self.agreement = self.agreement.add(weight.mul(scale).div(maxAgreementScale(opinionScales)));
+        self.agreement = self.agreement.add(weight.mul(scale).div(_maxAgreementScale(opinionScales)));
     }
 
     /// @dev removeVote removes a vote from the option
@@ -52,12 +52,12 @@ library LRC {
     /// @param opinionID The voted opinion ID
     /// @param weight The weight of the vote
     /// @param opinionScales The opinion scales
-    function removeVote(Option storage self, uint256 opinionID, uint256 weight, uint256[] storage opinionScales) internal {
+    function _removeVote(Option storage self, uint256 opinionID, uint256 weight, uint256[] storage opinionScales) internal {
         require(opinionID < opinionScales.length, "wrong opinion ID");
 
         uint256 scale = opinionScales[opinionID];
 
         self.votes = self.votes.sub(weight);
-        self.agreement = self.agreement.sub(weight.mul(scale).div(maxAgreementScale(opinionScales)));
+        self.agreement = self.agreement.sub(weight.mul(scale).div(_maxAgreementScale(opinionScales)));
     }
 }

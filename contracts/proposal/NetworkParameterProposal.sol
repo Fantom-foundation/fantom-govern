@@ -40,76 +40,80 @@ interface ConstsI {
 /// @notice A proposal to update network parameters
 contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable {
     using SafeMath for uint256;
-    Proposal.ExecType _exec;
+    Proposal.ExecType public exec;
     ConstsI public consts;
     uint8 public methodID;
     uint256[] public getOptionVal;
 
     constructor(
-        string memory __description,
-        uint8 __methodID,
-        uint256[] memory __optionsVals,
-        address __consts,
-        uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd,
+        string memory _description,
+        uint8 _methodID,
+        uint256[] memory _optionsVals,
+        address _consts,
+        uint256 _minVotes,
+        uint256 _minAgreement,
+        uint256 _start,
+        uint256 _minEnd,
+        uint256 _maxEnd,
         address verifier
     ) {
-        require(__methodID >= 1 && __methodID <= 15, "wrong methodID");
-        if (__methodID == 1) {
+        require(_methodID >= 1 && _methodID <= 15, "wrong methodID");
+        if (_methodID == 1) {
             _name = "Update minimum self-stake";
-            _options = uintsToStrs(__optionsVals, 1e18, " FTM");
-        } else if (__methodID == 2) {
+            _options = uintsToStrs(_optionsVals, 1e18, " FTM");
+        } else if (_methodID == 2) {
             _name = "Update maximum delegated stake ratio";
-            _options = uintsToStrs(__optionsVals, 1e16, " %");
-        } else if (__methodID == 3) {
+            _options = uintsToStrs(_optionsVals, 1e16, " %");
+        } else if (_methodID == 3) {
             _name = "Update validator rewards commission";
-            _options = uintsToStrs(__optionsVals, 1e16, " %");
-        } else if (__methodID == 4) {
+            _options = uintsToStrs(_optionsVals, 1e16, " %");
+        } else if (_methodID == 4) {
             _name = "Update burnt fee share";
-            _options = uintsToStrs(__optionsVals, 1e16, " %");
-        } else if (__methodID == 5) {
+            _options = uintsToStrs(_optionsVals, 1e16, " %");
+        } else if (_methodID == 5) {
             _name = "Update treasury fee share";
-            _options = uintsToStrs(__optionsVals, 1e16, " %");
-        } else if (__methodID == 6) {
+            _options = uintsToStrs(_optionsVals, 1e16, " %");
+        } else if (_methodID == 6) {
             _name = "Update unlocked reward ratio";
-            _options = uintsToStrs(__optionsVals, 1e16, " %");
-        } else if (__methodID == 7) {
+            _options = uintsToStrs(_optionsVals, 1e16, " %");
+        } else if (_methodID == 7) {
             _name = "Update minimum lockup duration";
-            _options = uintsToStrs(__optionsVals, 1440 minutes, " days");
-        } else if (__methodID == 8) {
+            _options = uintsToStrs(_optionsVals, 1440 minutes, " days");
+        } else if (_methodID == 8) {
             _name = "Update maximum lockup duration";
-            _options = uintsToStrs(__optionsVals, 1440 minutes, " days");
-        } else if (__methodID == 9) {
+            _options = uintsToStrs(_optionsVals, 1440 minutes, " days");
+        } else if (_methodID == 9) {
             _name = "Update number epochs of withdrawal period";
-            _options = uintsToStrs(__optionsVals, 1, "");
-        } else if (__methodID == 10) {
+            _options = uintsToStrs(_optionsVals, 1, "");
+        } else if (_methodID == 10) {
             _name = "Update withdrawal period";
-            _options = uintsToStrs(__optionsVals, 60 minutes, " hours");
-        } else if (__methodID == 11) {
+            _options = uintsToStrs(_optionsVals, 60 minutes, " hours");
+        } else if (_methodID == 11) {
             _name = "Update base reward per second";
-            _options = uintsToStrs(__optionsVals, 1e18, " FTM");
-        } else if (__methodID == 12) {
+            _options = uintsToStrs(_optionsVals, 1e18, " FTM");
+        } else if (_methodID == 12) {
             _name = "Update time threshold for offline penalty";
-            _options = uintsToStrs(__optionsVals, 60 minutes, " hours");
-        } else if (__methodID == 13) {
+            _options = uintsToStrs(_optionsVals, 60 minutes, " hours");
+        } else if (_methodID == 13) {
             _name = "Update blocks threshold for offline penalty";
-            _options = uintsToStrs(__optionsVals, 1, "");
-        } else if (__methodID == 14) {
+            _options = uintsToStrs(_optionsVals, 1, "");
+        } else if (_methodID == 14) {
             _name = "Update target gas power second";
-            _options = uintsToStrs(__optionsVals, 1e6, " M");
+            _options = uintsToStrs(_optionsVals, 1e6, " M");
         } else {
             _name = "Update gas price balancing period";
-            _options = uintsToStrs(__optionsVals, 1 minutes, " minutes");
+            _options = uintsToStrs(_optionsVals, 1 minutes, " minutes");
         }
-        _description = __description;
-        methodID = __methodID;
-        _minVotes = __minVotes;
-        _minAgreement = __minAgreement;
-        _start = __start;
-        _minEnd = __minEnd;
-        _maxEnd = __maxEnd;
-        getOptionVal = __optionsVals;
+        _description = _description;
+        methodID = _methodID;
+        _minVotes = _minVotes;
+        _minAgreement = _minAgreement;
+        _start = _start;
+        _minEnd = _minEnd;
+        _maxEnd = _maxEnd;
+        getOptionVal = _optionsVals;
         _opinionScales = [0, 1, 2, 3, 4];
-        consts = ConstsI(__consts);
+        consts = ConstsI(_consts);
         // verify the proposal right away to avoid deploying a wrong proposal
         if (verifier != address(0)) {
             require(verifyProposalParams(verifier), "failed verification");
@@ -216,7 +220,11 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
     /// @param vals The array of uint256 to be converted
     /// @param unit The unit of the numbers
     /// @param symbol The symbol of the numbers
-    function uintsToStrs(uint256[] memory vals, uint256 unit, string memory symbol) internal pure returns (bytes32[] memory) {
+    function uintsToStrs(
+        uint256[] memory vals,
+        uint256 unit,
+        string memory symbol
+    ) internal pure returns (bytes32[] memory) {
         bytes32[] memory res = new bytes32[](vals.length);
         for (uint256 i = 0; i < vals.length; i++) {
             (uint256 integer, uint256 fractional) = unpackDecimal(vals[i], unit);

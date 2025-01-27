@@ -9,16 +9,16 @@ import "./ScopedVerifier.sol";
 contract OwnableVerifier is ScopedVerifier, Ownable {
     constructor(address govAddress) {
         Ownable.initialize(msg.sender);
-        gov = Governance(govAddress);
+        _gov = Governance(govAddress);
     }
 
-    Governance internal gov;
+    Governance internal _gov;
 
     /// @notice create a new proposal
     /// @param propAddr The address of the proposal
     function createProposal(address propAddr) payable external onlyOwner {
         unlockedFor = propAddr;
-        gov.createProposal{value: msg.value}(propAddr);
+        _gov.createProposal{value: msg.value}(propAddr);
         unlockedFor = address(0);
     }
 }

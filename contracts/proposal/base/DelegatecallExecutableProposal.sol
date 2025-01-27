@@ -6,15 +6,15 @@ import "../../governance/Proposal.sol";
 
 /// @notice extended BaseProposal for any proposals with delegate call
 contract DelegatecallExecutableProposal is BaseProposal {
+    function execute_delegatecall(address, uint256) external override virtual{
+        require(false, "must be overridden");
+    }
+
     function executable() public override virtual view returns (Proposal.ExecType) {
         return Proposal.ExecType.DELEGATECALL;
     }
 
     function pType() public override virtual view returns (uint256) {
         return uint256(StdProposalTypes.UNKNOWN_DELEGATECALL_EXECUTABLE);
-    }
-
-    function execute_delegatecall(address, uint256) external override virtual{
-        require(false, "must be overridden");
     }
 }

@@ -14,20 +14,29 @@ contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
     address public upgradeableContract;
     address public newImplementation;
 
-    constructor(string memory __name, string memory __description,
-        uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd,
-        address __upgradeableContract, address __newImplementation, address verifier) {
-        _name = __name;
-        _description = __description;
+    constructor(
+        string memory _name,
+        string memory _description,
+        uint256 _minVotes,
+        uint256 _minAgreement,
+        uint256 _start,
+        uint256 _minEnd,
+        uint256 _maxEnd,
+        address _upgradeableContract,
+        address _newImplementation,
+        address verifier
+    ) {
+        _name = _name;
+        _description = _description;
         _options.push(bytes32("Level of agreement"));
-        _minVotes = __minVotes;
-        _minAgreement = __minAgreement;
+        _minVotes = _minVotes;
+        _minAgreement = _minAgreement;
         _opinionScales = [0, 1, 2, 3, 4];
-        _start = __start;
-        _minEnd = __minEnd;
-        _maxEnd = __maxEnd;
-        upgradeableContract = __upgradeableContract;
-        newImplementation = __newImplementation;
+        _start = _start;
+        _minEnd = _minEnd;
+        _maxEnd = _maxEnd;
+        upgradeableContract = _upgradeableContract;
+        newImplementation = _newImplementation;
         // verify the proposal right away to avoid deploying a wrong proposal
         if (verifier != address(0)) {
             require(verifyProposalParams(verifier), "failed verification");

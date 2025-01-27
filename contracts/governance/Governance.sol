@@ -46,20 +46,20 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         uint256 proposalID;
     }
 
-    Governable governableContract; // SFC to Governable adapter refer to SFCToGovernable.sol
-    IProposalVerifier proposalVerifier;
+    Governable internal governableContract; // SFC to Governable adapter refer to SFCToGovernable.sol
+    IProposalVerifier internal proposalVerifier;
     uint256 public lastProposalID;
 
-    Task[] tasks; // Tasks of all current proposals
+    Task[] public tasks; // Tasks of all current proposals
 
     // ProposalID => ProposalState
-    mapping(uint256 => ProposalState) proposals;
+    mapping(uint256 => ProposalState) public proposals;
     // voter address => proposalID => weight
     mapping(address => mapping(uint256 => uint256)) public overriddenWeight;
     // voter => delegationReceiver => proposalID => Vote
-    mapping(address => mapping(address => mapping(uint256 => Vote))) _votes;
+    mapping(address => mapping(address => mapping(uint256 => Vote))) public votes;
 
-    VotesBookKeeper votebook;
+    VotesBookKeeper internal votebook;
 
     /// @notice Emitted when a new proposal is created.
     /// @param proposalID ID of newly created proposal.
@@ -175,7 +175,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     function proposalOptionState(uint256 proposalID, uint256 optionID) public view returns (uint256 votes, uint256 agreementRatio, uint256 agreement) {
         ProposalState storage prop = proposals[proposalID];
         LRC.Option storage opt = prop.options[optionID];
-        return (opt.votes, LRC.agreementRatio(opt), opt.agreement);
+        return (opt.votes, LRC._agreementRatio(opt), opt.agreement);
     }
 
     /// @notice Get the state of a proposal.
@@ -195,7 +195,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     /// @return weight The weight of the vote.
     /// @return choices The choices of the vote.
     function getVote(address from, address delegatedTo, uint256 proposalID) public view returns (uint256 weight, uint256[] memory choices) {
-        Vote memory v = _votes[from][delegatedTo][proposalID];
+        Vote memory v = votes[from][delegatedTo][proposalID];
         return (v.weight, v.choices);
     }
 
@@ -227,9 +227,9 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         ProposalState storage prop = proposals[proposalID];
 
         require(prop.params.proposalContract != address(0), "proposal with a given ID doesnt exist");
-        require(isInitialStatus(prop.status), "proposal isn't active");
+        require(_isInitialStatus(prop.status), "proposal isn't active");
         require(block.timestamp >= prop.params.deadlines.votingStartTime, "proposal voting hasn't begun");
-        require(_votes[msg.sender][delegatedTo][proposalID].weight == 0, "vote already exists");
+        require(votes[msg.sender][delegatedTo][proposalID].weight == 0, "vote already exists");
         require(choices.length == prop.params.options.length, "wrong number of choices");
 
         uint256 weight = _processNewVote(proposalID, msg.sender, delegatedTo, choices);
@@ -243,71 +243,25 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
 
         lastProposalID++;
         _createProposal(lastProposalID, proposalContract);
-        addTasks(lastProposalID);
+        _addTasks(lastProposalID);
 
         // burn a non-reward part of the proposal fee
-        burn(proposalBurntFee());
+        _burn(proposalBurntFee());
 
         emit ProposalCreated(lastProposalID);
     }
 
-    /// @dev Internal function to create a new proposal.
-    /// @param proposalID The ID of the proposal.
-    /// @param proposalContract The address of the proposal contract.
-    function _createProposal(uint256 proposalID, address proposalContract) internal {
-        require(proposalContract != address(0), "empty proposal address");
-        IProposal p = IProposal(proposalContract);
-        // capture the parameters once to ensure that contract will not return different values
-        uint256 pType = p.pType();
-        Proposal.ExecType executable = p.executable();
-        uint256 minVotes = p.minVotes();
-        uint256 minAgreement = p.minAgreement();
-        uint256[] memory opinionScales = p.opinionScales();
-        uint256 votingStartTime = p.votingStartTime();
-        uint256 votingMinEndTime = p.votingMinEndTime();
-        uint256 votingMaxEndTime = p.votingMaxEndTime();
-        bytes32[] memory options = p.options();
-        // check the parameters and contract
-        require(options.length != 0, "proposal options are empty - nothing to vote for");
-        require(options.length <= maxOptions(), "too many options");
-        bool ok;
-        ok = proposalVerifier.verifyProposalParams(
-            pType,
-            executable,
-            minVotes,
-            minAgreement,
-            opinionScales,
-            votingStartTime,
-            votingMinEndTime,
-            votingMaxEndTime
-        );
-        require(ok, "proposal parameters failed verification");
-        ok = proposalVerifier.verifyProposalContract(pType, proposalContract);
-        require(ok, "proposal contract failed verification");
-        // save the parameters
-        ProposalState storage prop = proposals[proposalID];
-        prop.params.pType = pType;
-        prop.params.executable = executable;
-        prop.params.minVotes = minVotes;
-        prop.params.minAgreement = minAgreement;
-        prop.params.opinionScales = opinionScales;
-        prop.params.proposalContract = proposalContract;
-        prop.params.deadlines.votingStartTime = votingStartTime;
-        prop.params.deadlines.votingMinEndTime = votingMinEndTime;
-        prop.params.deadlines.votingMaxEndTime = votingMaxEndTime;
-        prop.params.options = options;
-    }
-
-    /// @notice Cancel a proposal if no votes have been cast - Only the proposal contract can cancel the proposal.
+    /// @dev Cancel a proposal if no votes have been cast.
+    /// Only the proposal contract can cancel the proposal.
     /// @param proposalID The ID of the proposal.
     function cancelProposal(uint256 proposalID) nonReentrant external {
         ProposalState storage prop = proposals[proposalID];
         require(prop.params.proposalContract != address(0), "proposal with a given ID doesnt exist");
-        require(isInitialStatus(prop.status), "proposal isn't active");
+        require(_isInitialStatus(prop.status), "proposal isn't active");
         require(prop.votes == 0, "voting has already begun");
         require(msg.sender == prop.params.proposalContract, "must be sent from the proposal contract");
 
-        prop.status = statusCanceled();
+        prop.status = _statusCanceled();
         emit ProposalCanceled(proposalID);
     }
 
@@ -319,7 +273,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         uint256 handled = 0;
         uint256 i;
         for (i = startIdx; i < tasks.length && i < startIdx + quantity; i++) {
-            if (handleTask(i)) {
+            if (_handleTask(i)) {
                 handled += 1;
             }
         }
@@ -350,100 +304,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         payable(msg.sender).transfer(erased.mul(taskErasingReward()));
     }
 
-    /// @dev Handle a single specific task.
-    /// @param taskIdx The index of the task.
-    /// @return handled Whether the task was handled.
-    function handleTask(uint256 taskIdx) internal returns (bool handled) {
-        require(taskIdx < tasks.length, "incorrect task index");
-        Task storage task = tasks[taskIdx];
-        if (!task.active) {
-            return false;
-        }
-        handled = handleTaskAssignments(tasks[taskIdx].proposalID, task.assignment);
-        if (handled) {
-            task.active = false;
-        }
-        return handled;
-    }
-
-    /// @dev Handle task for a proposal by its assignment.
-    /// @param proposalID The ID of the proposal.
-    /// @param assignment The assignment type.
-    /// @return handled Whether the task was handled.
-    function handleTaskAssignments(uint256 proposalID, uint256 assignment) internal returns (bool handled) {
-        ProposalState storage prop = proposals[proposalID];
-        if (!isInitialStatus(prop.status)) {
-            // deactivate all tasks for non-active proposals
-            return true;
-        }
-        if (assignment == TASK_VOTING) {
-            return handleVotingTask(proposalID, prop);
-        }
-        return false;
-    }
-
-    /// @dev Handle voting tasks for a proposal with TASK_VOTING assignment.
-    /// @dev Emits ProposalResolved or ProposalRejected event depending of the fate of the task.
-    /// @param proposalID The ID of the proposal.
-    /// @param prop The state of the proposal.
-    /// @return handled Whether the task was handled.
-    function handleVotingTask(uint256 proposalID, ProposalState storage prop) internal returns (bool handled) {
-        uint256 minVotesAbs = minVotesAbsolute(governableContract.getTotalWeight(), prop.params.minVotes);
-        bool must = block.timestamp >= prop.params.deadlines.votingMaxEndTime;
-        bool may = block.timestamp >= prop.params.deadlines.votingMinEndTime && prop.votes >= minVotesAbs;
-        if (!must && !may) {
-            return false;
-        }
-        (bool proposalResolved, uint256 winnerID) = _calculateVotingTally(prop);
-        if (proposalResolved) {
-            (bool ok, bool expired) = executeProposal(prop, winnerID);
-            if (!ok) {
-                return false;
-            }
-            if (!expired) {
-                prop.status = statusResolved();
-                prop.winnerOptionID = winnerID;
-                emit ProposalResolved(proposalID);
-            } else {
-                prop.status = statusExecutionExpired();
-                emit ProposalExecutionExpired(proposalID);
-            }
-        } else {
-            prop.status = statusFailed();
-            emit ProposalRejected(proposalID);
-        }
-        return true;
-    }
-
-    /// @dev Execute a proposal.
-    /// @param prop The state of the proposal.
-    /// @param winnerOptionID The ID of the winning option.
-    /// @return success Whether the execution was successful.
-    /// @return expired Whether the execution period has expired.
-    function executeProposal(ProposalState storage prop, uint256 winnerOptionID) internal returns (bool, bool) {
-        bool executable = prop.params.executable == Proposal.ExecType.CALL || prop.params.executable == Proposal.ExecType.DELEGATECALL;
-        if (!executable) {
-            return (true, false);
-        }
-
-        bool executionExpired = block.timestamp > prop.params.deadlines.votingMaxEndTime + maxExecutionPeriod();
-        if (executionExpired) {
-            // protection against proposals which revert or consume too much gas
-            return (true, true);
-        }
-        address propAddr = prop.params.proposalContract;
-        bool success;
-        bytes memory result;
-        if (prop.params.executable == Proposal.ExecType.CALL) {
-            (success, result) = propAddr.call(abi.encodeWithSignature("execute_call(uint256)", winnerOptionID));
-        } else {
-            (success, result) = propAddr.delegatecall(abi.encodeWithSignature("execute_delegatecall(address,uint256)", propAddr, winnerOptionID));
-        }
-        result;
-        return (success, false);
-    }
-
-    /// @notice Calculates votes options and finds the winner.
+    /// @dev Calculates votes options and finds the winner.
     /// @param proposalID The ID of the proposal.
     /// @return proposalResolved Whether the proposal is resolved.
     /// @return winnerID The ID of the winning option.
@@ -454,137 +315,30 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         return (proposalResolved, winnerID, prop.votes);
     }
 
-    /// @dev internal function for calculating votes options and finding the winner.
-    /// @param prop The state of the proposal.
-    /// @return proposalResolved Whether the proposal is resolved.
-    /// @return winnerID The ID of the winning option.
-    function _calculateVotingTally(ProposalState storage prop) internal view returns (bool, uint256) {
-        uint256 minVotesAbs = minVotesAbsolute(governableContract.getTotalWeight(), prop.params.minVotes);
-        uint256 mostAgreement = 0;
-        uint256 winnerID = prop.params.options.length;
-        if (prop.votes < minVotesAbs) {
-            return (false, winnerID);
-        }
-        for (uint256 i = 0; i < prop.params.options.length; i++) {
-            uint256 optionID = i;
-            uint256 agreement = LRC.agreementRatio(prop.options[optionID]);
 
-            if (agreement < prop.params.minAgreement) {
-                // critical resistance against this option
-                continue;
-            }
-
-            if (mostAgreement == 0 || agreement > mostAgreement) {
-                mostAgreement = agreement;
-                winnerID = i;
-            }
-        }
-
-        return (winnerID != prop.params.options.length, winnerID);
-    }
-
-    /// @notice Cancel a vote for a proposal.
+    /// @dev Cancel a vote for a proposal.
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     /// @param proposalID The ID of the proposal.
     function cancelVote(address delegatedTo, uint256 proposalID) nonReentrant external {
         if (delegatedTo == address(0)) {
             delegatedTo = msg.sender;
         }
-        Vote memory v = _votes[msg.sender][delegatedTo][proposalID];
+        Vote memory v = votes[msg.sender][delegatedTo][proposalID];
         require(v.weight != 0, "doesn't exist");
-        require(isInitialStatus(proposals[proposalID].status), "proposal isn't active");
+        require(_isInitialStatus(proposals[proposalID].status), "proposal isn't active");
         _cancelVote(msg.sender, delegatedTo, proposalID);
     }
 
-    /// @dev internal function for canceling a vote.
-    /// @dev Emits VoteCanceled event.
-    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
-    /// @param proposalID The ID of the proposal.
-    function _cancelVote(address voter, address delegatedTo, uint256 proposalID) internal {
-        Vote storage v = _votes[voter][delegatedTo][proposalID];
-        if (v.weight == 0) {
-            return;
-        }
 
-        if (voter != delegatedTo) {
-            unOverrideDelegationWeight(delegatedTo, proposalID, v.weight);
-        }
-
-        removeChoicesFromProp(proposalID, v.choices, v.weight);
-        delete _votes[voter][delegatedTo][proposalID];
-
-        if (address(votebook) != address(0)) {
-            votebook.onVoteCanceled(voter, delegatedTo, proposalID);
-        }
-
-        emit VoteCanceled(voter, delegatedTo, proposalID);
-    }
-
-    /// @dev Cast a vote for a proposal.
-    /// @dev Emits Voted event.
-    /// @param proposalID The ID of the proposal.
-    /// @param voter The address of the voter.
-    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
-    /// @param choices The choices of the vote.
-    /// @param weight The weight of the vote.
-    function makeVote(uint256 proposalID, address voter, address delegatedTo, uint256[] memory choices, uint256 weight) internal {
-        _votes[voter][delegatedTo][proposalID] = Vote(weight, choices);
-        addChoicesToProp(proposalID, choices, weight);
-        if (address(votebook) != address(0)) {
-            votebook.onVoted(voter, delegatedTo, proposalID);
-        }
-        emit Voted(voter, delegatedTo, proposalID, choices, weight);
-    }
-
-    /// @dev Process a new vote for a proposal.
-    /// @param proposalID The ID of the proposal.
-    /// @param voterAddr The address of the voter.
-    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
-    /// @param choices The choices of the vote.
-    /// @return The weight of the vote.
-    function _processNewVote(uint256 proposalID, address voterAddr, address delegatedTo, uint256[] memory choices) internal returns (uint256) {
-        if (delegatedTo == voterAddr) {
-            // voter isn't a delegator
-            uint256 weight = governableContract.getReceivedWeight(voterAddr);
-            uint256 overridden = overriddenWeight[voterAddr][proposalID];
-            if (weight > overridden) {
-                weight -= overridden;
-            } else {
-                weight = 0;
-            }
-            if (weight == 0) {
-                return 0;
-            }
-            makeVote(proposalID, voterAddr, voterAddr, choices, weight);
-            return weight;
-        } else {
-            if (_votes[delegatedTo][delegatedTo][proposalID].choices.length > 0) {
-                // recount vote from delegatedTo
-                // Needed only in a case if delegatedTo's received weight has changed without calling recountVote
-                _recountVote(delegatedTo, delegatedTo, proposalID);
-            }
-            // votes through one of delegations, overrides previous vote of "delegatedTo" (if any)
-            uint256 delegatedWeight = governableContract.getWeight(voterAddr, delegatedTo);
-            // reduce weight of vote of "delegatedTo" (current vote or any future vote)
-            overrideDelegationWeight(delegatedTo, proposalID, delegatedWeight);
-            if (delegatedWeight == 0) {
-                return 0;
-            }
-            // make own vote
-            makeVote(proposalID, voterAddr, delegatedTo, choices, delegatedWeight);
-            return delegatedWeight;
-        }
-    }
-
-    /// @notice Recount a votes weight for a proposal.
+    /// @dev Recount a votes weight for a proposal.
     /// @param voterAddr The address of the voter.
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     /// @param proposalID The ID of the proposal.
     function recountVote(address voterAddr, address delegatedTo, uint256 proposalID) nonReentrant external {
-        Vote storage v = _votes[voterAddr][delegatedTo][proposalID];
-        Vote storage vSuper = _votes[delegatedTo][delegatedTo][proposalID];
+        Vote storage v = votes[voterAddr][delegatedTo][proposalID];
+        Vote storage vSuper = votes[delegatedTo][delegatedTo][proposalID];
         require(v.choices.length > 0, "doesn't exist");
-        require(isInitialStatus(proposals[proposalID].status), "proposal isn't active");
+        require(_isInitialStatus(proposals[proposalID].status), "proposal isn't active");
         uint256 beforeSelf = v.weight;
         uint256 beforeSuper = vSuper.weight;
         _recountVote(voterAddr, delegatedTo, proposalID);
@@ -592,93 +346,6 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         uint256 afterSuper = vSuper.weight;
         // check that some weight has changed due to recounting
         require(beforeSelf != afterSelf || beforeSuper != afterSuper, "nothing changed");
-    }
-
-    /// @dev internal function for recounting votes.
-    /// @param voterAddr The address of the voter.
-    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
-    /// @param proposalID The ID of the proposal.
-    /// @return The weight of the vote.
-    function _recountVote(address voterAddr, address delegatedTo, uint256 proposalID) internal returns (uint256) {
-        uint256[] memory origChoices = _votes[voterAddr][delegatedTo][proposalID].choices;
-        // cancel previous vote
-        _cancelVote(voterAddr, delegatedTo, proposalID);
-        // re-make vote
-        return _processNewVote(proposalID, voterAddr, delegatedTo, origChoices);
-    }
-
-    /// @dev Override the delegation weight for a proposal.
-    /// @dev Emits VoteWeightOverridden event.
-    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
-    /// @param proposalID The ID of the proposal.
-    /// @param weight The weight of the vote.
-    function overrideDelegationWeight(address delegatedTo, uint256 proposalID, uint256 weight) internal {
-        uint256 overridden = overriddenWeight[delegatedTo][proposalID];
-        overridden = overridden.add(weight);
-        overriddenWeight[delegatedTo][proposalID] = overridden;
-        Vote storage v = _votes[delegatedTo][delegatedTo][proposalID];
-        if (v.choices.length > 0) {
-            v.weight = v.weight.sub(weight);
-            removeChoicesFromProp(proposalID, v.choices, weight);
-        }
-        emit VoteWeightOverridden(delegatedTo, weight);
-    }
-
-    /// @dev Un-override the delegation weight for a proposal.
-    /// @dev Emits VoteWeightUnOverridden event.
-    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
-    /// @param proposalID The ID of the proposal.
-    /// @param weight The weight of the vote.
-    function unOverrideDelegationWeight(address delegatedTo, uint256 proposalID, uint256 weight) internal {
-        uint256 overridden = overriddenWeight[delegatedTo][proposalID];
-        overridden = overridden.sub(weight);
-        overriddenWeight[delegatedTo][proposalID] = overridden;
-        Vote storage v = _votes[delegatedTo][delegatedTo][proposalID];
-        if (v.choices.length > 0) {
-            v.weight = v.weight.add(weight);
-            addChoicesToProp(proposalID, v.choices, weight);
-        }
-        emit VoteWeightUnOverridden(delegatedTo, weight);
-    }
-
-    /// @dev Add choices to a proposal.
-    /// @param proposalID The ID of the proposal.
-    /// @param choices The choices to be added.
-    /// @param weight The weight of the vote.
-    function addChoicesToProp(uint256 proposalID, uint256[] memory choices, uint256 weight) internal {
-        ProposalState storage prop = proposals[proposalID];
-
-        prop.votes = prop.votes.add(weight);
-
-        for (uint256 i = 0; i < prop.params.options.length; i++) {
-            prop.options[i].addVote(choices[i], weight, prop.params.opinionScales);
-        }
-    }
-
-    /// @dev Remove choices from a proposal.
-    /// @param proposalID The ID of the proposal.
-    /// @param choices The choices to be removed.
-    /// @param weight The weight of the vote.
-    function removeChoicesFromProp(uint256 proposalID, uint256[] memory choices, uint256 weight) internal {
-        ProposalState storage prop = proposals[proposalID];
-
-        prop.votes = prop.votes.sub(weight);
-
-        for (uint256 i = 0; i < prop.params.options.length; i++) {
-            prop.options[i].removeVote(choices[i], weight, prop.params.opinionScales);
-        }
-    }
-
-    /// @dev Add a task for a proposal.
-    /// @param proposalID The ID of the proposal.
-    function addTasks(uint256 proposalID) internal {
-        tasks.push(Task(true, TASK_VOTING, proposalID));
-    }
-
-    /// @dev Burn a specified amount of tokens.
-    /// @param amount The amount of tokens to burn.
-    function burn(uint256 amount) internal {
-        payable(address(0)).transfer(amount);
     }
 
     /// @dev Sanitize the winner ID of a resolved proposal.
@@ -701,5 +368,343 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
             sstore(0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103, 0)
             sstore(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc, 0)
         }
+    }
+
+
+    /// @dev Internal function to create a new proposal.
+    /// @param proposalID The ID of the proposal.
+    /// @param proposalContract The address of the proposal contract.
+    function _createProposal(uint256 proposalID, address proposalContract) internal {
+        require(proposalContract != address(0), "empty proposal address");
+        IProposal p = IProposal(proposalContract);
+        // capture the parameters once to ensure that contract will not return different values
+        uint256 pType = p.pType();
+        Proposal.ExecType executable = p.executable();
+        uint256 minVotes = p.minVotes();
+        uint256 minAgreement = p.minAgreement();
+        uint256[] memory opinionScales = p.opinionScales();
+        uint256 votingStartTime = p.votingStartTime();
+        uint256 votingMinEndTime = p.votingMinEndTime();
+        uint256 votingMaxEndTime = p.votingMaxEndTime();
+        bytes32[] memory options = p.options();
+        // check the parameters and contract
+        require(options.length != 0, "proposal options are empty - nothing to vote for");
+        require(options.length <= maxOptions(), "too many options");
+        bool ok;
+        ok = proposalVerifier.verifyProposalParams(pType, executable, minVotes, minAgreement, opinionScales, votingStartTime, votingMinEndTime, votingMaxEndTime);
+        require(ok, "proposal parameters failed verification");
+        ok = proposalVerifier.verifyProposalContract(pType, proposalContract);
+        require(ok, "proposal contract failed verification");
+        // save the parameters
+        ProposalState storage prop = proposals[proposalID];
+        prop.params.pType = pType;
+        prop.params.executable = executable;
+        prop.params.minVotes = minVotes;
+        prop.params.minAgreement = minAgreement;
+        prop.params.opinionScales = opinionScales;
+        prop.params.proposalContract = proposalContract;
+        prop.params.deadlines.votingStartTime = votingStartTime;
+        prop.params.deadlines.votingMinEndTime = votingMinEndTime;
+        prop.params.deadlines.votingMaxEndTime = votingMaxEndTime;
+        prop.params.options = options;
+    }
+
+
+    /// @dev Handle a single specific task.
+    /// @param taskIdx The index of the task.
+    /// @return handled Whether the task was handled.
+    function _handleTask(uint256 taskIdx) internal returns (bool handled) {
+        require(taskIdx < tasks.length, "incorrect task index");
+        Task storage task = tasks[taskIdx];
+        if (!task.active) {
+            return false;
+        }
+        handled = _handleTaskAssignments(tasks[taskIdx].proposalID, task.assignment);
+        if (handled) {
+            task.active = false;
+        }
+        return handled;
+    }
+
+    /// @dev Handle task for a proposal by its assignment.
+    /// @param proposalID The ID of the proposal.
+    /// @param assignment The assignment type.
+    /// @return handled Whether the task was handled.
+    function _handleTaskAssignments(uint256 proposalID, uint256 assignment) internal returns (bool handled) {
+        ProposalState storage prop = proposals[proposalID];
+        if (!_isInitialStatus(prop.status)) {
+            // deactivate all tasks for non-active proposals
+            return true;
+        }
+        if (assignment == TASK_VOTING) {
+            return _handleVotingTask(proposalID, prop);
+        }
+        return false;
+    }
+
+    /// @dev Handle voting tasks for a proposal with TASK_VOTING assignment.
+    /// @dev Emits ProposalResolved or ProposalRejected event depending of the fate of the task.
+    /// @param proposalID The ID of the proposal.
+    /// @param prop The state of the proposal.
+    /// @return handled Whether the task was handled.
+    function _handleVotingTask(uint256 proposalID, ProposalState storage prop) internal returns (bool handled) {
+        uint256 minVotesAbs = minVotesAbsolute(governableContract.getTotalWeight(), prop.params.minVotes);
+        bool must = block.timestamp >= prop.params.deadlines.votingMaxEndTime;
+        bool may = block.timestamp >= prop.params.deadlines.votingMinEndTime && prop.votes >= minVotesAbs;
+        if (!must && !may) {
+            return false;
+        }
+        (bool proposalResolved, uint256 winnerID) = _calculateVotingTally(prop);
+        if (proposalResolved) {
+            (bool ok, bool expired) = _executeProposal(prop, winnerID);
+            if (!ok) {
+                return false;
+            }
+            if (!expired) {
+                prop.status = _statusResolved();
+                prop.winnerOptionID = winnerID;
+                emit ProposalResolved(proposalID);
+            } else {
+                prop.status = _statusExecutionExpired();
+                emit ProposalExecutionExpired(proposalID);
+            }
+        } else {
+            prop.status = _statusFailed();
+            emit ProposalRejected(proposalID);
+        }
+        return true;
+    }
+
+    /// @dev Execute a proposal.
+    /// @param prop The state of the proposal.
+    /// @param winnerOptionID The ID of the winning option.
+    /// @return success Whether the execution was successful.
+    /// @return expired Whether the execution period has expired.
+    function _executeProposal(ProposalState storage prop, uint256 winnerOptionID) internal returns (bool, bool) {
+        bool executable = prop.params.executable == Proposal.ExecType.CALL || prop.params.executable == Proposal.ExecType.DELEGATECALL;
+        if (!executable) {
+            return (true, false);
+        }
+
+        bool executionExpired = block.timestamp > prop.params.deadlines.votingMaxEndTime + maxExecutionPeriod();
+        if (executionExpired) {
+            // protection against proposals which revert or consume too much gas
+            return (true, true);
+        }
+        address propAddr = prop.params.proposalContract;
+        bool success;
+        bytes memory result;
+        if (prop.params.executable == Proposal.ExecType.CALL) {
+            (success, result) = propAddr.call(abi.encodeWithSignature("execute_call(uint256)", winnerOptionID));
+        } else {
+            (success, result) = propAddr.delegatecall(abi.encodeWithSignature("execute_delegatecall(address,uint256)", propAddr, winnerOptionID));
+        }
+        result;
+        return (success, false);
+    }
+
+
+
+    /// @dev internal function for calculating votes options and finding the winner.
+    /// @param prop The state of the proposal.
+    /// @return proposalResolved Whether the proposal is resolved.
+    /// @return winnerID The ID of the winning option.
+    function _calculateVotingTally(ProposalState storage prop) internal view returns (bool, uint256) {
+        uint256 minVotesAbs = minVotesAbsolute(governableContract.getTotalWeight(), prop.params.minVotes);
+        uint256 mostAgreement = 0;
+        uint256 winnerID = prop.params.options.length;
+        if (prop.votes < minVotesAbs) {
+            return (false, winnerID);
+        }
+        for (uint256 i = 0; i < prop.params.options.length; i++) {
+            uint256 optionID = i;
+            uint256 agreement = LRC._agreementRatio(prop.options[optionID]);
+
+            if (agreement < prop.params.minAgreement) {
+                // critical resistance against this option
+                continue;
+            }
+
+            if (mostAgreement == 0 || agreement > mostAgreement) {
+                mostAgreement = agreement;
+                winnerID = i;
+            }
+        }
+
+        return (winnerID != prop.params.options.length, winnerID);
+    }
+
+
+    /// @dev internal function for canceling a vote.
+    /// @dev Emits VoteCanceled event.
+    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
+    /// @param proposalID The ID of the proposal.
+    function _cancelVote(address voter, address delegatedTo, uint256 proposalID) internal {
+        Vote storage v = votes[voter][delegatedTo][proposalID];
+        if (v.weight == 0) {
+            return;
+        }
+
+        if (voter != delegatedTo) {
+            _unOverrideDelegationWeight(delegatedTo, proposalID, v.weight);
+        }
+
+        removeChoicesFromProp(proposalID, v.choices, v.weight);
+        delete votes[voter][delegatedTo][proposalID];
+
+        if (address(votebook) != address(0)) {
+            votebook.onVoteCanceled(voter, delegatedTo, proposalID);
+        }
+
+        emit VoteCanceled(voter, delegatedTo, proposalID);
+    }
+
+    /// @dev Cast a vote for a proposal.
+    /// @dev Emits Voted event.
+    /// @param proposalID The ID of the proposal.
+    /// @param voter The address of the voter.
+    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
+    /// @param choices The choices of the vote.
+    /// @param weight The weight of the vote.
+    function _makeVote(uint256 proposalID, address voter, address delegatedTo, uint256[] memory choices, uint256 weight) internal {
+        votes[voter][delegatedTo][proposalID] = Vote(weight, choices);
+        _addChoicesToProp(proposalID, choices, weight);
+        if (address(votebook) != address(0)) {
+            votebook.onVoted(voter, delegatedTo, proposalID);
+        }
+        emit Voted(voter, delegatedTo, proposalID, choices, weight);
+    }
+
+    /// @dev Process a new vote for a proposal.
+    /// @param proposalID The ID of the proposal.
+    /// @param voterAddr The address of the voter.
+    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
+    /// @param choices The choices of the vote.
+    /// @return The weight of the vote.
+    function _processNewVote(
+        uint256 proposalID,
+        address voterAddr,
+        address delegatedTo,
+        uint256[] memory choices
+    ) internal returns (uint256) {
+        if (delegatedTo == voterAddr) {
+            // voter isn't a delegator
+            uint256 weight = governableContract.getReceivedWeight(voterAddr);
+            uint256 overridden = overriddenWeight[voterAddr][proposalID];
+            if (weight > overridden) {
+                weight -= overridden;
+            } else {
+                weight = 0;
+            }
+            if (weight == 0) {
+                return 0;
+            }
+            _makeVote(proposalID, voterAddr, voterAddr, choices, weight);
+            return weight;
+        } else {
+            if (votes[delegatedTo][delegatedTo][proposalID].choices.length > 0) {
+                // recount vote from delegatedTo
+                // Needed only in a case if delegatedTo's received weight has changed without calling recountVote
+                _recountVote(delegatedTo, delegatedTo, proposalID);
+            }
+            // votes through one of delegations, overrides previous vote of "delegatedTo" (if any)
+            uint256 delegatedWeight = governableContract.getWeight(voterAddr, delegatedTo);
+            // reduce weight of vote of "delegatedTo" (current vote or any future vote)
+            _overrideDelegationWeight(delegatedTo, proposalID, delegatedWeight);
+            if (delegatedWeight == 0) {
+                return 0;
+            }
+            // make own vote
+            _makeVote(proposalID, voterAddr, delegatedTo, choices, delegatedWeight);
+            return delegatedWeight;
+        }
+    }
+
+
+    /// @dev internal function for recounting votes.
+    /// @param voterAddr The address of the voter.
+    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
+    /// @param proposalID The ID of the proposal.
+    /// @return The weight of the vote.
+    function _recountVote(address voterAddr, address delegatedTo, uint256 proposalID) internal returns (uint256) {
+        uint256[] memory origChoices = votes[voterAddr][delegatedTo][proposalID].choices;
+        // cancel previous vote
+        _cancelVote(voterAddr, delegatedTo, proposalID);
+        // re-make vote
+        return _processNewVote(proposalID, voterAddr, delegatedTo, origChoices);
+    }
+
+    /// @dev Override the delegation weight for a proposal.
+    /// @dev Emits VoteWeightOverridden event.
+    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
+    /// @param proposalID The ID of the proposal.
+    /// @param weight The weight of the vote.
+    function _overrideDelegationWeight(address delegatedTo, uint256 proposalID, uint256 weight) internal {
+        uint256 overridden = overriddenWeight[delegatedTo][proposalID];
+        overridden = overridden.add(weight);
+        overriddenWeight[delegatedTo][proposalID] = overridden;
+        Vote storage v = votes[delegatedTo][delegatedTo][proposalID];
+        if (v.choices.length > 0) {
+            v.weight = v.weight.sub(weight);
+            removeChoicesFromProp(proposalID, v.choices, weight);
+        }
+        emit VoteWeightOverridden(delegatedTo, weight);
+    }
+
+    /// @dev Un-override the delegation weight for a proposal.
+    /// @dev Emits VoteWeightUnOverridden event.
+    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
+    /// @param proposalID The ID of the proposal.
+    /// @param weight The weight of the vote.
+    function _unOverrideDelegationWeight(address delegatedTo, uint256 proposalID, uint256 weight) internal {
+        uint256 overridden = overriddenWeight[delegatedTo][proposalID];
+        overridden = overridden.sub(weight);
+        overriddenWeight[delegatedTo][proposalID] = overridden;
+        Vote storage v = votes[delegatedTo][delegatedTo][proposalID];
+        if (v.choices.length > 0) {
+            v.weight = v.weight.add(weight);
+            _addChoicesToProp(proposalID, v.choices, weight);
+        }
+        emit VoteWeightUnOverridden(delegatedTo, weight);
+    }
+
+    /// @dev Add choices to a proposal.
+    /// @param proposalID The ID of the proposal.
+    /// @param choices The choices to be added.
+    /// @param weight The weight of the vote.
+    function _addChoicesToProp(uint256 proposalID, uint256[] memory choices, uint256 weight) internal {
+        ProposalState storage prop = proposals[proposalID];
+
+        prop.votes = prop.votes.add(weight);
+
+        for (uint256 i = 0; i < prop.params.options.length; i++) {
+            prop.options[i]._addVote(choices[i], weight, prop.params.opinionScales);
+        }
+    }
+
+    /// @dev Remove choices from a proposal.
+    /// @param proposalID The ID of the proposal.
+    /// @param choices The choices to be removed.
+    /// @param weight The weight of the vote.
+    function removeChoicesFromProp(uint256 proposalID, uint256[] memory choices, uint256 weight) internal {
+        ProposalState storage prop = proposals[proposalID];
+
+        prop.votes = prop.votes.sub(weight);
+
+        for (uint256 i = 0; i < prop.params.options.length; i++) {
+            prop.options[i]._removeVote(choices[i], weight, prop.params.opinionScales);
+        }
+    }
+
+    /// @dev Add a task for a proposal.
+    /// @param proposalID The ID of the proposal.
+    function _addTasks(uint256 proposalID) internal {
+        tasks.push(Task(true, TASK_VOTING, proposalID));
+    }
+
+    /// @dev Burn a specified amount of tokens.
+    /// @param amount The amount of tokens to burn.
+    function _burn(uint256 amount) internal {
+        payable(address(0)).transfer(amount);
     }
 }

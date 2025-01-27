@@ -8,10 +8,24 @@ import "../../governance/Proposal.sol";
 /// @dev A proposal that can be stores data about NonDelegateCall
 /// @dev Used for testing purposes
 contract ExecLoggingProposal is PlainTextProposal {
-    Proposal.ExecType _exec;
+    Proposal.ExecType public exec;
 
-    constructor(string memory v1, string memory v2, bytes32[] memory v3,
-        uint256 v4, uint256 v5, uint256 v6, uint256 v7, uint256 v8, address v9) PlainTextProposal(v1, v2, v3, v4, v5, v6, v7, v8, v9) {}
+    uint256 public executedCounter;
+    address public executedMsgSender;
+    address public executedAs;
+    uint256 public executedOption;
+
+    constructor(
+        string memory v1,
+        string memory v2,
+        bytes32[] memory v3,
+        uint256 v4,
+        uint256 v5,
+        uint256 v6,
+        uint256 v7,
+        uint256 v8,
+        address v9
+    ) PlainTextProposal(v1, v2, v3, v4, v5, v6, v7, v8, v9) {}
 
     function setOpinionScales(uint256[] memory v) public {
         _opinionScales = v;
@@ -22,22 +36,17 @@ contract ExecLoggingProposal is PlainTextProposal {
     }
 
     function executable() public override view returns (Proposal.ExecType) {
-        return _exec;
+        return exec;
     }
 
-    function setExecutable(Proposal.ExecType __exec) public {
-        _exec = __exec;
+    function setExecutable(Proposal.ExecType _exec) public {
+        exec = _exec;
     }
 
     function cancel(uint256 myID, address govAddress) public override {
         Governance gov = Governance(govAddress);
         gov.cancelProposal(myID);
     }
-
-    uint256 public executedCounter;
-    address public executedMsgSender;
-    address public executedAs;
-    uint256 public executedOption;
 
     function executeNonDelegateCall(address _executedAs, address _executedMsgSender, uint256 optionID) public {
         executedAs = _executedAs;

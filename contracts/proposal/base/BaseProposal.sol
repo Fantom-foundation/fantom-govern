@@ -10,27 +10,36 @@ import "../../governance/Proposal.sol";
 contract BaseProposal is IProposal {
     using SafeMath for uint256;
 
-    string _name;
-    string _description;
-    bytes32[] _options;
+    string internal _name;
+    string internal _description;
+    bytes32[] internal _options;
 
-    uint256 _minVotes;
-    uint256 _minAgreement;
+    uint256 internal _minVotes;
+    uint256 internal _minAgreement;
     // Static scale for front end
     // i.e. [1, 2, 3, 4] will result in the scale being divided into 4 parts
     // where 1 means the least agreement and 4 means the most
-    uint256[] _opinionScales;
+    uint256[] internal _opinionScales;
 
-    uint256 _start; // Start of the voting
-    uint256 _minEnd; // Minimal end time of the voting
-    uint256 _maxEnd; // Maxinal end time of the voting
+    uint256 internal _start; // Start of the voting
+    uint256 internal _minEnd; // Minimal end time of the voting
+    uint256 internal _maxEnd; // Maxinal end time of the voting
 
     /// @notice Verify the parameters of the proposal using a given verifier.
     /// @param verifier The address of the verifier contract.
     /// @return bool indicating whether the proposal parameters are valid.
     function verifyProposalParams(address verifier) public view returns (bool) {
         IProposalVerifier proposalVerifier = IProposalVerifier(verifier);
-        return proposalVerifier.verifyProposalParams(pType(), executable(), minVotes(), minAgreement(), opinionScales(), votingStartTime(), votingMinEndTime(), votingMaxEndTime());
+        return proposalVerifier.verifyProposalParams(
+            pType(),
+            executable(),
+            minVotes(),
+            minAgreement(),
+            opinionScales(),
+            votingStartTime(),
+            votingMinEndTime(),
+            votingMaxEndTime()
+        );
     }
 
     function pType() public virtual view returns (uint256) {

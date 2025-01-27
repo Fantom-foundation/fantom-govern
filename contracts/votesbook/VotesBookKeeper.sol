@@ -12,14 +12,14 @@ interface GovernanceI {
 
 /// @notice A contract that keeps track of votes
 contract VotesBookKeeper is Initializable, Ownable {
-    address gov; // Address of the governance contract
+    address public gov; // Address of the governance contract
 
     uint256 public maxProposalsPerVoter; // Maximum number of proposals a voter can vote on
 
-    mapping(address => mapping(address => uint256[])) votesList; // voter => delegatedTo => []proposal IDs
+    mapping(address => mapping(address => uint256[])) public votesList; // voter => delegatedTo => []proposal IDs
 
     // voter => delegatedTo => proposal ID => {index in the list + 1}
-    mapping(address => mapping(address => mapping(uint256 => uint256))) votesIndex;
+    mapping(address => mapping(address => mapping(uint256 => uint256))) public votesIndex;
 
     /// @notice Initialize the contract
     /// @param _owner The owner of the contract
@@ -56,13 +56,15 @@ contract VotesBookKeeper is Initializable, Ownable {
         uint256 origLen = list.length;
         uint256 i = 0;
         for (uint256 iter = 0; iter < origLen; iter++) {
-            (bool success,) = gov.call(abi.encodeWithSignature("recountVote(address,address,uint256)", voter, delegatedTo, list[i]));
+            (bool success,) = gov.call(
+                abi.encodeWithSignature("recountVote(address,address,uint256)", voter, delegatedTo, list[i])
+            );
             bool evicted = false;
             if (!success) {
                 // unindex if proposal isn't active
                 (,, uint256 status) = GovernanceI(gov).proposalState(list[i]);
                 if (status != 0) {
-                    eraseVote(voter, delegatedTo, list[i], i + 1);
+                    _eraseVote(voter, delegatedTo, list[i], i + 1);
                     evicted = true;
                 }
             }
@@ -102,14 +104,20 @@ contract VotesBookKeeper is Initializable, Ownable {
         if (idx == 0) {
             return;
         }
-        eraseVote(voter, delegatedTo, proposalID, idx);
+        _eraseVote(voter, delegatedTo, proposalID, idx);
+    }
+
+    /// @dev Set the maximum number of proposals a voter can vote on
+    /// @param v The new maximum number of proposals
+    function setMaxProposalsPerVoter(uint256 v) onlyOwner external {
+        maxProposalsPerVoter = v;
     }
 
     /// @dev Remove a vote from the list of votes
     /// @param voter The address of the voter
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     /// @param proposalID The ID of the proposal
-    function eraseVote(address voter, address delegatedTo, uint256 proposalID, uint256 idx) internal {
+    function _eraseVote(address voter, address delegatedTo, uint256 proposalID, uint256 idx) internal {
         votesIndex[voter][delegatedTo][proposalID] = 0;
         uint256[] storage list = votesList[voter][delegatedTo];
         uint256 len = list.length;
@@ -122,11 +130,5 @@ contract VotesBookKeeper is Initializable, Ownable {
             list.pop();
             votesIndex[voter][delegatedTo][last] = idx;
         }
-    }
-
-    /// @notice Set the maximum number of proposals a voter can vote on
-    /// @param v The new maximum number of proposals
-    function setMaxProposalsPerVoter(uint256 v) onlyOwner external {
-        maxProposalsPerVoter = v;
     }
 }
