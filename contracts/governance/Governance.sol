@@ -8,12 +8,12 @@ import {Proposal} from "./Proposal.sol";
 import {GovernanceSettings} from "./GovernanceSettings.sol";
 import {LRC} from "./LRC.sol";
 import {Version} from "../version/Version.sol";
-import {VotesBookKeeper} from "../votesbook/VotesBookKeeper.sol";
 import {ReentrancyGuardTransient} from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /// @notice Governance contract for voting on proposals
-contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettings, Version {
+contract Governance is ReentrancyGuardTransient, GovernanceSettings, Version, UUPSUpgradeable, OwnableUpgradeable {
     using LRC for LRC.Option;
 
     struct Vote {
@@ -52,14 +52,24 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
 
     Task[] public tasks; // Tasks of all current proposals
 
+    // Maximum number of proposals a voter can vote on
+    uint256 public maxActiveVotesPerVoter;
+
+    // All proposals
     // ProposalID => ProposalState
+    mapping(uint256 => ProposalState) _proposals;
+    // weight taken from a validator by delegators vote
     mapping(uint256 => ProposalState) internal _proposals;
     // voter address => proposalID => weight
     mapping(address => mapping(uint256 => uint256)) public overriddenWeight;
+    // votes details
     // voter => delegationReceiver => proposalID => Vote
-    mapping(address => mapping(address => mapping(uint256 => Vote))) internal _votes;
-
-    VotesBookKeeper public votebook;
+    mapping(address => mapping(address => mapping(uint256 => Vote))) _votes;
+    // list of all proposal to which voter has voted for
+    // voter => delegatedTo => []proposal IDs
+    mapping(address => mapping(address => uint256[])) public votesList;
+    // voter => delegatedTo => proposal ID => {index in the list + 1}
+    mapping(address => mapping(address => mapping(uint256 => uint256))) public votesIndex;
 
     /// @notice Emitted when a new proposal is created.
     /// @param proposalID ID of newly created proposal.
@@ -116,13 +126,21 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     event VoteCanceled(address voter, address delegatedTo, uint256 proposalID);
 
     /// @notice Initialize the contract.
+    /// @param _owner The address of the owner.
     /// @param _governableContract The address of the governable contract.
     /// @param _proposalVerifier The address of the proposal verifier.
-    /// @param _votebook The address of the votebook contract.
-    function initialize(address _governableContract, address _proposalVerifier, address _votebook) public initializer {
+    /// @param _maxProposalsPerVoter The maximum number of proposals a voter can cast.
+    function initialize(
+        address _owner,
+        address _governableContract,
+        address _proposalVerifier,
+        uint256 _maxProposalsPerVoter
+    ) public initializer {
+        __Ownable_init(_owner);
+        __UUPSUpgradeable_init();
         governableContract = IGovernable(_governableContract);
         proposalVerifier = IProposalVerifier(_proposalVerifier);
-        votebook = VotesBookKeeper(_votebook);
+        maxActiveVotesPerVoter = _maxProposalsPerVoter;
     }
 
     /// @notice Get the proposal params of a given proposal.
@@ -214,6 +232,80 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         return (t.active, t.assignment, t.proposalID);
     }
 
+    /// @notice Get the proposal IDs for a voter
+    /// @param voter The address of the voter
+    /// @param delegatedTo The address of the delegator which the voter has delegated their stake to
+    /// @return An array of proposal IDs
+    function getProposalIDs(address voter, address delegatedTo) public view returns (uint256[] memory) {
+        return votesList[voter][delegatedTo];
+    }
+
+    /// @notice Get option for which the voter voted (indexed from 1), zero if not voted.
+    /// @param voter The address of the voter
+    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
+    /// @param proposalID The ID of the proposal
+    /// @return The index of the vote plus 1 if the vote exists, otherwise 0
+    function getVoteIndex(address voter, address delegatedTo, uint256 proposalID) public view returns (uint256) {
+        return votesIndex[voter][delegatedTo][proposalID];
+    }
+
+    /// @notice Recount votes for a voter
+    /// @param voter The address of the voter
+    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
+    function recountVotes(address voter, address delegatedTo) public {
+        uint256[] storage list = votesList[voter][delegatedTo];
+        uint256 origLen = list.length;
+        uint256 i = 0;
+        bool isCanceled = false;
+        for (uint256 iter = 0; iter < origLen; iter++) {
+            isCanceled = _recountVote(voter, delegatedTo, list[i]);
+            // Only increment if the vote wasn't canceled
+            // otherwise the array has already been shifted
+            if (!isCanceled) {
+                i++;
+            }
+        }
+    }
+
+
+    /// @notice Recount a votes weight for a proposal.
+    /// @param voterAddr The address of the voter.
+    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
+    /// @param proposalID The ID of the proposal.
+    function recountVote(address voterAddr, address delegatedTo, uint256 proposalID) nonReentrant external {
+        Vote storage v = _votes[voterAddr][delegatedTo][proposalID];
+        Vote storage vSuper = _votes[delegatedTo][delegatedTo][proposalID];
+        require(v.choices.length > 0, "doesn't exist");
+        require(isInitialStatus(proposals[proposalID].status), "proposal isn't active");
+        uint256 beforeSelf = v.weight;
+        uint256 beforeSuper = vSuper.weight;
+        _recountVote(voterAddr, delegatedTo, proposalID);
+        uint256 afterSelf = v.weight;
+        uint256 afterSuper = vSuper.weight;
+        // check that some weight has changed due to recounting
+        require(beforeSelf != afterSelf || beforeSuper != afterSuper, "nothing changed");
+    }
+
+    /// @dev internal function for recounting votes.
+    /// @param voterAddr The address of the voter.
+    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
+    /// @param proposalID The ID of the proposal.
+    /// @return The weight of the vote.
+    function _recountVote(address voterAddr, address delegatedTo, uint256 proposalID) internal returns (bool) {
+        uint256[] memory origChoices = _votes[voterAddr][delegatedTo][proposalID].choices;
+        // cancel previous vote
+        bool isCanceled = _cancelVote(voterAddr, delegatedTo, proposalID);
+        // re-make vote
+        _processNewVote(proposalID, voterAddr, delegatedTo, origChoices);
+        return isCanceled;
+    }
+
+    /// @notice Set the maximum number of proposals a voter can vote on
+    /// @param v The new maximum number of proposals
+    function setMaxProposalsPerVoter(uint256 v) onlyOwner external {
+        maxActiveVotesPerVoter = v;
+    }
+
     /// @notice Cast a vote for a proposal.
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     /// @param proposalID The ID of the proposal.
@@ -248,6 +340,28 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         burn(proposalBurntFee);
 
         emit ProposalCreated(lastProposalID);
+    }
+
+    /// @dev override to only allow the owner to upgrade the contract
+    function _authorizeUpgrade(address) internal override onlyOwner {}
+
+    /// @dev Remove a vote from the list of votes
+    /// @param voter The address of the voter
+    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
+    /// @param proposalID The ID of the proposal
+    function eraseVote(address voter, address delegatedTo, uint256 proposalID, uint256 idx) internal {
+        votesIndex[voter][delegatedTo][proposalID] = 0;
+        uint256[] storage list = votesList[voter][delegatedTo];
+        uint256 len = list.length;
+        if (len == idx) {
+            // last element
+            list.pop();
+        } else {
+            uint256 last = list[len - 1];
+            list[idx - 1] = last;
+            list.pop();
+            votesIndex[voter][delegatedTo][last] = idx;
+        }
     }
 
     /// @dev Internal function to create a new proposal.
@@ -347,6 +461,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         (bool success, ) = payable(msg.sender).call{value: erased * taskErasingReward}("");
         require(success, "transfer failed");
     }
+
 
     /// @dev Handle a single specific task.
     /// @param taskIdx The index of the task.
@@ -500,10 +615,10 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @dev Emits VoteCanceled event.
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     /// @param proposalID The ID of the proposal.
-    function _cancelVote(address voter, address delegatedTo, uint256 proposalID) internal {
+    function _cancelVote(address voter, address delegatedTo, uint256 proposalID) internal returns (bool) {
         Vote storage v = _votes[voter][delegatedTo][proposalID];
         if (v.weight == 0) {
-            return;
+            return false;
         }
 
         if (voter != delegatedTo) {
@@ -513,11 +628,13 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         removeChoicesFromProp(proposalID, v.choices, v.weight);
         delete _votes[voter][delegatedTo][proposalID];
 
-        if (address(votebook) != address(0)) {
-            votebook.onVoteCanceled(voter, delegatedTo, proposalID);
+        uint256 idx = votesIndex[voter][delegatedTo][proposalID];
+        if (idx != 0) {
+            eraseVote(voter, delegatedTo, proposalID, idx);
         }
 
         emit VoteCanceled(voter, delegatedTo, proposalID);
+        return true;
     }
 
     /// @dev Cast a vote for a proposal.
@@ -530,9 +647,19 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     function makeVote(uint256 proposalID, address voter, address delegatedTo, uint256[] memory choices, uint256 weight) internal {
         _votes[voter][delegatedTo][proposalID] = Vote(weight, choices);
         addChoicesToProp(proposalID, choices, weight);
-        if (address(votebook) != address(0)) {
-            votebook.onVoted(voter, delegatedTo, proposalID);
+        uint256 idx = votesIndex[voter][delegatedTo][proposalID];
+        if (idx > 0) {
+            return;
         }
+        if (votesList[voter][delegatedTo].length >= maxActiveVotesPerVoter) {
+            // erase votes for outdated proposals
+            recountVotes(voter, delegatedTo);
+        }
+        votesList[voter][delegatedTo].push(proposalID);
+        idx = votesList[voter][delegatedTo].length;
+        require(idx <= maxActiveVotesPerVoter, "too many votes");
+        votesIndex[voter][delegatedTo][proposalID] = idx;
+
         emit Voted(voter, delegatedTo, proposalID, choices, weight);
     }
 
@@ -576,36 +703,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         }
     }
 
-    /// @notice Recount a votes weight for a proposal.
-    /// @param voterAddr The address of the voter.
-    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
-    /// @param proposalID The ID of the proposal.
-    function recountVote(address voterAddr, address delegatedTo, uint256 proposalID) external nonReentrant {
-        Vote storage v = _votes[voterAddr][delegatedTo][proposalID];
-        Vote storage vSuper = _votes[delegatedTo][delegatedTo][proposalID];
-        require(v.choices.length > 0, "doesn't exist");
-        require(_proposals[proposalID].status == ProposalStatus.INITIAL, "proposal isn't active");
-        uint256 beforeSelf = v.weight;
-        uint256 beforeSuper = vSuper.weight;
-        _recountVote(voterAddr, delegatedTo, proposalID);
-        uint256 afterSelf = v.weight;
-        uint256 afterSuper = vSuper.weight;
-        // check that some weight has changed due to recounting
-        require(beforeSelf != afterSelf || beforeSuper != afterSuper, "nothing changed");
-    }
 
-    /// @dev internal function for recounting votes.
-    /// @param voterAddr The address of the voter.
-    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
-    /// @param proposalID The ID of the proposal.
-    /// @return The weight of the vote.
-    function _recountVote(address voterAddr, address delegatedTo, uint256 proposalID) internal returns (uint256) {
-        uint256[] memory origChoices = _votes[voterAddr][delegatedTo][proposalID].choices;
-        // cancel previous vote
-        _cancelVote(voterAddr, delegatedTo, proposalID);
-        // re-make vote
-        return _processNewVote(proposalID, voterAddr, delegatedTo, origChoices);
-    }
 
     /// @dev Override the delegation weight for a proposal.
     /// @dev Emits VoteWeightOverridden event.
@@ -690,17 +788,5 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         require(prop.params.executable == Proposal.ExecType.NONE, "proposal is executable");
         require(prop.winnerOptionID == 0, "winner ID is correct");
         (, prop.winnerOptionID) = _calculateVotingTally(prop);
-    }
-
-    /// @dev Upgrade the votebook contract.
-    /// @param _votebook The address of the new votebook contract.
-    function upgrade(address _votebook) external {
-        require(address(votebook) == address(0), "already set");
-        votebook = VotesBookKeeper(_votebook);
-        // erase leftovers from upgradeability proxy
-        assembly {
-            sstore(0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103, 0)
-            sstore(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc, 0)
-        }
     }
 }

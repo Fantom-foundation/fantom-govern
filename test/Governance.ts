@@ -26,12 +26,12 @@ const governanceFixture = async function () {
     await sfc.addValidator(2, 0, firstVoterAcc)
     const govable = await ethers.deployContract("SFCGovernableAdapter", [await sfc.getAddress()]);
     const verifier = await ethers.deployContract("ProposalTemplates")
+
     const verifierAddress = await verifier.getAddress();
-    const votebook = await ethers.deployContract("VotesBookKeeper");
     const gov = await ethers.deployContract("Governance");
-    await verifier.initialize(defaultAcc.getAddress());
-    await votebook.initialize(defaultAcc.getAddress(), gov.getAddress(), 1000);
-    await gov.initialize(govable.getAddress(), verifierAddress, votebook.getAddress());
+    const [defaultAcc, otherAcc, firstVoterAcc, secondVoterAcc, delegatorAcc] = await ethers.getSigners();
+    await verifier.initialize(defaultAcc);
+    await gov.initialize(defaultAcc, govable.getAddress(), verifierAddress, 1000);
     const proposalFee = await gov.proposalFee();
 
     return {
@@ -39,7 +39,6 @@ const governanceFixture = async function () {
         govable,
         verifier,
         verifierAddress,
-        votebook,
         gov,
         defaultAcc,
         otherAcc,
@@ -384,7 +383,7 @@ describe("Governance test", function () {
             await this.gov.cancelVote(this.defaultAcc, this.proposalID);
         });
 
-        it("cancel vote via recounting", async function () {
+        it("cancel vote via recountVote", async function () {
             this.sfc.unstake(this.defaultAcc, ethers.parseEther("10.0"));
             await this.gov.recountVote(this.defaultAcc, this.defaultAcc, this.proposalID, {from: this.defaultAcc});
             await expect(this.gov.recountVote(this.defaultAcc, this.defaultAcc, this.proposalID, {from: this.defaultAcc})).to.be.revertedWith("doesn't exist");
@@ -393,8 +392,8 @@ describe("Governance test", function () {
 
         it("cancel vote via recounting from VotesBookKeeper", async function () {
             this.sfc.unstake(this.defaultAcc, ethers.parseEther("10.0"));
-            await this.votebook.recountVotes(this.defaultAcc, this.defaultAcc, {from: this.defaultAcc});
-            expect(await this.votebook.getProposalIDs(this.defaultAcc, this.defaultAcc)).to.be.empty
+            await this.gov.recountVotes(this.defaultAcc, this.defaultAcc, {from: this.defaultAcc});
+            expect(await this.gov.getProposalIDs(this.defaultAcc, this.defaultAcc)).to.be.empty
             await expect(this.gov.recountVote(this.defaultAcc, this.defaultAcc, this.proposalID, {from: this.defaultAcc})).to.be.revertedWith("doesn't exist");
             // vote should be erased, checked by afterEach
         });
