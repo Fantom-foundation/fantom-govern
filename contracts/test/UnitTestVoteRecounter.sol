@@ -1,7 +1,8 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
-/// @dev FakeVoteRecounter is a VoteCounter contract for used unit tests
-contract FakeVoteRecounter {
+/// @dev UnitTestVoteRecounter.sol is a VoteCounter contract for used unit tests
+contract UnitTestVoteRecounter {
     address public expectVoterAddr;
     address public expectDelegatedTo;
 
@@ -30,7 +31,7 @@ contract FakeVoteRecounter {
     function reset(address voterAddr, address delegatedTo) external {
         expectVoterAddr = voterAddr;
         expectDelegatedTo = delegatedTo;
-        recounted.length = 0;
+        delete recounted;
     }
 
     function setOutdatedProposals(uint256[] calldata proposalIDs) external {

@@ -1,4 +1,5 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
 import "../governance/Governance.sol";
 import "../proposal/PlainTextProposal.sol";
@@ -7,7 +8,7 @@ import "../verifiers/ScopedVerifier.sol";
 /// @notice PlainTextProposalFactory is a factory contract to create PlainTextProposal
 contract PlainTextProposalFactory is ScopedVerifier {
     Governance internal gov;
-    constructor(address _govAddress) public {
+    constructor(address _govAddress) {
         gov = Governance(_govAddress);
     }
 
@@ -23,7 +24,7 @@ contract PlainTextProposalFactory is ScopedVerifier {
     function create(
         string calldata __name,
         string calldata __description,
-        bytes32[] calldata __options,
+        bytes[] calldata __options,
         uint256 __minVotes,
         uint256 __minAgreement,
         uint256 __start,
@@ -45,13 +46,13 @@ contract PlainTextProposalFactory is ScopedVerifier {
     /// @param __description The description of the proposal
     /// @param __options The options of the proposal
     /// @param params The parameters of the proposal
-    function _create(string memory __name, string memory __description, bytes32[] memory __options, uint256[] memory params) internal {
+    function _create(string memory __name, string memory __description, bytes[] memory __options, uint256[] memory params) internal {
         PlainTextProposal proposal = new PlainTextProposal(__name, __description, __options,
             params[0], params[1], params[2], params[3], params[4], address(0));
         proposal.transferOwnership(msg.sender);
 
         unlockedFor = address(proposal);
-        gov.createProposal.value(msg.value)(address(proposal));
+        gov.createProposal{value: msg.value}(address(proposal));
         unlockedFor = address(0);
     }
 }

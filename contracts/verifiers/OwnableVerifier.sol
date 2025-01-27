@@ -1,4 +1,5 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
 import "../ownership/Ownable.sol";
 import "../governance/Governance.sol";
@@ -6,7 +7,7 @@ import "./ScopedVerifier.sol";
 
 /// @dev OwnableVerifier is a verifier that only allows the owner to create proposals
 contract OwnableVerifier is ScopedVerifier, Ownable {
-    constructor(address govAddress) public {
+    constructor(address govAddress) {
         Ownable.initialize(msg.sender);
         gov = Governance(govAddress);
     }
@@ -17,7 +18,7 @@ contract OwnableVerifier is ScopedVerifier, Ownable {
     /// @param propAddr The address of the proposal
     function createProposal(address propAddr) payable external onlyOwner {
         unlockedFor = propAddr;
-        gov.createProposal.value(msg.value)(propAddr);
+        gov.createProposal{value: msg.value}(propAddr);
         unlockedFor = address(0);
     }
 }

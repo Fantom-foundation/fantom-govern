@@ -1,4 +1,5 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
 import "../base/BaseProposal.sol";
 
@@ -42,7 +43,7 @@ contract ExplicitProposal is BaseProposal {
         _exec = v;
     }
 
-    function setOptions(bytes32[] memory v) public {
+    function setOptions(bytes[] memory v) public {
         _options = v;
     }
 
@@ -54,26 +55,26 @@ contract ExplicitProposal is BaseProposal {
         _description = v;
     }
 
-    function pType() public view returns (uint256) {
+    function pType() public view override returns (uint256) {
         return _pType;
     }
 
-    function executable() public view returns (Proposal.ExecType) {
+    function executable() public override view returns (Proposal.ExecType) {
         return _exec;
     }
 
-    function votingStartTime() public view returns (uint256) {
+    function votingStartTime() public override view returns (uint256) {
         return _start;
     }
 
-    function votingMinEndTime() public view returns (uint256) {
+    function votingMinEndTime() public override view returns (uint256) {
         return _minEnd;
     }
 
-    function votingMaxEndTime() public view returns (uint256) {
+    function votingMaxEndTime() public override view returns (uint256) {
         return _maxEnd;
     }
 
-    function execute_delegatecall(address, uint256) external {}
-    function execute_call(uint256) external {}
+    function execute_delegatecall(address, uint256) external override {}
+    function execute_call(uint256) external override {}
 }

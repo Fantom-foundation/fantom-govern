@@ -1,4 +1,5 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
 import "../common/Decimal.sol";
 import "../proposal/base/IProposal.sol";
@@ -86,7 +87,7 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
     /// @param maxStartDelay The maximum start delay
     function addTemplate(
         uint256 pType,
-        string calldata name,
+        string memory name,
         address verifier,
         Proposal.ExecType executable,
         uint256 minVotes,

@@ -1,4 +1,5 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
 import "../proposal/base/IProposal.sol";
 
@@ -25,7 +26,7 @@ library Proposal {
         uint256 minAgreement; // min. agreement threshold for options (ratio)
         uint256[] opinionScales;
         address proposalContract; // contract which stores the proposal data and executes its logic
-        bytes32[] options;
+        bytes[] options;
         Timeline deadlines;
     }
 }

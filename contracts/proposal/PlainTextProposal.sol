@@ -1,12 +1,13 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
 import "./base/Cancelable.sol";
 import "./base/NonExecutableProposal.sol";
 
 /// @notice A plain text proposal
 contract PlainTextProposal is NonExecutableProposal, Cancelable {
-    constructor(string memory __name, string memory __description, bytes32[] memory __options,
-        uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd, address verifier) public {
+    constructor(string memory __name, string memory __description, bytes[] memory __options,
+        uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd, address verifier) {
         _name = __name;
         _description = __description;
         _options = __options;
