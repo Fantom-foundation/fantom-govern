@@ -1,21 +1,15 @@
 {
-  "name": "fantom-govern",
+  "name": "governance",
   "version": "1.0.0",
   "description": "Governance contract supports on-chain voting by arbitrary members on arbitrary topics. Each voting topic is called a \"proposal\".",
-  "main": "old.hardhat.config.js",
   "directories": {
     "test": "test"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Fantom-foundation/fantom-govern.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/Fantom-foundation/fantom-govern/issues"

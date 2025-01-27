@@ -2,8 +2,8 @@ import { expect } from "chai";
 import {ethers} from "hardhat";
 import {randomAddressString} from "hardhat/internal/hardhat-network/provider/utils/random";
 
-describe("VotesBook", function () {
-    beforeEach("Deploy VotesBook", async function (){
+describe("VotesBookKeeper", function () {
+    beforeEach("Deploy VotesBookKeeper", async function (){
         // Init used accounts
         [this.defaultAcc, this.otherAcc] = await ethers.getSigners();
         this.votesBookKeeper = await ethers.deployContract("VotesBookKeeper");
