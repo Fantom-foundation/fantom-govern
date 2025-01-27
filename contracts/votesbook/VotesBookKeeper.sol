@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import {Ownable} from "../ownership/Ownable.sol";
-import {Initializable} from "../common/Initializable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /// @notice Interface for the governance contract
 interface GovernanceI {
@@ -12,7 +11,7 @@ interface GovernanceI {
 }
 
 /// @notice A contract that keeps track of votes
-contract VotesBookKeeper is Initializable, Ownable {
+contract VotesBookKeeper is OwnableUpgradeable {
     address gov; // Address of the governance contract
 
     uint256 public maxProposalsPerVoter; // Maximum number of proposals a voter can vote on
@@ -27,9 +26,9 @@ contract VotesBookKeeper is Initializable, Ownable {
     /// @param _gov The address of the governance contract
     /// @param _maxProposalsPerVoter The maximum number of proposals a voter can vote on
     function initialize(address _owner, address _gov, uint256 _maxProposalsPerVoter) public initializer {
-        Ownable.initialize(_owner);
         gov = _gov;
         maxProposalsPerVoter = _maxProposalsPerVoter;
+        __Ownable_init(_owner);
     }
 
     /// @notice Get the proposal IDs for a voter

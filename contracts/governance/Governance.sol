@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
 import {Governable} from "../model/Governable.sol";
 import {IProposal} from "../proposal/base/IProposal.sol";
 import {IProposalVerifier} from "../verifiers/IProposalVerifier.sol";
@@ -12,10 +11,11 @@ import {GovernanceSettings} from "./GovernanceSettings.sol";
 import {LRC} from "./LRC.sol";
 import {Version} from "../version/Version.sol";
 import {VotesBookKeeper} from "../votesbook/VotesBookKeeper.sol";
-import {Initializable} from "../common/Initializable.sol";
+import {ReentrancyGuardTransient} from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /// @notice Governance contract for voting on proposals
-contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Version {
+contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettings, Version {
     using LRC for LRC.Option;
 
     struct Vote {
@@ -119,7 +119,6 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     /// @param _proposalVerifier The address of the proposal verifier.
     /// @param _votebook The address of the votebook contract.
     function initialize(address _governableContract, address _proposalVerifier, address _votebook) public initializer {
-        ReentrancyGuard.initialize();
         governableContract = Governable(_governableContract);
         proposalVerifier = IProposalVerifier(_proposalVerifier);
         votebook = VotesBookKeeper(_votebook);

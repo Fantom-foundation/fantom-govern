@@ -23,6 +23,8 @@
   },
   "dependencies": {
     "@nomicfoundation/hardhat-network-helpers": "^1.0.12",
+    "@openzeppelin/contracts": "^5.2.0",
+    "@openzeppelin/contracts-upgradeable": "^5.2.0",
     "bluebird": "^3.7.2",
     "openzeppelin-test-helpers": "^0.4.3",
     "web3": "^4.16.0"
