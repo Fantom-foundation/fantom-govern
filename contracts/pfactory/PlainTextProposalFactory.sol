@@ -4,14 +4,14 @@ import "../governance/Governance.sol";
 import "../proposal/PlainTextProposal.sol";
 import "../verifiers/ScopedVerifier.sol";
 
-/// @dev PlainTextProposalFactory is a factory contract to create PlainTextProposal
+/// @notice PlainTextProposalFactory is a factory contract to create PlainTextProposal
 contract PlainTextProposalFactory is ScopedVerifier {
     Governance internal gov;
     constructor(address _govAddress) public {
         gov = Governance(_govAddress);
     }
 
-    /// @dev create creates a new PlainTextProposal
+    /// @notice create a new PlainTextProposal
     /// @param __name The name of the proposal
     /// @param __description The description of the proposal
     /// @param __options The options of the proposal

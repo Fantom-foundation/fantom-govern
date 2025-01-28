@@ -2,14 +2,14 @@ pragma solidity ^0.5.0;
 
 import "../ownership/Ownable.sol";
 
-/// @dev Interface for the governance contract
+/// @notice Interface for the governance contract
 interface GovernanceI {
     function recountVote(address voterAddr, address delegatedTo, uint256 proposalID) external;
 
     function proposalState(uint256 proposalID) external view returns (uint256 winnerOptionID, uint256 votes, uint256 status);
 }
 
-/// @dev A contract that keeps track of votes
+/// @notice A contract that keeps track of votes
 contract VotesBookKeeper is Initializable, Ownable {
     address gov; // Address of the governance contract
 
@@ -20,7 +20,7 @@ contract VotesBookKeeper is Initializable, Ownable {
     // voter => delegatedTo => proposal ID => {index in the list + 1}
     mapping(address => mapping(address => mapping(uint256 => uint256))) votesIndex;
 
-    /// @dev Initialize the contract
+    /// @notice Initialize the contract
     /// @param _owner The owner of the contract
     /// @param _gov The address of the governance contract
     /// @param _maxProposalsPerVoter The maximum number of proposals a voter can vote on
@@ -30,11 +30,15 @@ contract VotesBookKeeper is Initializable, Ownable {
         maxProposalsPerVoter = _maxProposalsPerVoter;
     }
 
+    /// @notice Get the proposal IDs for a voter
+    /// @param voter The address of the voter
+    /// @param delegatedTo The address of the delegator which the voter has delegated their stake to
+    /// @return An array of proposal IDs
     function getProposalIDs(address voter, address delegatedTo) public view returns (uint256[] memory) {
         return votesList[voter][delegatedTo];
     }
 
-    /// @dev Get vote index plus 1 if vote exists. Returns 0 if vote doesn't exist
+    /// @notice Get vote index plus 1 if vote exists. Returns 0 if vote doesn't exist
     /// @param voter The address of the voter
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     /// @param proposalID The ID of the proposal
@@ -43,7 +47,7 @@ contract VotesBookKeeper is Initializable, Ownable {
         return votesIndex[voter][delegatedTo][proposalID];
     }
 
-    /// @dev Recount votes for a voter
+    /// @notice Recount votes for a voter
     /// @param voter The address of the voter
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     function recountVotes(address voter, address delegatedTo) public {
@@ -67,8 +71,8 @@ contract VotesBookKeeper is Initializable, Ownable {
         }
     }
 
-    /// @dev Add a vote to the list of votes
-    /// Should be called when a new vote is created
+    /// @notice Add a vote to the list of votes
+    /// @dev Should be called when a new vote is created
     /// @param voter The address of the voter
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     /// @param proposalID The ID of the proposal
@@ -87,8 +91,8 @@ contract VotesBookKeeper is Initializable, Ownable {
         votesIndex[voter][delegatedTo][proposalID] = idx;
     }
 
-    /// @dev Remove a vote from the list of votes
-    /// Should be called when a vote is canceled
+    /// @notice Remove a vote from the list of votes
+    /// @dev Should be called when a vote is canceled
     /// @param voter The address of the voter
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     /// @param proposalID The ID of the proposal
@@ -119,7 +123,7 @@ contract VotesBookKeeper is Initializable, Ownable {
         }
     }
 
-    /// @dev Set the maximum number of proposals a voter can vote on
+    /// @notice Set the maximum number of proposals a voter can vote on
     /// @param v The new maximum number of proposals
     function setMaxProposalsPerVoter(uint256 v) onlyOwner external {
         maxProposalsPerVoter = v;

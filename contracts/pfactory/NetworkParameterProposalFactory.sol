@@ -5,7 +5,7 @@ import "../governance/Governance.sol";
 import "../proposal/NetworkParameterProposal.sol";
 import "../verifiers/ScopedVerifier.sol";
 
-/// @dev NetworkParameterProposalFactory is a factory contract to create NetworkParameterProposal
+/// @notice NetworkParameterProposalFactory is a factory contract to create NetworkParameterProposal
 contract NetworkParameterProposalFactory is ScopedVerifier {
     using SafeMath for uint256;
     Governance internal gov;
@@ -17,7 +17,7 @@ contract NetworkParameterProposalFactory is ScopedVerifier {
         constsAddress = _constsAddress;
     }
 
-    /// @dev create creates a new NetworkParameterProposal
+    /// @notice create a new NetworkParameterProposal
     /// @param __description The description of the proposal
     /// @param __methodID The method ID of the proposal
     /// @param __optionVals The option values of the proposal

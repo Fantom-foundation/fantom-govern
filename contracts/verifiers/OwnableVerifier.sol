@@ -13,6 +13,8 @@ contract OwnableVerifier is ScopedVerifier, Ownable {
 
     Governance internal gov;
 
+    /// @notice create a new proposal
+    /// @param propAddr The address of the proposal
     function createProposal(address propAddr) payable external onlyOwner {
         unlockedFor = propAddr;
         gov.createProposal.value(msg.value)(propAddr);

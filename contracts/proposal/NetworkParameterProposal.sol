@@ -35,7 +35,7 @@ interface ConstsI {
     function updateGasPriceBalancingCounterweight(uint256 v) external; // 15
 }
 
-/// @dev A proposal to update network parameters
+/// @notice A proposal to update network parameters
 contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable {
     using SafeMath for uint256;
     Proposal.ExecType _exec;

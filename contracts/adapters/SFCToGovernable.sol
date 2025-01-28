@@ -2,7 +2,7 @@ pragma solidity ^0.5.0;
 
 import "../model/Governable.sol";
 
-/// @dev SFC is an interface which implements some functions from the SFC required for the Governance contract.
+/// @dev SFC is representation of the network SFC contract for the purpose of the Governance contract. It provides weights of individual voters.
 interface SFC {
     /// @dev Get the current stake of a delegator for a specific validator.
     /// @param delegator The address of the delegator.
@@ -32,6 +32,7 @@ interface SFC {
     function getTotalActiveStake() external view returns (uint256);
 }
 
+// @dev SFCToGovernable is an adapter allowing to use the network SFC contract as Governable (governance votes weights provider).
 contract SFCToGovernable is Governable {
     SFC internal sfc = SFC(address(0xFC00FACE00000000000000000000000000000000));
 

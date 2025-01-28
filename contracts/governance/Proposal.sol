@@ -2,7 +2,7 @@ pragma solidity ^0.5.0;
 
 import "../proposal/base/IProposal.sol";
 
-/// @dev Proposal is a library for handling proposals
+/// @notice Proposal is a library for handling information about proposal
 library Proposal {
     struct Timeline {
         uint256 votingStartTime; // date when the voting starts

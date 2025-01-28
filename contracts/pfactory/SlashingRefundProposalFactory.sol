@@ -4,7 +4,7 @@ import "../governance/Governance.sol";
 import "../proposal/SlashingRefundProposal.sol";
 import "../verifiers/ScopedVerifier.sol";
 
-/// @dev SlashingRefundProposalFactory is a factory contract to create SlashingRefundProposal
+/// @notice SlashingRefundProposalFactory is a factory contract to create SlashingRefundProposal
 contract SlashingRefundProposalFactory is ScopedVerifier {
     Governance internal gov;
     address internal sfcAddress;
@@ -13,7 +13,7 @@ contract SlashingRefundProposalFactory is ScopedVerifier {
         sfcAddress = _sfcAddress;
     }
 
-    /// @dev create creates a new SlashingRefundProposal
+    /// @notice create a new SlashingRefundProposal
     /// @param __validatorID The ID of the validator
     /// @param __description The description of the proposal
     /// @param __minVotes The minimum number of votes required

@@ -13,6 +13,7 @@ import "./LRC.sol";
 import "../version/Version.sol";
 import "../votesbook/VotesBookKeeper.sol";
 
+/// @notice Governance contract for voting on proposals
 contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Version {
     using SafeMath for uint256;
     using LRC for LRC.Option;
@@ -50,7 +51,8 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
 
     Task[] tasks; // Tasks of all current proposals
 
-    mapping(uint256 => ProposalState) proposals; // ProposalID => ProposalState
+    // ProposalID => ProposalState
+    mapping(uint256 => ProposalState) proposals;
     // voter address => proposalID => weight
     mapping(address => mapping(uint256 => uint256)) public overriddenWeight;
     // voter => delegationReceiver => proposalID => Vote
@@ -58,47 +60,47 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
 
     VotesBookKeeper votebook;
 
-    /// @dev Emitted when a new proposal is created.
+    /// @notice Emitted when a new proposal is created.
     /// @param proposalID ID of newly created proposal.
     event ProposalCreated(uint256 proposalID);
 
-    /// @dev Emitted when a proposal is resolved.
+    /// @notice Emitted when a proposal is resolved.
     /// @param proposalID ID of newly created proposal.
     event ProposalResolved(uint256 proposalID);
 
-    /// @dev Emitted when a proposal is rejected.
+    /// @notice Emitted when a proposal is rejected.
     /// @param proposalID ID of newly created proposal.
     event ProposalRejected(uint256 proposalID);
 
-    /// @dev Emitted when a proposal is canceled.
+    /// @notice Emitted when a proposal is canceled.
     /// @param proposalID ID of newly created proposal.
     event ProposalCanceled(uint256 proposalID);
 
-    /// @dev Emitted when a proposal has expired.
+    /// @notice Emitted when a proposal has expired.
     /// @param proposalID ID of newly created proposal.
     event ProposalExecutionExpired(uint256 proposalID);
 
-    /// @dev Emitted when a task (or tasks) is handled.
+    /// @notice Emitted when a task (or tasks) is handled.
     /// @param startIdx Index of the first task handled.
     /// @param endIdx Index of the last task handled.
     /// @param handled Number of tasks handled.
     event TasksHandled(uint256 startIdx, uint256 endIdx, uint256 handled);
 
-    /// @dev Emitted when a task (or tasks) is erased.
+    /// @notice Emitted when a task (or tasks) is erased.
     /// @param quantity Number of tasks erased.
     event TasksErased(uint256 quantity);
 
-    /// @dev Emitted when a weight of a voted has been override.
+    /// @notice Emitted when a weight of a voted has been override.
     /// @param voter Address of the voter.
     /// @param diff Weight difference.
     event VoteWeightOverridden(address voter, uint256 diff);
 
-    /// @dev Emitted when a weight of a voted has been un-override.
+    /// @notice Emitted when a weight of a voted has been un-override.
     /// @param voter Address of the voter.
     /// @param diff Weight difference.
     event VoteWeightUnOverridden(address voter, uint256 diff);
 
-    /// @dev Emitted when a vote is cast.
+    /// @notice Emitted when a vote is cast.
     /// @param voter Address of the voter.
     /// @param delegatedTo The address which the voter has delegated their stake to.
     /// @param proposalID ID of the proposal.
@@ -106,13 +108,13 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     /// @param weight Weight of the vote.
     event Voted(address voter, address delegatedTo, uint256 proposalID, uint256[] choices, uint256 weight);
 
-    /// @dev Emitted when a vote is canceled.
+    /// @notice Emitted when a vote is canceled.
     /// @param voter Address of the voter.
     /// @param delegatedTo The address which the voter has delegated their stake to.
     /// @param proposalID ID of the proposal.
     event VoteCanceled(address voter, address delegatedTo, uint256 proposalID);
 
-    /// @dev Initialize the contract.
+    /// @notice Initialize the contract.
     /// @param _governableContract The address of the governable contract.
     /// @param _proposalVerifier The address of the proposal verifier.
     /// @param _votebook The address of the votebook contract.
@@ -123,7 +125,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         votebook = VotesBookKeeper(_votebook);
     }
 
-    /// @dev Get the proposal params of a given proposal.
+    /// @notice Get the proposal params of a given proposal.
     /// @param proposalID The ID of the proposal.
     /// @return pType The type of the proposal.
     /// @return executable The execution type of the proposal.
@@ -164,7 +166,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         );
     }
 
-    /// @dev Get the state of a specific option in a proposal.
+    /// @notice Get the state of a specific option in a proposal.
     /// @param proposalID The ID of the proposal.
     /// @param optionID The ID of the option.
     /// @return votes Sum of total weight of votes
@@ -176,7 +178,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         return (opt.votes, LRC.agreementRatio(opt), opt.agreement);
     }
 
-    /// @dev Get the state of a proposal.
+    /// @notice Get the state of a proposal.
     /// @param proposalID The ID of the proposal.
     /// @return winnerOptionID The ID of the winning option.
     /// @return votes Sum of total weight of votes
@@ -186,7 +188,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         return (p.winnerOptionID, p.votes, p.status);
     }
 
-    /// @dev Get the vote details of a specific voter to a specific proposal.
+    /// @notice Get the vote details of a specific voter to a specific proposal.
     /// @param from The address of the voter.
     /// @param delegatedTo The address which the voter has delegated their stake to.
     /// @param proposalID The ID of the proposal.
@@ -197,13 +199,13 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         return (v.weight, v.choices);
     }
 
-    /// @dev Get the total number of tasks.
+    /// @notice Get the total number of tasks.
     /// @return The total number of tasks.
     function tasksCount() public view returns (uint256) {
         return (tasks.length);
     }
 
-    /// @dev Get the details of a specific task.
+    /// @notice Get the details of a specific task.
     /// @param i The index of the task.
     /// @return active Whether the task is active.
     /// @return assignment The assignment type of the task.
@@ -213,7 +215,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         return (t.active, t.assignment, t.proposalID);
     }
 
-    /// @dev Cast a vote for a proposal.
+    /// @notice Cast a vote for a proposal.
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     /// @param proposalID The ID of the proposal.
     /// @param choices The choices of the vote.
@@ -234,10 +236,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         require(weight != 0, "zero weight");
     }
 
-    /// @dev Create a new proposal.
-    /// The proposal must pay the proposal fee.
-    /// The proposal must pass the verification.
-    /// There must be at least one option.
+    /// @notice Create a new proposal.
     /// @param proposalContract The address of the proposal contract.
     function createProposal(address proposalContract) nonReentrant external payable {
         require(msg.value == proposalFee(), "paid proposal fee is wrong");
@@ -253,7 +252,6 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     }
 
     /// @dev Internal function to create a new proposal.
-
     /// @param proposalID The ID of the proposal.
     /// @param proposalContract The address of the proposal contract.
     function _createProposal(uint256 proposalID, address proposalContract) internal {
@@ -291,8 +289,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         prop.params.options = options;
     }
 
-    /// @dev Cancel a proposal if no votes have been cast.
-    /// Only the proposal contract can cancel the proposal.
+    /// @notice Cancel a proposal if no votes have been cast - Only the proposal contract can cancel the proposal.
     /// @param proposalID The ID of the proposal.
     function cancelProposal(uint256 proposalID) nonReentrant external {
         ProposalState storage prop = proposals[proposalID];
@@ -305,8 +302,8 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         emit ProposalCanceled(proposalID);
     }
 
-    /// @dev Handle a specified range of tasks.
-    /// Emits TasksHandled event.
+    /// @notice Handle a specified range of tasks.
+    /// @dev Emits TasksHandled event.
     /// @param startIdx The starting index of the tasks.
     /// @param quantity The number of tasks to handle.
     function handleTasks(uint256 startIdx, uint256 quantity) nonReentrant external {
@@ -325,8 +322,8 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         msg.sender.transfer(handled.mul(taskHandlingReward()));
     }
 
-    /// @dev Clean up inactive tasks.
-    /// Emits TasksErased event.
+    /// @notice Clean up inactive tasks.
+    /// @dev Emits TasksErased event.
     /// @param quantity The number of tasks to clean up.
     function tasksCleanup(uint256 quantity) nonReentrant external {
         uint256 erased;
@@ -377,7 +374,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     }
 
     /// @dev Handle voting tasks for a proposal with TASK_VOTING assignment.
-    /// Emits ProposalResolved or ProposalRejected event depending of the fate of the task.
+    /// @dev Emits ProposalResolved or ProposalRejected event depending of the fate of the task.
     /// @param proposalID The ID of the proposal.
     /// @param prop The state of the proposal.
     /// @return handled Whether the task was handled.
@@ -437,7 +434,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         return (success, false);
     }
 
-    /// @dev Calculates votes options and finds the winner.
+    /// @notice Calculates votes options and finds the winner.
     /// @param proposalID The ID of the proposal.
     /// @return proposalResolved Whether the proposal is resolved.
     /// @return winnerID The ID of the winning option.
@@ -448,7 +445,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         return (proposalResolved, winnerID, prop.votes);
     }
 
-    /// @dev Calculates votes options and finds the winner.
+    /// @dev internal function for calculating votes options and finding the winner.
     /// @param prop The state of the proposal.
     /// @return proposalResolved Whether the proposal is resolved.
     /// @return winnerID The ID of the winning option.
@@ -477,7 +474,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         return (winnerID != prop.params.options.length, winnerID);
     }
 
-    /// @dev Cancel a vote for a proposal.
+    /// @notice Cancel a vote for a proposal.
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     /// @param proposalID The ID of the proposal.
     function cancelVote(address delegatedTo, uint256 proposalID) nonReentrant external {
@@ -490,8 +487,8 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         _cancelVote(msg.sender, delegatedTo, proposalID);
     }
 
-    /// @dev Cancel a vote for a proposal.
-    /// Emits VoteCanceled event.
+    /// @dev internal function for canceling a vote.
+    /// @dev Emits VoteCanceled event.
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     /// @param proposalID The ID of the proposal.
     function _cancelVote(address voter, address delegatedTo, uint256 proposalID) internal {
@@ -515,7 +512,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     }
 
     /// @dev Cast a vote for a proposal.
-    /// Emits Voted event.
+    /// @dev Emits Voted event.
     /// @param proposalID The ID of the proposal.
     /// @param voter The address of the voter.
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
@@ -570,7 +567,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         }
     }
 
-    /// @dev Recount a votes weight for a proposal.
+    /// @notice Recount a votes weight for a proposal.
     /// @param voterAddr The address of the voter.
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     /// @param proposalID The ID of the proposal.
@@ -588,7 +585,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         require(beforeSelf != afterSelf || beforeSuper != afterSuper, "nothing changed");
     }
 
-    /// @dev Recount a votes weight for a proposal.
+    /// @dev internal function for recounting votes.
     /// @param voterAddr The address of the voter.
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     /// @param proposalID The ID of the proposal.
@@ -602,7 +599,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     }
 
     /// @dev Override the delegation weight for a proposal.
-    /// Emits VoteWeightOverridden event.
+    /// @dev Emits VoteWeightOverridden event.
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     /// @param proposalID The ID of the proposal.
     /// @param weight The weight of the vote.
@@ -619,7 +616,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     }
 
     /// @dev Un-override the delegation weight for a proposal.
-    /// Emits VoteWeightUnOverridden event.
+    /// @dev Emits VoteWeightUnOverridden event.
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     /// @param proposalID The ID of the proposal.
     /// @param weight The weight of the vote.

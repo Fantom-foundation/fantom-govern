@@ -7,7 +7,7 @@ import "../ownership/Ownable.sol";
 import "../version/Version.sol";
 import "../common/Initializable.sol";
 
-// @dev A storage of current proposal templates. Any new proposal will be verified against the stored template of its type.
+// @notice A storage of current proposal templates. Any new proposal will be verified against the stored template of its type.
 // Verification checks for parameters and calls additional verifier (if any).
 // Supposed to be owned by the governance contract
 contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version {
@@ -15,10 +15,10 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
         Ownable.initialize(msg.sender);
     }
 
-    /// @dev Event emitted when a new template is added
+    /// @notice Event emitted when a new template is added
     /// @param id The ID of the template
     event AddedTemplate(uint256 id);
-    /// @dev Event emitted when a template is erased
+    /// @notice Event emitted when a template is erased
     /// @param id The ID of the template
     event ErasedTemplate(uint256 id);
 
@@ -50,7 +50,7 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
         return (t.name, t.verifier, t.executable, t.minVotes, t.minAgreement, t.opinionScales, t.minVotingDuration, t.maxVotingDuration, t.minStartDelay, t.maxStartDelay);
     }
 
-    /// @dev adds a new template to the library - Only the owner can add a template
+    /// @notice adds a new template to the library
     /// @param id The ID of the template - must not already exist
     /// @param name The name of the template
     /// @param verifier The address of the verifier contract
@@ -98,7 +98,7 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
         emit AddedTemplate(id);
     }
 
-    /// @dev erases a template from the library - Only the owner can erase a template
+    /// @notice erases a template from the library - Only the owner can erase a template
     /// @param id The ID of the template
     function eraseTemplate(uint256 id) external onlyOwner {
         require(exists(id), "template doesn't exist");
@@ -107,7 +107,7 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
         emit ErasedTemplate(id);
     }
 
-    /// @dev Verify proposal parameters - Each proposal type has a template to which the data in proposal must correspond
+    /// @notice Verify proposal parameters
     /// @param id The ID of the template
     /// @param executable The type of execution
     /// @param minVotes The minimum number of votes required
@@ -201,9 +201,7 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
         return IProposalVerifier(template.verifier).verifyProposalParams(id, executable, minVotes, minAgreement, opinionScales, start, minEnd, maxEnd);
     }
 
-    // verifyProposalContract verifies proposal using the additional verifier
-
-    /// @dev Verify proposal contract - Each proposal type has a template to which the data in proposal must correspond
+    /// @notice Verify proposal contract
     /// @param id The ID of the template
     /// @param propAddr The address of the proposal contract
     /// @return true if the proposal contract is valid

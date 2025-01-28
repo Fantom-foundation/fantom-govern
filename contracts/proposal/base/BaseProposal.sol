@@ -5,7 +5,7 @@ import "./IProposal.sol";
 import "../../verifiers/IProposalVerifier.sol";
 import "../../governance/Proposal.sol";
 
-/// @dev A base for any proposal
+/// @notice A base for any proposal
 contract BaseProposal is IProposal {
     using SafeMath for uint256;
 
@@ -24,7 +24,7 @@ contract BaseProposal is IProposal {
     uint256 _minEnd; // Minimal end time of the voting
     uint256 _maxEnd; // Maxinal end time of the voting
 
-    /// @dev Verify the parameters of the proposal using a given verifier.
+    /// @notice Verify the parameters of the proposal using a given verifier.
     /// @param verifier The address of the verifier contract.
     /// @return bool indicating whether the proposal parameters are valid.
     function verifyProposalParams(address verifier) public view returns (bool) {

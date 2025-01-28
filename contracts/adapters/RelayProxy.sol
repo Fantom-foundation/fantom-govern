@@ -2,7 +2,7 @@ pragma solidity ^0.5.0;
 
 import "../ownership/Ownable.sol";
 
-/// @dev RelayProxy is a contract for relaying calls to another contract
+/// @notice RelayProxy relays calls from the owner to the predefined destination contract
 contract RelayProxy {
     address public __destination;
     address public __owner;
@@ -12,12 +12,12 @@ contract RelayProxy {
         __destination = _destination;
     }
 
-    /// @dev Emitted when ownership of the contract is transferred.
+    /// @notice Emitted when ownership of the contract is transferred.
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-    /// @dev Emitted when ownership of the contract is transferred.
+    /// @notice Emitted when destination of the contract is changed.
     event DestinationChanged(address indexed previousRelay, address indexed newRelay);
 
-    /// @dev Transfers ownership of the contract to a new account. - Can only be called by the current owner.
+    /// @notice Transfers ownership of the contract to a new account. - Can only be called by the current owner.
     /// @param newOwner The address to transfer ownership to.
     function __transferOwnership(address newOwner) public onlyOwner {
         require(newOwner != address(0), "Relay: new owner is the zero address");
@@ -25,16 +25,17 @@ contract RelayProxy {
         __owner = newOwner;
     }
 
-    /// @dev Sets the destination of the relay.
+    /// @notice Sets the destination of the relay - Can only be called by the current owner.
     /// @param newDestination The address to relay calls to.
     function __setDestination(address newDestination) public onlyOwner {
         require(newDestination != address(0), "new owner address is the zero address");
+        // todo this should emit DestinationChanged
         emit OwnershipTransferred(__destination, newDestination);
         __destination = newDestination;
     }
 
 
-    /// @dev Returns true if the caller is the current owner.
+    /// @dev Returns whether the caller is the current owner.
     function isOwner() internal view returns (bool) {
         return msg.sender == __owner;
     }

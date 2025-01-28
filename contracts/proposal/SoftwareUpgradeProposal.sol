@@ -3,12 +3,12 @@ pragma solidity ^0.5.0;
 import "./base/Cancelable.sol";
 import "./base/DelegatecallExecutableProposal.sol";
 
-/// @dev An interface to update this contract to a destination address
+/// @notice An interface to update this contract to a destination address
 interface Upgradability {
     function upgradeTo(address newImplementation) external;
 }
 
-/// @dev A proposal to upgrade a contract to a new implementation
+/// @notice A proposal to upgrade a contract to a new implementation
 contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
     address public upgradeableContract;
     address public newImplementation;

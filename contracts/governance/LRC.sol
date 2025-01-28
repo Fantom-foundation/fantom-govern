@@ -4,7 +4,7 @@ import "../common/Decimal.sol";
 import "../common/SafeMath.sol";
 
 
-/// @dev LRC implements the "least resistant consensus" paper. More detailed description can be found in Sonic's docs.
+/// @notice LRC implements the "least resistant consensus" paper. More detailed description can be found in Sonic's docs.
 library LRC {
     using SafeMath for uint256;
 
