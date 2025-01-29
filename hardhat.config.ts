@@ -19,12 +19,14 @@ const config: HardhatUserConfig = {
             url: 'http://127.0.0.1:8545',
         },
         mainnet: {
-            url: 'https://rpcapi.fantom.network',
-            chainId: 250,
+            url: 'https://rpc.sonic.soniclabs.com',
+            chainId: 146,
+            hardfork: "cancun",
         },
         testnet: {
-            url: 'https://rpc.testnet.fantom.network',
-            chainId: 4002,
+            url: 'https://rpc.blaze.soniclabs.com',
+            chainId: 57054,
+            hardfork: "cancun",
         },
     },
     mocha: {},
