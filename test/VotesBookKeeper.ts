@@ -1,14 +1,20 @@
 import { expect } from "chai";
 import {ethers} from "hardhat";
 import {randomAddressString} from "hardhat/internal/hardhat-network/provider/utils/random";
+import {loadFixture} from "@nomicfoundation/hardhat-network-helpers";
 
 describe("VotesBookKeeper", function () {
-    beforeEach("Deploy VotesBookKeeper", async function (){
+    const fixture = async function() {
         // Init used accounts
-        [this.defaultAcc, this.otherAcc] = await ethers.getSigners();
-        this.votesBookKeeper = await ethers.deployContract("VotesBookKeeper");
+        const [defaultAcc, otherAcc] = await ethers.getSigners();
+        const votesBookKeeper = await ethers.deployContract("VotesBookKeeper");
         // Only one vote per address is allowed
-        this.fakeGov = await ethers.deployContract("FakeVoteRecounter");
+        const fakeGov = await ethers.deployContract("FakeVoteRecounter");
+
+        return { defaultAcc, otherAcc, votesBookKeeper, fakeGov };
+    }
+    beforeEach("Deploy VotesBookKeeper", async function (){
+        Object.assign(this,await loadFixture(fixture));
     })
     it("onVoted() should record two votes from one voter to two different proposals", async function () {
         this.votesBookKeeper.initialize(this.defaultAcc, randomAddressString(), 2);

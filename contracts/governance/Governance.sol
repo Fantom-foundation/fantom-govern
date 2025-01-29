@@ -11,7 +11,7 @@ import "./Constants.sol";
 import "./GovernanceSettings.sol";
 import "./LRC.sol";
 import "../version/Version.sol";
-import "../VotesBookKeeper/VotesBookKeeper.sol";
+import "../votesbook/VotesBookKeeper.sol";
 
 contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Version {
     using SafeMath for uint256;

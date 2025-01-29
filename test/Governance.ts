@@ -2,8 +2,8 @@ import {BigNumberish} from "ethers";
 
 import {expect} from "chai";
 import {ethers} from "hardhat";
-import {time} from "@nomicfoundation/hardhat-network-helpers";
-import {ExecLoggingProposal, Governance, IProposalVerifier, ProposalTemplates} from "../typechain-types"
+import {loadFixture, time} from "@nomicfoundation/hardhat-network-helpers";
+import {ExecLoggingProposal, Governance, ProposalTemplates} from "../typechain-types"
 import type {HardhatEthersSigner} from "@nomicfoundation/hardhat-ethers/src/signers";
 
 const NonExecutableType = 0n;
@@ -11,22 +11,37 @@ const CallType = 1n;
 const DelegateCallType = 2n;
 const scales = [0, 2, 3, 4, 5];
 
+const governanceFixture = async function () {
+    const govable = await ethers.deployContract("UnitTestGovernable")
+    const verifier = await ethers.deployContract("ProposalTemplates")
+    const verifierAddress = await verifier.getAddress();
+    await verifier.initialize();
+    const votebook = await ethers.deployContract("VotesBookKeeper");
+    const gov = await ethers.deployContract("Governance");
+    const [defaultAcc, otherAcc, firstVoterAcc, secondVoterAcc, delegatorAcc] = await ethers.getSigners();
+    await votebook.initialize(defaultAcc.getAddress(), gov.getAddress(), 1000);
+    await gov.initialize(govable.getAddress(), verifierAddress, votebook.getAddress());
+    const proposalFee = await gov.proposalFee();
+
+    return {
+        govable,
+        verifier,
+        verifierAddress,
+        votebook,
+        gov,
+        defaultAcc,
+        otherAcc,
+        firstVoterAcc,
+        secondVoterAcc,
+        delegatorAcc,
+        proposalFee,
+    }
+}
 
 describe("Governance test", function () {
     beforeEach(async function (){
-        this.govable = await ethers.deployContract("UnitTestGovernable")
-        this.verifier = await ethers.deployContract("ProposalTemplates")
-        this.verifierAddress = await this.verifier.getAddress();
-        await this.verifier.initialize();
-        this.votebook = await ethers.deployContract("VotesBookKeeper");
-        this.gov = await ethers.deployContract("Governance");
-        [this.defaultAcc, this.otherAcc, this.firstVoterAcc, this.secondVoterAcc, this.delegatorAcc] = await ethers.getSigners();
-        await this.votebook.initialize(this.defaultAcc.getAddress(), this.gov.getAddress(), 1000);
-        await this.gov.initialize(this.govable.getAddress(), this.verifierAddress, this.votebook.getAddress());
-        this.proposalFee = await this.gov.proposalFee();
+        Object.assign(this, await loadFixture(governanceFixture));
     });
-
-
     it("checking deployment of a plaintext proposal contract", async function () {
         await this.verifier.addTemplate(1, "plaintext", ethers.ZeroAddress, NonExecutableType, ethers.parseEther("0.4"), ethers.parseEther("0.6"), [0, 1, 2, 3, 4], 120, 1200, 0, 60);
         const option = ethers.encodeBytes32String("opt");
@@ -752,7 +767,7 @@ describe("Governance test", function () {
                 const start = 60;
                 const minEnd = 500;
                 const maxEnd = 1000;
-                const proposalContract = await createProposal(this.gov, this.verifier, CallType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"), start, minEnd, maxEnd);
+                await createProposal(this.gov, this.verifier, CallType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"), start, minEnd, maxEnd);
                 this.proposalID = await this.gov.lastProposalID();
                 // make the new votes
                 await time.increase(start + 10);
