@@ -3,6 +3,7 @@ pragma solidity ^0.5.0;
 import "../ownership/Ownable.sol";
 import "../common/Decimal.sol";
 
+/// @dev UnitTestConstantsManager is a contract for managing constants for unit tests
 contract UnitTestConstantsManager is Ownable {
     // Minimum amount of stake for a validator, i.e., 500000 FTM
     uint256 public minSelfStake;

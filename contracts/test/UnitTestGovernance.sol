@@ -2,6 +2,7 @@ pragma solidity ^0.5.0;
 
 import "../governance/Governance.sol";
 
+/// @dev UnitTestGovernance is a mock Governance which is used for unit tests
 contract UnitTestGovernance is Governance {
     // reduce proposal fee in tests
     function proposalFee() public pure returns (uint256) {

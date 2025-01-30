@@ -5,9 +5,7 @@ import "./IProposal.sol";
 import "../../verifiers/IProposalVerifier.sol";
 import "../../governance/Proposal.sol";
 
-/**
- * @dev A base for any proposal
- */
+/// @notice A base for any proposal
 contract BaseProposal is IProposal {
     using SafeMath for uint256;
 
@@ -17,13 +15,18 @@ contract BaseProposal is IProposal {
 
     uint256 _minVotes;
     uint256 _minAgreement;
+    // Static scale for front end
+    // i.e. [1, 2, 3, 4] will result in the scale being divided into 4 parts
+    // where 1 means the least agreement and 4 means the most
     uint256[] _opinionScales;
 
-    uint256 _start;
-    uint256 _minEnd;
-    uint256 _maxEnd;
+    uint256 _start; // Start of the voting
+    uint256 _minEnd; // Minimal end time of the voting
+    uint256 _maxEnd; // Maxinal end time of the voting
 
-    // verifyProposalParams passes proposal parameters to a given verifier
+    /// @notice Verify the parameters of the proposal using a given verifier.
+    /// @param verifier The address of the verifier contract.
+    /// @return bool indicating whether the proposal parameters are valid.
     function verifyProposalParams(address verifier) public view returns (bool) {
         IProposalVerifier proposalVerifier = IProposalVerifier(verifier);
         return proposalVerifier.verifyProposalParams(pType(), executable(), minVotes(), minAgreement(), opinionScales(), votingStartTime(), votingMinEndTime(), votingMaxEndTime());

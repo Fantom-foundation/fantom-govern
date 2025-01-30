@@ -4,6 +4,8 @@ import "../PlainTextProposal.sol";
 import "../../governance/Governance.sol";
 import "../../governance/Proposal.sol";
 
+/// @dev A proposal that can be stores data about NonDelegateCall
+/// @dev Used for testing purposes
 contract ExecLoggingProposal is PlainTextProposal {
     Proposal.ExecType _exec;
 

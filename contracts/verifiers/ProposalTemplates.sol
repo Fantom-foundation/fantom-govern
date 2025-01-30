@@ -7,17 +7,19 @@ import "../ownership/Ownable.sol";
 import "../version/Version.sol";
 import "../common/Initializable.sol";
 
-/**
- * @dev A storage of current proposal templates. Any new proposal will be verified against the stored template of its type. 
- *      Verification checks for parameters and calls additional verifier (if any).
- *      Supposed to be owned by the governance contract
- */
+// @notice A storage of current proposal templates. Any new proposal will be verified against the stored template of its type.
+// Verification checks for parameters and calls additional verifier (if any).
+// Supposed to be owned by the governance contract
 contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version {
     function initialize() public initializer {
         Ownable.initialize(msg.sender);
     }
 
+    /// @notice Event emitted when a new template is added
+    /// @param pType The type of the template
     event AddedTemplate(uint256 pType);
+    /// @notice Event emitted when a template is erased
+    /// @param pType The type of the template
     event ErasedTemplate(uint256 pType);
 
     // Stored data for a proposal template
@@ -35,7 +37,7 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
     }
 
     // templates library
-    mapping(uint256 => ProposalTemplate) proposalTemplates; // proposal type -> ProposalTemplate
+    mapping(uint256 => ProposalTemplate) proposalTemplates; // proposal type => ProposalTemplate
 
     // exists returns true if proposal template is present
     function exists(uint256 pType) public view returns (bool) {
@@ -43,14 +45,58 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
     }
 
     // get returns proposal template
-    function get(uint256 pType) public view returns (string memory name, address verifier, Proposal.ExecType executable, uint256 minVotes, uint256 minAgreement, uint256[] memory opinionScales, uint256 minVotingDuration, uint256 maxVotingDuration, uint256 minStartDelay, uint256 maxStartDelay) {
+    function get(uint256 pType) public view returns (
+        string memory name,
+        address verifier,
+        Proposal.ExecType executable,
+        uint256 minVotes,
+        uint256 minAgreement,
+        uint256[] memory opinionScales,
+        uint256 minVotingDuration,
+        uint256 maxVotingDuration,
+        uint256 minStartDelay,
+        uint256 maxStartDelay
+    ) {
         ProposalTemplate storage t = proposalTemplates[pType];
-        return (t.name, t.verifier, t.executable, t.minVotes, t.minAgreement, t.opinionScales, t.minVotingDuration, t.maxVotingDuration, t.minStartDelay, t.maxStartDelay);
+        return (
+            t.name,
+            t.verifier,
+            t.executable,
+            t.minVotes,
+            t.minAgreement,
+            t.opinionScales,
+            t.minVotingDuration,
+            t.maxVotingDuration,
+            t.minStartDelay,
+            t.maxStartDelay
+        );
     }
 
-    // addTemplate adds a template into the library
-    // template must have unique type
-    function addTemplate(uint256 pType, string calldata name, address verifier, Proposal.ExecType executable, uint256 minVotes, uint256 minAgreement, uint256[] calldata opinionScales, uint256 minVotingDuration, uint256 maxVotingDuration, uint256 minStartDelay, uint256 maxStartDelay) external onlyOwner {
+    /// @notice adds a new template to the library
+    /// @param pType The type of the template - must not already exist
+    /// @param name The name of the template
+    /// @param verifier The address of the verifier contract
+    /// @param executable The type of execution
+    /// @param minVotes The minimum number of votes required
+    /// @param minAgreement The minimum agreement required
+    /// @param opinionScales The opinion scales
+    /// @param minVotingDuration The minimum voting duration
+    /// @param maxVotingDuration The maximum voting duration
+    /// @param minStartDelay The minimum start delay
+    /// @param maxStartDelay The maximum start delay
+    function addTemplate(
+        uint256 pType,
+        string calldata name,
+        address verifier,
+        Proposal.ExecType executable,
+        uint256 minVotes,
+        uint256 minAgreement,
+        uint256[] calldata opinionScales,
+        uint256 minVotingDuration,
+        uint256 maxVotingDuration,
+        uint256 minStartDelay,
+        uint256 maxStartDelay
+    ) external onlyOwner {
         ProposalTemplate storage template = proposalTemplates[pType];
         // empty name is a marker of non-existing template
         require(bytes(name).length != 0, "empty name");
@@ -74,7 +120,8 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
         emit AddedTemplate(pType);
     }
 
-    // eraseTemplate removes the template of specified type from the library
+    /// @notice erases a template from the library - Only the owner can erase a template
+    /// @param pType The type of the template
     function eraseTemplate(uint256 pType) external onlyOwner {
         require(exists(pType), "template doesn't exist");
         delete (proposalTemplates[pType]);
@@ -82,24 +129,26 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
         emit ErasedTemplate(pType);
     }
 
-    // verifyProposalParams checks proposal parameters
-    function verifyProposalParams(uint256 pType, Proposal.ExecType executable, uint256 minVotes, uint256 minAgreement, uint256[] calldata opinionScales, uint256 start, uint256 minEnd, uint256 maxEnd) external view returns (bool) {
-        if (start < block.timestamp) {
-            // start in the past
-            return false;
-        }
-        if (minEnd > maxEnd) {
-            // inconsistent data
-            return false;
-        }
-        if (start > minEnd) {
-            // inconsistent data
-            return false;
-        }
-        uint256 minDuration = minEnd - start;
-        uint256 maxDuration = maxEnd - start;
-        uint256 startDelay_ = start - block.timestamp;
-
+    /// @notice Verify proposal parameters
+    /// @param pType The type of the template
+    /// @param executable The type of execution
+    /// @param minVotes The minimum number of votes required
+    /// @param minAgreement The minimum agreement required
+    /// @param opinionScales The opinion scales
+    /// @param start The start time
+    /// @param minEnd The minimum end time
+    /// @param maxEnd The maximum end time
+    /// @return true if the proposal parameters are valid
+    function verifyProposalParams(
+        uint256 pType,
+        Proposal.ExecType executable,
+        uint256 minVotes,
+        uint256 minAgreement,
+        uint256[] calldata opinionScales,
+        uint256 start,
+        uint256 minEnd,
+        uint256 maxEnd
+    ) external view returns (bool) {
         if (!exists(pType)) {
             // non-existing template
             return false;
@@ -135,6 +184,22 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
                 return false;
             }
         }
+        if (start < block.timestamp) {
+            // start in the past
+            return false;
+        }
+        if (start > minEnd) {
+            // inconsistent data
+            return false;
+        }
+        if (minEnd > maxEnd) {
+            // inconsistent data
+            return false;
+        }
+
+        uint256 minDuration = minEnd - start;
+        uint256 maxDuration = maxEnd - start;
+        uint256 startDelay_ = start - block.timestamp;
         if (minDuration < template.minVotingDuration) {
             // min. voting duration is too short
             return false;
@@ -155,10 +220,22 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
             // template with no additional verifier
             return true;
         }
-        return IProposalVerifier(template.verifier).verifyProposalParams(pType, executable, minVotes, minAgreement, opinionScales, start, minEnd, maxEnd);
+        return IProposalVerifier(template.verifier).verifyProposalParams(
+            pType,
+            executable,
+            minVotes,
+            minAgreement,
+            opinionScales,
+            start,
+            minEnd,
+            maxEnd
+        );
     }
 
-    // verifyProposalContract verifies proposal using the additional verifier
+    /// @notice Verify proposal contract against its template
+    /// @param pType The type of the template
+    /// @param propAddr The address of the proposal contract
+    /// @return true if the proposal contract is valid
     function verifyProposalContract(uint256 pType, address propAddr) external view returns (bool) {
         if (!exists(pType)) {
             // non-existing template
@@ -172,7 +249,9 @@ contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version
         return IProposalVerifier(template.verifier).verifyProposalContract(pType, propAddr);
     }
 
-    // checkNonDecreasing returns true if array values are monotonically nondecreasing
+    /// @dev Check if array values are monotonically non-decreasing
+    /// @param arr The array to check
+    /// @return true if the array is monotonically non-decreasing
     function checkNonDecreasing(uint256[] memory arr) internal pure returns (bool) {
         for (uint256 i = 1; i < arr.length; i++) {
             if (arr[i - 1] > arr[i]) {

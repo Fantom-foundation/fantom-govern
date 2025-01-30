@@ -2,41 +2,67 @@ pragma solidity ^0.5.0;
 
 import "../model/Governable.sol";
 
+/// @dev SFC is representation of the network SFC contract for the purpose of the Governance contract. It provides weights of individual voters.
 interface SFC {
-    function getStake(address _from, uint256 _toValidatorID) external view returns (uint256);
+    /// @dev Get the current stake of a delegator for a specific validator.
+    /// @param delegator The address of the delegator.
+    /// @param toValidatorID The ID of the validator to whom the stake is delegated.
+    /// @return The amount of stake delegated by given delegator to the specified validator.
+    function getStake(address delegator, uint256 toValidatorID) external view returns (uint256);
 
-    function getValidator(uint256 _validatorID) external view returns (uint256 status, uint256 deactivatedTime, uint256 deactivatedEpoch,
-        uint256 receivedStake, uint256 createdEpoch, uint256 createdTime, address auth);
+    /// @dev Get information about validator for the given ID.
+    /// @param validatorID The ID of the validator.
+    /// @return status The information about the validator.
+    function getValidator(uint256 validatorID) external view returns (
+        uint256 status,
+        uint256 receivedStake,
+        address auth,
+        uint256 createdEpoch,
+        uint256 createdTime,
+        uint256 deactivatedTime,
+        uint256 deactivatedEpoch
+    );
 
-    function getValidatorID(address _addr) external view returns (uint256);
+    /// @dev Get the current stake of a delegator for a specific validator.
+    /// @param validator The address of the validator.
+    /// @return The ID of the validator.
+    function getValidatorID(address validator) external view returns (uint256);
 
-    function totalActiveStake() external view returns (uint256);
+    /// @dev Get the sum of all active delegated stakes.
+    function getTotalActiveStake() external view returns (uint256);
 }
 
+// @dev SFCToGovernable is an adapter allowing to use the network SFC contract as Governable (governance votes weights provider).
 contract SFCToGovernable is Governable {
     SFC internal sfc = SFC(address(0xFC00FACE00000000000000000000000000000000));
 
-    // Gets the total weight of voters
+    /// @dev Retrieves the total active stake across all validators.
+    /// @return The sum of all active delegated stakes.
     function getTotalWeight() external view returns (uint256) {
-        return sfc.totalActiveStake();
+        return sfc.getTotalActiveStake();
     }
 
-    // Gets the received delegated weight
-    function getReceivedWeight(address addr) external view returns (uint256) {
-        uint256 validatorID = sfc.getValidatorID(addr);
+    /// @dev Retrieves the total delegated stake received by a specific validator.
+    /// @param validator The address of the validator whose received stake is being queried.
+    /// @return The total amount of stake delegated to the specified validator.
+    function getReceivedWeight(address validator) external view returns (uint256) {
+        uint256 validatorID = sfc.getValidatorID(validator);
         if (validatorID == 0) {
             return 0;
         }
-        (uint256 status, , , uint256 receivedStake, , ,) = sfc.getValidator(validatorID);
+        (uint256 status, uint256 receivedStake, , , , ,) = sfc.getValidator(validatorID);
         if (status != 0) {
             return 0;
         }
         return receivedStake;
     }
 
-    // Gets the voting weight which is delegated from the specified address to the specified address
-    function getWeight(address from, address to) external view returns (uint256) {
-        uint256 toValidatorID = sfc.getValidatorID(to);
+    /// @dev Retrieves the voting weight of a given delegator for a specified validator.
+    /// @param delegator The address of the delegator whose voting weight is being queried.
+    /// @param validator The address of the validator to whom the stake is delegated.
+    /// @return The voting weight (stake) of the delegator for the specified validator.
+    function getWeight(address delegator, address validator) external view returns (uint256) {
+        uint256 toValidatorID = sfc.getValidatorID(validator);
         if (toValidatorID == 0) {
             return 0;
         }
@@ -44,6 +70,6 @@ contract SFCToGovernable is Governable {
         if (status != 0) {
             return 0;
         }
-        return sfc.getStake(from, toValidatorID);
+        return sfc.getStake(delegator, toValidatorID);
     }
 }

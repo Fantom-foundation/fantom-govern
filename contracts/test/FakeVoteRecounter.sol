@@ -1,5 +1,6 @@
 pragma solidity ^0.5.0;
 
+/// @dev FakeVoteRecounter is a VoteCounter contract for used unit tests
 contract FakeVoteRecounter {
     address public expectVoterAddr;
     address public expectDelegatedTo;
