@@ -29,7 +29,7 @@ contract Governance is Initializable, ReentrancyGuard, Version {
     uint256 constant public MAX_OPTIONS = 10;
     uint256 constant public MAX_EXECUTION_PERIOD = 3 days;
 
-    // Proposal status constants
+    // ProposalState.status constants
     uint256 constant public STATUS_INITIAL = 0;
     uint256 constant public STATUS_RESOLVED = 1;
     uint256 constant public STATUS_FAILED = 1 << 1;
@@ -43,13 +43,6 @@ contract Governance is Initializable, ReentrancyGuard, Version {
         mapping(uint256 => LRC.Option) options; // Voting state OptionID => LRC.Option
         uint256 winnerOptionID;
         uint256 votes; // Sum of total weight of votes
-
-        // Refer to Constants.sol
-        // 0 == STATUS_INITIAL
-        // 1 = STATUS_RESOLVED
-        // 1 << 1 == STATUS_FAILED
-        // 1 << 2 == STATUS_CANCELED
-        // 1 << 3 == STATUS_EXECUTION_EXPIRED
         uint256 status;
     }
 
