@@ -1,51 +1,30 @@
 {
   "name": "governance",
   "version": "1.0.0",
-  "scripts": {
-    "lint": "npm run eslint && npm run solium",
-    "eslint": "eslint test/ migrations/",
-    "solium": "solium --dir contracts",
-    "build": "truffle build",
-    "test": "truffle test",
-    "truffle": "truffle",
-    "flatten": "rm -rf contracts/Flattened.sol && truffle-flattener contracts/Staker.sol >> contracts/Flattened.sol"
-  },
-  "dependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.1.1",
-    "@nomiclabs/hardhat-truffle5": "^2.0.7",
-    "@nomiclabs/hardhat-waffle": "^2.0.3",
-    "@nomiclabs/hardhat-web3": "^2.0.0",
-    "@openzeppelin/contracts": "^2.3.0",
-    "@openzeppelin/test-helpers": "^0.5.16",
-    "hardhat-contract-sizer": "^2.6.1"
-  },
-  "devDependencies": {
-    "babel-polyfill": "^6.26.0",
-    "babel-preset-env": "^1.7.0",
-    "babel-register": "^6.26.0",
-    "bignumber.js": "^9.0.0",
-    "chai": "^4.2.0",
-    "chai-as-promised": "^7.1.1",
-    "chai-bignumber": "^3.0.0",
-    "eslint": "^6.2.2",
-    "eslint-config-airbnb": "^18.0.1",
-    "eslint-config-airbnb-base": "^14.0.0",
-    "eslint-plugin-import": "^2.18.2",
-    "eslint-plugin-jsx-a11y": "^6.2.3",
-    "eslint-plugin-react": "^7.14.3",
-    "eslint-plugin-react-hooks": "^1.7.0",
-    "ethereumjs-testrpc-sc": "^6.5.1-sc.0",
-    "karma": "^4.3.0",
-    "lodash": "^4.17.15",
-    "openzeppelin-test-helpers": "^0.4.3",
-    "solidity-coverage": "^0.7.1",
-    "truffle-flattener": "^1.4.0",
-    "web3-utils": "^1.2.1"
+  "description": "Governance contract supports on-chain voting by arbitrary members on arbitrary topics. Each voting topic is called a \"proposal\".",
+  "directories": {
+    "test": "test"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Fantom-foundation/fantom-govern"
+    "url": "git+https://github.com/Fantom-foundation/fantom-govern.git"
   },
-  "author": "Fantom Foundation",
-  "license": "MIT"
+  "license": "MIT",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Fantom-foundation/fantom-govern/issues"
+  },
+  "homepage": "https://github.com/Fantom-foundation/fantom-govern#readme",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.17",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.12",
+    "bluebird": "^3.7.2",
+    "openzeppelin-test-helpers": "^0.4.3",
+    "web3": "^4.16.0"
+  }
 }

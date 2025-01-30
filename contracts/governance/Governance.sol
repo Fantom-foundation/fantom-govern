@@ -11,7 +11,7 @@ import "./Constants.sol";
 import "./GovernanceSettings.sol";
 import "./LRC.sol";
 import "../version/Version.sol";
-import "../votebook/votebook.sol";
+import "../votesbook/VotesBookKeeper.sol";
 
 contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Version {
     using SafeMath for uint256;
@@ -108,7 +108,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
 
         require(prop.params.proposalContract != address(0), "proposal with a given ID doesnt exist");
         require(isInitialStatus(prop.status), "proposal isn't active");
-        require(block.timestamp >= prop.params.deadlines.votingStartTime, "proposal voting has't begun");
+        require(block.timestamp >= prop.params.deadlines.votingStartTime, "proposal voting hasn't begun");
         require(_votes[msg.sender][delegatedTo][proposalID].weight == 0, "vote already exists");
         require(choices.length == prop.params.options.length, "wrong number of choices");
 
