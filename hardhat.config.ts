@@ -29,6 +29,18 @@ const config: HardhatUserConfig = {
             hardfork: "cancun",
         },
     },
+    etherscan: {
+        customChains: [
+            {
+                network: "sonic",
+                chainId: 146,
+                urls: {
+                    apiURL: "https://api.sonicscan.org/api",
+                    browserURL: "https://sonicscan.org/"
+                }
+            }
+        ],
+    },
     mocha: {},
     paths: {
         sources: './contracts',
