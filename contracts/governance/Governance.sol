@@ -137,8 +137,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     /// @return votingStartTime The start time of the voting.
     /// @return votingMinEndTime The minimum end time of the voting.
     /// @return votingMaxEndTime The maximum end time of the voting.
-    function proposalParams(uint256 proposalID)
-    public view returns (
+    function proposalParams(uint256 proposalID) public view returns (
         uint256 pType,
         Proposal.ExecType executable,
         uint256 minVotes,
@@ -271,7 +270,16 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         require(options.length != 0, "proposal options are empty - nothing to vote for");
         require(options.length <= maxOptions(), "too many options");
         bool ok;
-        ok = proposalVerifier.verifyProposalParams(pType, executable, minVotes, minAgreement, opinionScales, votingStartTime, votingMinEndTime, votingMaxEndTime);
+        ok = proposalVerifier.verifyProposalParams(
+            pType,
+            executable,
+            minVotes,
+            minAgreement,
+            opinionScales,
+            votingStartTime,
+            votingMinEndTime,
+            votingMaxEndTime
+        );
         require(ok, "proposal parameters failed verification");
         ok = proposalVerifier.verifyProposalContract(pType, proposalContract);
         require(ok, "proposal contract failed verification");

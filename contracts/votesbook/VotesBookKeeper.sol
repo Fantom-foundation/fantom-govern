@@ -38,7 +38,7 @@ contract VotesBookKeeper is Initializable, Ownable {
         return votesList[voter][delegatedTo];
     }
 
-    /// @notice Get vote index plus 1 if vote exists. Returns 0 if vote doesn't exist
+    /// @notice Get option for which the voter voted (indexed from 1), zero if not voted.
     /// @param voter The address of the voter
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     /// @param proposalID The ID of the proposal
