@@ -4,13 +4,12 @@ import "../common/Decimal.sol";
 import "../proposal/base/IProposal.sol";
 import "./IProposalVerifier.sol";
 import "../ownership/Ownable.sol";
-import "../version/Version.sol";
 import "../common/Initializable.sol";
 
 // @notice A storage of current proposal templates. Any new proposal will be verified against the stored template of its type.
 // Verification checks for parameters and calls additional verifier (if any).
 // Supposed to be owned by the governance contract
-contract ProposalTemplates is Initializable, IProposalVerifier, Ownable, Version {
+contract ProposalTemplates is Initializable, IProposalVerifier, Ownable {
     function initialize() public initializer {
         Ownable.initialize(msg.sender);
     }

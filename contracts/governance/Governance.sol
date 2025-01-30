@@ -10,11 +10,10 @@ import "./Proposal.sol";
 import "./Constants.sol";
 import "./GovernanceSettings.sol";
 import "./LRC.sol";
-import "../version/Version.sol";
 import "../votesbook/VotesBookKeeper.sol";
 
 /// @notice Governance contract for voting on proposals
-contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Version {
+contract Governance is Initializable, ReentrancyGuard, GovernanceSettings {
     using SafeMath for uint256;
     using LRC for LRC.Option;
 
