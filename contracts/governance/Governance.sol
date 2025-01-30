@@ -7,14 +7,12 @@ import "../proposal/base/IProposal.sol";
 import "../verifiers/IProposalVerifier.sol";
 import "../proposal/SoftwareUpgradeProposal.sol";
 import "./Proposal.sol";
-import "./Constants.sol";
-import "./GovernanceSettings.sol";
 import "./LRC.sol";
 import "../version/Version.sol";
 import "../votesbook/VotesBookKeeper.sol";
 
 /// @notice Governance contract for voting on proposals
-contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Version {
+contract Governance is Initializable, ReentrancyGuard, Version {
     using SafeMath for uint256;
     using LRC for LRC.Option;
 
@@ -22,6 +20,22 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         uint256 weight; // Weight of the vote
         uint256[] choices; // Votes choices
     }
+
+    // Settings constants
+    uint256 constant public PROPOSAL_BURNT_FEE = 50 * 1e18;
+    uint256 constant public TASK_HANDLING_REWARD = 40 * 1e18;
+    uint256 constant public TASK_ERASING_REWARD = 10 * 1e18;
+    uint256 constant public PROPOSAL_FEE = PROPOSAL_BURNT_FEE + TASK_HANDLING_REWARD + TASK_ERASING_REWARD;
+    uint256 constant public MAX_OPTIONS = 10;
+    uint256 constant public MAX_EXECUTION_PERIOD = 3 days;
+
+    // Proposal status constants
+    uint256 constant public STATUS_INITIAL = 0;
+    uint256 constant public STATUS_RESOLVED = 1;
+    uint256 constant public STATUS_FAILED = 1 << 1;
+    uint256 constant public STATUS_CANCELED = 1 << 2;
+    uint256 constant public STATUS_EXECUTION_EXPIRED = 1 << 3;
+    uint256 constant public TASK_VOTING = 1;
 
     struct ProposalState {
         Proposal.Parameters params;
@@ -226,7 +240,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         ProposalState storage prop = proposals[proposalID];
 
         require(prop.params.proposalContract != address(0), "proposal with a given ID doesnt exist");
-        require(isInitialStatus(prop.status), "proposal isn't active");
+        require(prop.status == STATUS_INITIAL, "proposal isn't active");
         require(block.timestamp >= prop.params.deadlines.votingStartTime, "proposal voting hasn't begun");
         require(_votes[msg.sender][delegatedTo][proposalID].weight == 0, "vote already exists");
         require(choices.length == prop.params.options.length, "wrong number of choices");
@@ -238,14 +252,14 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     /// @notice Create a new proposal.
     /// @param proposalContract The address of the proposal contract.
     function createProposal(address proposalContract) nonReentrant external payable {
-        require(msg.value == proposalFee(), "paid proposal fee is wrong");
+        require(msg.value == PROPOSAL_FEE, "paid proposal fee is wrong");
 
         lastProposalID++;
         _createProposal(lastProposalID, proposalContract);
         addTasks(lastProposalID);
 
         // burn a non-reward part of the proposal fee
-        burn(proposalBurntFee());
+        burn(PROPOSAL_BURNT_FEE);
 
         emit ProposalCreated(lastProposalID);
     }
@@ -268,7 +282,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         bytes32[] memory options = p.options();
         // check the parameters and contract
         require(options.length != 0, "proposal options are empty - nothing to vote for");
-        require(options.length <= maxOptions(), "too many options");
+        require(options.length <= MAX_OPTIONS, "too many options");
         bool ok;
         ok = proposalVerifier.verifyProposalParams(
             pType,
@@ -302,11 +316,11 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     function cancelProposal(uint256 proposalID) nonReentrant external {
         ProposalState storage prop = proposals[proposalID];
         require(prop.params.proposalContract != address(0), "proposal with a given ID doesnt exist");
-        require(isInitialStatus(prop.status), "proposal isn't active");
+        require(prop.status == STATUS_INITIAL, "proposal isn't active");
         require(prop.votes == 0, "voting has already begun");
         require(msg.sender == prop.params.proposalContract, "must be sent from the proposal contract");
 
-        prop.status = statusCanceled();
+        prop.status = STATUS_CANCELED;
         emit ProposalCanceled(proposalID);
     }
 
@@ -327,7 +341,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
 
         emit TasksHandled(startIdx, i, handled);
         // reward the sender
-        msg.sender.transfer(handled.mul(taskHandlingReward()));
+        msg.sender.transfer(handled.mul(TASK_HANDLING_REWARD));
     }
 
     /// @notice Clean up inactive tasks.
@@ -346,7 +360,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         require(erased > 0, "no tasks erased");
         emit TasksErased(erased);
         // reward the sender
-        msg.sender.transfer(erased.mul(taskErasingReward()));
+        msg.sender.transfer(erased.mul(TASK_ERASING_REWARD));
     }
 
     /// @dev Handle a single specific task.
@@ -371,7 +385,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     /// @return handled Whether the task was handled.
     function handleTaskAssignments(uint256 proposalID, uint256 assignment) internal returns (bool handled) {
         ProposalState storage prop = proposals[proposalID];
-        if (!isInitialStatus(prop.status)) {
+        if (prop.status != STATUS_INITIAL) {
             // deactivate all tasks for non-active proposals
             return true;
         }
@@ -400,15 +414,15 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
                 return false;
             }
             if (!expired) {
-                prop.status = statusResolved();
+                prop.status = STATUS_RESOLVED;
                 prop.winnerOptionID = winnerID;
                 emit ProposalResolved(proposalID);
             } else {
-                prop.status = statusExecutionExpired();
+                prop.status = STATUS_EXECUTION_EXPIRED;
                 emit ProposalExecutionExpired(proposalID);
             }
         } else {
-            prop.status = statusFailed();
+            prop.status = STATUS_FAILED;
             emit ProposalRejected(proposalID);
         }
         return true;
@@ -425,7 +439,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
             return (true, false);
         }
 
-        bool executionExpired = block.timestamp > prop.params.deadlines.votingMaxEndTime + maxExecutionPeriod();
+        bool executionExpired = block.timestamp > prop.params.deadlines.votingMaxEndTime + MAX_EXECUTION_PERIOD;
         if (executionExpired) {
             // protection against proposals which revert or consume too much gas
             return (true, true);
@@ -491,7 +505,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         }
         Vote memory v = _votes[msg.sender][delegatedTo][proposalID];
         require(v.weight != 0, "doesn't exist");
-        require(isInitialStatus(proposals[proposalID].status), "proposal isn't active");
+        require(proposals[proposalID].status == STATUS_INITIAL, "proposal isn't active");
         _cancelVote(msg.sender, delegatedTo, proposalID);
     }
 
@@ -583,7 +597,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         Vote storage v = _votes[voterAddr][delegatedTo][proposalID];
         Vote storage vSuper = _votes[delegatedTo][delegatedTo][proposalID];
         require(v.choices.length > 0, "doesn't exist");
-        require(isInitialStatus(proposals[proposalID].status), "proposal isn't active");
+        require(proposals[proposalID].status == STATUS_INITIAL, "proposal isn't active");
         uint256 beforeSelf = v.weight;
         uint256 beforeSuper = vSuper.weight;
         _recountVote(voterAddr, delegatedTo, proposalID);
@@ -700,5 +714,13 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
             sstore(0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103, 0)
             sstore(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc, 0)
         }
+    }
+
+    /// @notice calculates the minimum number of votes required for a proposal
+    /// @param totalWeight The total weight of the voters
+    /// @param minVotesRatio The minimum ratio of votes required
+    /// @return The minimum number of votes required
+    function minVotesAbsolute(uint256 totalWeight, uint256 minVotesRatio) public pure returns (uint256) {
+        return totalWeight * minVotesRatio / Decimal.unit();
     }
 }

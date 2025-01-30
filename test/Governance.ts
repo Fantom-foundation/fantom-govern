@@ -21,7 +21,7 @@ const governanceFixture = async function () {
     const [defaultAcc, otherAcc, firstVoterAcc, secondVoterAcc, delegatorAcc] = await ethers.getSigners();
     await votebook.initialize(defaultAcc.getAddress(), gov.getAddress(), 1000);
     await gov.initialize(govable.getAddress(), verifierAddress, votebook.getAddress());
-    const proposalFee = await gov.proposalFee();
+    const proposalFee = await gov.PROPOSAL_FEE();
 
     return {
         govable,
@@ -532,7 +532,7 @@ describe("Governance test", function () {
         const maxEnd = 1000;
         const proposalContract = await createProposal(this.gov, this.verifier, CallType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"), start, minEnd, maxEnd);
         const proposalID = await this.gov.lastProposalID();
-        const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
+        const maxExecutionPeriod = await this.gov.MAX_EXECUTION_PERIOD();
         // Advance time to be over maxExecutionPeriod
         await time.increase(maxExecutionPeriod + BigInt(start) + BigInt(maxEnd) + 10n);
         await this.govable.stake(this.defaultAcc, ethers.parseEther("10.0"));
@@ -559,7 +559,7 @@ describe("Governance test", function () {
         const maxEnd = 1000;
         const proposalContract = await createProposal(this.gov, this.verifier, CallType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"), start, minEnd, maxEnd);
         const proposalID = await this.gov.lastProposalID();
-        const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
+        const maxExecutionPeriod = await this.gov.MAX_EXECUTION_PERIOD();
         // Advance time to be over maxExecutionPeriod
         await time.increase(maxExecutionPeriod + BigInt(start) + BigInt(maxEnd) + 10n);
         await this.govable.stake(this.defaultAcc, ethers.parseEther("10.0"));
@@ -589,7 +589,7 @@ describe("Governance test", function () {
         const maxEnd = 1000;
         const proposalContract = await createProposal(this.gov, this.verifier, DelegateCallType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"), start, minEnd, maxEnd);
         const proposalID = await this.gov.lastProposalID();
-        const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
+        const maxExecutionPeriod = await this.gov.MAX_EXECUTION_PERIOD();
         // Advance time not to exceed maxExecutionPeriod
         await time.increase(maxExecutionPeriod + BigInt(start) + BigInt(maxEnd) - 10n);
         await this.govable.stake(this.defaultAcc, ethers.parseEther("10.0"));
@@ -616,7 +616,7 @@ describe("Governance test", function () {
         const maxEnd = 1000;
         const proposalContract = await createProposal(this.gov, this.verifier, NonExecutableType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"), start, minEnd, maxEnd);
         const proposalID = await this.gov.lastProposalID();
-        const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
+        const maxExecutionPeriod = await this.gov.MAX_EXECUTION_PERIOD();
         // Advance time not to exceed maxExecutionPeriod
         await time.increase(maxExecutionPeriod + BigInt(start) + BigInt(maxEnd) - 10n);
         await this.govable.stake(this.defaultAcc, ethers.parseEther("10.0"));
@@ -715,7 +715,7 @@ describe("Governance test", function () {
         const maxEnd = 1000;
         const proposalContract = await createProposal(this.gov, this.verifier, CallType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"), start, minEnd, maxEnd);
         const proposalID = await this.gov.lastProposalID();
-        const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
+        const maxExecutionPeriod = await this.gov.MAX_EXECUTION_PERIOD();
         // Advance time to be over maxExecutionPeriod
         await time.increase(maxExecutionPeriod + BigInt(start) + BigInt(maxEnd) + 10n);
         await this.govable.stake(this.defaultAcc, ethers.parseEther("10.0")); // defaultAcc has less than 50% of weight
@@ -1231,7 +1231,7 @@ const createProposal = async (
     );
     await contract.setOpinionScales(opinionScales);
     await contract.setExecutable(execType);
-    await gov.createProposal(contract.getAddress(), {value: await gov.proposalFee()});
+    await gov.createProposal(contract.getAddress(), {value: await gov.PROPOSAL_FEE()});
 
     return contract
 };
