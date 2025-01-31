@@ -192,6 +192,8 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         while (true) {
             bstr[strIdx] = bytes1(uint8(48 + num % 10));
             num /= 10;
+            // while still being able to loop if num is 1
+            // we need add the break condition here to avoid strIdx underflow
             if (num == 0) {
                 break;
             }
