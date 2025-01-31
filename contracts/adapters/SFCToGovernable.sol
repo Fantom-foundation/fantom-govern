@@ -31,11 +31,22 @@ interface SFC {
 
     /// @dev Get the sum of all active delegated stakes.
     function getTotalActiveStake() external view returns (uint256);
+
+    /// @notice Update slashing refund ratio for a validator.
+    /// @dev The refund ratio is used to calculate the amount of stake that can be withdrawn after slashing.
+    function updateSlashingRefundRatio(uint256 validatorID, uint256 refundRatio) external;
+
+    /// @notice Check whether the given validator is slashed
+    function isSlashed(uint256 validatorID) public view returns (bool);
 }
 
 // @dev SFCToGovernable is an adapter allowing to use the network SFC contract as Governable (governance votes weights provider).
 contract SFCToGovernable is Governable {
-    SFC internal sfc = SFC(address(0xFC00FACE00000000000000000000000000000000));
+    SFC internal sfc;
+
+    constructor(address _sfcAddress) public {
+        sfc = SFC(_sfcAddress);
+    }
 
     /// @dev Retrieves the total active stake across all validators.
     /// @return The sum of all active delegated stakes.

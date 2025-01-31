@@ -4,13 +4,7 @@ pragma solidity 0.8.27;
 import {DelegatecallExecutableProposal} from "./base/DelegatecallExecutableProposal.sol";
 import {Cancelable} from "./base/Cancelable.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-
-/// @notice An interface to update slashing penalty ratio
-interface SFC {
-    function updateSlashingRefundRatio(uint256 validatorID, uint256 ratio) external;
-
-    function isSlashed(uint256 validatorID) external returns(bool);
-}
+import {SFCToGovernable} from "../adapters/SFCToGovernable.sol";
 
 /// @notice A proposal to refund a slashed validator
 contract SlashingRefundProposal is DelegatecallExecutableProposal, Cancelable {
