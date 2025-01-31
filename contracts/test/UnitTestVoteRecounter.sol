@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-/// @dev UnitTestVoteRecounter.sol is a VoteCounter contract for used unit tests
+/// @dev UnitTestVoteRecounter implementation for unit testing purpose
 contract UnitTestVoteRecounter {
     address public expectVoterAddr;
     address public expectDelegatedTo;

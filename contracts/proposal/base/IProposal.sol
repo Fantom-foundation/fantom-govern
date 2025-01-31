@@ -3,7 +3,7 @@ pragma solidity 0.8.27;
 
 import "../../governance/Proposal.sol";
 
-/// @notice An abstract proposal
+/// @notice The proposal interface
 interface IProposal {
     /// @dev Get type of proposal (e.g. plaintext, software upgrade)
     /// If BaseProposal.sol is used, must be overridden

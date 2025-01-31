@@ -47,10 +47,6 @@ contract RelayProxy {
         _;
     }
 
-    receive() payable external {
-        require(isOwner(), "Relay: caller is not the owner");
-        _relay(__destination);
-    }
 
     fallback() payable external {
         require(isOwner(), "Relay: caller is not the owner");

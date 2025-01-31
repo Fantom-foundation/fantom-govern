@@ -3,7 +3,7 @@ pragma solidity 0.8.27;
 
 import "./base/Cancelable.sol";
 import "./base/DelegatecallExecutableProposal.sol";
-import "hardhat/console.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 interface ConstsI {
     function updateMinSelfStake(uint256 v) external;
@@ -178,43 +178,13 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         return decimals;
     }
 
-    /// @dev Convert a uint256 to a bytes
-    /// @param num The number to be converted
-    /// @return The converted bytes
-    function uint256ToB(uint256 num) internal pure returns (bytes memory) {
-        if (num == 0) {
-            return bytes("0");
-        }
-        console.log(num);
-        uint decimals = decimalsNum(num);
-        bytes memory bstr = new bytes(decimals);
-        uint strIdx = decimals - 1;
-        while (true) {
-            bstr[strIdx] = bytes1(uint8(48 + num % 10));
-            num /= 10;
-            // while still being able to loop if num is 1
-            // we need add the break condition here to avoid strIdx underflow
-            if (num == 0) {
-                break;
-            }
-            strIdx--;
-        }
-        return bstr;
-    }
-    /// @dev Convert a uint256 to a string
-    /// @param num The number to be converted
-    /// @return The converted string
-    function uint256ToStr(uint256 num) internal pure returns (string memory) {
-        return string(uint256ToB(num));
-    }
-
     /// @dev Convert a decimal to a string
-    /// @param interger The interger part of the decimal
+    /// @param integer The integer part of the decimal
     /// @param fractional The fractional part of the decimal
     /// @return The converted string
-    function decimalToStr(uint256 interger, uint256 fractional) internal pure returns (string memory) {
-        bytes memory intStr = uint256ToB(interger);
-        bytes memory fraStr = uint256ToB(fractional);
+    function decimalToStr(uint256 integer, uint256 fractional) internal pure returns (string memory) {
+        bytes memory intStr = bytes(Strings.toString(integer));
+        bytes memory fraStr = bytes(Strings.toString(fractional));
         // replace leading 1 with .
         fraStr[0] = bytes1(uint8(46));
         return string(abi.encodePacked(intStr, fraStr));
@@ -223,7 +193,7 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
     /// @dev Unpack a decimal number
     /// @param num The number to be unpacked
     /// @param unit The unit of the number
-    function unpackDecimal(uint256 num, uint256 unit) internal pure returns (uint256 interger, uint256 fractional) {
+    function unpackDecimal(uint256 num, uint256 unit) internal pure returns (uint256 integer, uint256 fractional) {
         assert(unit <= 1e18);
         fractional = (num % unit).mul(1e18).div(unit);
         return (num / unit, trimFractional(1e18 + fractional));
@@ -249,11 +219,11 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
     function uintsToStrs(uint256[] memory vals, uint256 unit, string memory symbol) internal pure returns (bytes32[] memory) {
         bytes32[] memory res = new bytes32[](vals.length);
         for (uint256 i = 0; i < vals.length; i++) {
-            (uint256 interger, uint256 fractional) = unpackDecimal(vals[i], unit);
+            (uint256 integer, uint256 fractional) = unpackDecimal(vals[i], unit);
             if (fractional == 1) {
-                res[i] = strToB32(string(abi.encodePacked(uint256ToStr(interger), symbol)));
+                res[i] = strToB32(string(abi.encodePacked(Strings.toString(integer), symbol)));
             } else {
-                res[i] = strToB32(string(abi.encodePacked(decimalToStr(interger, fractional), symbol)));
+                res[i] = strToB32(string(abi.encodePacked(decimalToStr(integer, fractional), symbol)));
             }
         }
         return res;
