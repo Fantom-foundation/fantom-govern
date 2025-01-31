@@ -22,12 +22,12 @@ contract SlashingRefundProposal is DelegatecallExecutableProposal, Cancelable {
         address __sfc, address verifier) {
         _name = string(abi.encodePacked("Refund for Slashed Validator #", Strings.toString(__validatorID)));
         _description = __description;
-        _options.push(bytes("0%"));
-        _options.push(bytes("20%"));
-        _options.push(bytes("40%"));
-        _options.push(bytes("60%"));
-        _options.push(bytes("80%"));
-        _options.push(bytes("100%"));
+        _options.push(bytes32("0%"));
+        _options.push(bytes32("20%"));
+        _options.push(bytes32("40%"));
+        _options.push(bytes32("60%"));
+        _options.push(bytes32("80%"));
+        _options.push(bytes32("100%"));
         _minVotes = __minVotes;
         _minAgreement = __minAgreement;
         _opinionScales = [0, 1, 2, 3, 4];

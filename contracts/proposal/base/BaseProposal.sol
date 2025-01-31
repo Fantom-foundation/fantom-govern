@@ -12,7 +12,7 @@ contract BaseProposal is IProposal {
 
     string _name;
     string _description;
-    bytes[] _options;
+    bytes32[] _options;
 
     uint256 _minVotes;
     uint256 _minAgreement;
@@ -55,7 +55,7 @@ contract BaseProposal is IProposal {
         return _opinionScales;
     }
 
-    function options() public view returns (bytes[] memory) {
+    function options() public view returns (bytes32[] memory) {
         return _options;
     }
 

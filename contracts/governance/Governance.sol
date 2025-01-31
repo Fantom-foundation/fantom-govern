@@ -144,7 +144,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         uint256 minVotes,
         uint256 minAgreement,
         uint256[] memory opinionScales,
-        bytes[] memory options,
+        bytes32[] memory options,
         address proposalContract,
         uint256 votingStartTime,
         uint256 votingMinEndTime,
@@ -266,7 +266,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         uint256 votingStartTime = p.votingStartTime();
         uint256 votingMinEndTime = p.votingMinEndTime();
         uint256 votingMaxEndTime = p.votingMaxEndTime();
-        bytes[] memory options = p.options();
+        bytes32[] memory options = p.options();
         // check the parameters and contract
         require(options.length != 0, "proposal options are empty - nothing to vote for");
         require(options.length <= maxOptions(), "too many options");

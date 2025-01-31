@@ -26,7 +26,7 @@ library Proposal {
         uint256 minAgreement; // min. agreement threshold for options (ratio)
         uint256[] opinionScales;
         address proposalContract; // contract which stores the proposal data and executes its logic
-        bytes[] options;
+        bytes32[] options;
         Timeline deadlines;
     }
 }

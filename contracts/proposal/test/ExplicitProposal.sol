@@ -43,7 +43,7 @@ contract ExplicitProposal is BaseProposal {
         _exec = v;
     }
 
-    function setOptions(bytes[] memory v) public {
+    function setOptions(bytes32[] memory v) public {
         _options = v;
     }
 

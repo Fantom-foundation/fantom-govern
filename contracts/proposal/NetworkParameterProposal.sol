@@ -3,6 +3,7 @@ pragma solidity 0.8.27;
 
 import "./base/Cancelable.sol";
 import "./base/DelegatecallExecutableProposal.sol";
+import "hardhat/console.sol";
 
 interface ConstsI {
     function updateMinSelfStake(uint256 v) external;
@@ -181,9 +182,23 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
     /// @param num The number to be converted
     /// @return The converted bytes
     function uint256ToB(uint256 num) internal pure returns (bytes memory) {
-        return abi.encodePacked(num);
+        if (num == 0) {
+            return bytes("0");
+        }
+        console.log(num);
+        uint decimals = decimalsNum(num);
+        bytes memory bstr = new bytes(decimals);
+        uint strIdx = decimals - 1;
+        while (true) {
+            bstr[strIdx] = bytes1(uint8(48 + num % 10));
+            num /= 10;
+            if (num == 0) {
+                break;
+            }
+            strIdx--;
+        }
+        return bstr;
     }
-
     /// @dev Convert a uint256 to a string
     /// @param num The number to be converted
     /// @return The converted string
@@ -229,16 +244,31 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
     /// @param vals The array of uint256 to be converted
     /// @param unit The unit of the numbers
     /// @param symbol The symbol of the numbers
-    function uintsToStrs(uint256[] memory vals, uint256 unit, string memory symbol) internal pure returns (bytes[] memory) {
-        bytes[] memory res = new bytes[](vals.length);
+    function uintsToStrs(uint256[] memory vals, uint256 unit, string memory symbol) internal pure returns (bytes32[] memory) {
+        bytes32[] memory res = new bytes32[](vals.length);
         for (uint256 i = 0; i < vals.length; i++) {
             (uint256 interger, uint256 fractional) = unpackDecimal(vals[i], unit);
             if (fractional == 1) {
-                res[i] = abi.encodePacked(uint256ToStr(interger), symbol);
+                res[i] = strToB32(string(abi.encodePacked(uint256ToStr(interger), symbol)));
             } else {
-                res[i] = abi.encodePacked(decimalToStr(interger, fractional), symbol);
+                res[i] = strToB32(string(abi.encodePacked(decimalToStr(interger, fractional), symbol)));
             }
         }
         return res;
+    }
+
+
+    /// @dev Convert a string to a bytes32
+    /// @param str The string to be converted
+    /// @return result The converted bytes32
+    function strToB32(string memory str) internal pure returns (bytes32 result) {
+        bytes memory tempEmptyStringTest = bytes(str);
+        require(tempEmptyStringTest.length <= 32, "string is too long");
+        if (tempEmptyStringTest.length == 0) {
+            return 0x0;
+        }
+        assembly {
+            result := mload(add(tempEmptyStringTest, 32))
+        }
     }
 }

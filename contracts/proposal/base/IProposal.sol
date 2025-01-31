@@ -29,7 +29,7 @@ interface IProposal {
 
     /// @dev Get options to choose from
     /// @return Options to choose from
-    function options() external view returns (bytes[] memory);
+    function options() external view returns (bytes32[] memory);
 
     /// @dev Get date when the voting starts
     /// @return Timestamp when the voting starts

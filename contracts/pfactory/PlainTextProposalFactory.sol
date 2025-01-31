@@ -24,7 +24,7 @@ contract PlainTextProposalFactory is ScopedVerifier {
     function create(
         string calldata __name,
         string calldata __description,
-        bytes[] calldata __options,
+        bytes32[] calldata __options,
         uint256 __minVotes,
         uint256 __minAgreement,
         uint256 __start,
@@ -46,7 +46,7 @@ contract PlainTextProposalFactory is ScopedVerifier {
     /// @param __description The description of the proposal
     /// @param __options The options of the proposal
     /// @param params The parameters of the proposal
-    function _create(string memory __name, string memory __description, bytes[] memory __options, uint256[] memory params) internal {
+    function _create(string memory __name, string memory __description, bytes32[] memory __options, uint256[] memory params) internal {
         PlainTextProposal proposal = new PlainTextProposal(__name, __description, __options,
             params[0], params[1], params[2], params[3], params[4], address(0));
         proposal.transferOwnership(msg.sender);

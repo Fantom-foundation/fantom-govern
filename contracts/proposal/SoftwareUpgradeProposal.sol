@@ -19,7 +19,7 @@ contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
         address __upgradeableContract, address __newImplementation, address verifier) {
         _name = __name;
         _description = __description;
-        _options.push(bytes("Level of agreement"));
+        _options.push(bytes32("Level of agreement"));
         _minVotes = __minVotes;
         _minAgreement = __minAgreement;
         _opinionScales = [0, 1, 2, 3, 4];
