@@ -5,11 +5,10 @@ import {ethers} from "hardhat";
 import {loadFixture, time} from "@nomicfoundation/hardhat-network-helpers";
 import {ExecLoggingProposal, Governance, ProposalTemplates} from "../typechain-types"
 import type {HardhatEthersSigner} from "@nomicfoundation/hardhat-ethers/src/signers";
+import {CallType, DelegateCallType, initConsts, NonExecutableType} from "./utils";
 import {min} from "hardhat/internal/util/bigint";
 
-const NonExecutableType = 0n;
-const CallType = 1n;
-const DelegateCallType = 2n;
+
 const scales = [0, 2, 3, 4, 5];
 
 const ProposalStatus = {
@@ -239,24 +238,7 @@ describe("Governance test", function () {
         await proposal.verifyProposalParams(this.verifierAddress)
     });
 
-    const initConsts = async function (defaultAcc: HardhatEthersSigner) {
-        const consts = await ethers.deployContract("UnitTestConstantsManager",{from: defaultAcc});
-        await consts.updateMinSelfStake(317500000000000000n, {from: defaultAcc});
-        await consts.updateMaxDelegatedRatio(16000000000000000000n, {from: defaultAcc});
-        await consts.updateBurntFeeShare(2n, {from: defaultAcc});
-        await consts.updateTreasuryFeeShare(10n, {from: defaultAcc});
-        await consts.updateUnlockedRewardRatio(30n, {from: defaultAcc});
-        await consts.updateMinLockupDuration(1209600n, {from: defaultAcc});
-        await consts.updateMaxLockupDuration(31536000n, {from: defaultAcc});
-        await consts.updateWithdrawalPeriodEpochs(3n, {from: defaultAcc});
-        await consts.updateWithdrawalPeriodTime(604800n, {from: defaultAcc});
-        await consts.updateBaseRewardPerSecond(32n, {from: defaultAcc});
-        await consts.updateOfflinePenaltyThresholdTime(3600n, {from: defaultAcc});
-        await consts.updateOfflinePenaltyThresholdBlocksNum(10n, {from: defaultAcc});
-        await consts.updateTargetGasPowerPerSecond(1000n, {from: defaultAcc});
-        await consts.updateGasPriceBalancingCounterweight(1n, {from: defaultAcc});
-        return consts;
-    };
+
 
     it("checking creation and execution of network parameter proposals via proposal factory", async function () {
         const optionsNum = ethers.parseEther("1"); // use maximum number of options to test gas usage
@@ -269,7 +251,8 @@ describe("Governance test", function () {
         if (await this.verifier.exists(15) === false) {
             await this.verifier.addTemplate(6003, "NetworkParameterProposal", ethers.ZeroAddress, DelegateCallType, ethers.parseEther("0.0"), ethers.parseEther("0.0"), [0, 1, 2, 3, 4], 0, 100000000, 0, 100000000);
         }
-        const updateMinSelfStake = await ethers.deployContract("NetworkParameterProposal",
+        const updateMinSelfStake = await ethers.deployContract(
+            "NetworkParameterProposal",
             [
                 "Network",
                 1,
@@ -281,7 +264,8 @@ describe("Governance test", function () {
                 1,
                 voteEnd,
                 this.verifierAddress,
-            ])
+            ]
+        )
         // make new vote
         await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.0"));
         await this.gov.createProposal(updateMinSelfStake.getAddress(), {value: this.proposalFee});

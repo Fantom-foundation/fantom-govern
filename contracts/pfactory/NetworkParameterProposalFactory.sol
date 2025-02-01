@@ -29,7 +29,11 @@ contract NetworkParameterProposalFactory is ScopedVerifier {
         string memory __description,
         uint8 __methodID,
         uint256[] memory __optionVals,
-        uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd
+        uint256 __minVotes,
+        uint256 __minAgreement,
+        uint256 __start,
+        uint256 __minEnd,
+        uint256 __maxEnd
     ) public payable {
         NetworkParameterProposal proposal = new NetworkParameterProposal(
             __description,
@@ -41,7 +45,8 @@ contract NetworkParameterProposalFactory is ScopedVerifier {
             __start,
             __minEnd,
             __maxEnd,
-            address(0));
+            address(0)
+        );
         proposal.transferOwnership(msg.sender);
         lastNetworkProposal = address(proposal);
 

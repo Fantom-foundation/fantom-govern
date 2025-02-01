@@ -8,7 +8,19 @@ import {ScopedVerifier} from "../verifiers/ScopedVerifier.sol";
 /// @notice PlainTextProposalFactory is a factory contract to create PlainTextProposal
 contract PlainTextProposalFactory is ScopedVerifier {
     Governance internal gov;
-    constructor(address _govAddress) {
+    // @dev used to avoid 'Stack too deep' error
+    struct Params {
+        string name;
+        string description;
+        bytes32[] options;
+        uint256 minVotes;
+        uint256 minAgreement;
+        uint256 start;
+        uint256 minEnd;
+        uint256 maxEnd;
+    }
+
+    constructor(address _govAddress) public {
         gov = Governance(_govAddress);
     }
 
@@ -30,25 +42,36 @@ contract PlainTextProposalFactory is ScopedVerifier {
         uint256 __start,
         uint256 __minEnd,
         uint256 __maxEnd
-    ) external payable {
-        // use memory to avoid stack overflow
-        uint256[] memory params = new uint256[](5);
-        params[0] = __minVotes;
-        params[1] = __minAgreement;
-        params[2] = __start;
-        params[3] = __minEnd;
-        params[4] = __maxEnd;
-        _create(__name, __description, __options, params);
+    ) payable external payable {
+        Params memory p = Params(
+            __name,
+            __description,
+            __options,
+            __minVotes,
+            __minAgreement,
+            __start,
+            __minEnd,
+            __maxEnd
+        );
+        _create(p);
     }
 
     /// @dev internal function to create a new PlainTextProposal
-    /// @param __name The name of the proposal
-    /// @param __description The description of the proposal
-    /// @param __options The options of the proposal
-    /// @param params The parameters of the proposal
-    function _create(string memory __name, string memory __description, bytes32[] memory __options, uint256[] memory params) internal {
-        PlainTextProposal proposal = new PlainTextProposal(__name, __description, __options,
-            params[0], params[1], params[2], params[3], params[4], address(0));
+    /// @param p The parameters of the proposal
+    function _create(
+        Params memory p
+    ) internal {
+        PlainTextProposal proposal = new PlainTextProposal(
+            p.name,
+            p.description,
+            p.options,
+            p.minVotes,
+            p.minAgreement,
+            p.start,
+            p.minEnd,
+            p.maxEnd,
+            address(0)
+        );
         proposal.transferOwnership(msg.sender);
 
         unlockedFor = address(proposal);
