@@ -37,7 +37,7 @@ interface SFC {
     function updateSlashingRefundRatio(uint256 validatorID, uint256 refundRatio) external;
 
     /// @notice Check whether the given validator is slashed
-    function isSlashed(uint256 validatorID) public view returns (bool);
+    function isSlashed(uint256 validatorID) external view returns (bool);
 }
 
 // @dev SFCToGovernable is an adapter allowing to use the network SFC contract as Governable (governance votes weights provider).

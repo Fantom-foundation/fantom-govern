@@ -47,12 +47,12 @@ contract UnitTestSFC is SFC {
         validators[validatorID].slashingRefundRatio = refundRatio;
     }
 
-    function isSlashed(uint256 validatorID) public view returns (bool) {
+    function isSlashed(uint256 validatorID) external view returns (bool) {
         return validators[validatorID].isSlashed;
     }
 
     function addValidator(uint256 id, uint256 status, address addr) external {
-        validators[id] = Validator(status, 0, false);
+        validators[id] = Validator(status, 0, false, 0);
         validatorIDs[addr] = id;
     }
 
