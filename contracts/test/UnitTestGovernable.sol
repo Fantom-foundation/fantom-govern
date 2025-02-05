@@ -1,6 +1,7 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
-import "../model/Governable.sol";
+import {Governable} from "../model/Governable.sol";
 
 /// @dev UnitTestGovernable is a contract for managing stakes and for unit tests
 contract UnitTestGovernable is Governable {

@@ -1,6 +1,7 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
-import "../model/Governable.sol";
+import {Governable} from "../model/Governable.sol";
 
 /// @dev SFC is representation of the network SFC contract for the purpose of the Governance contract. It provides weights of individual voters.
 interface SFC {

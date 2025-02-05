@@ -1,7 +1,8 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
-import "./base/Cancelable.sol";
-import "./base/DelegatecallExecutableProposal.sol";
+import {Cancelable} from "./base/Cancelable.sol";
+import {DelegatecallExecutableProposal} from "./base/DelegatecallExecutableProposal.sol";
 
 /// @notice An interface to update this contract to a destination address
 interface Upgradability {
@@ -15,7 +16,7 @@ contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
 
     constructor(string memory __name, string memory __description,
         uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd,
-        address __upgradeableContract, address __newImplementation, address verifier) public {
+        address __upgradeableContract, address __newImplementation, address verifier) {
         _name = __name;
         _description = __description;
         _options.push(bytes32("Level of agreement"));
@@ -33,7 +34,7 @@ contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
         }
     }
 
-    function execute_delegatecall(address selfAddr, uint256) external {
+    function execute_delegatecall(address selfAddr, uint256) external override {
         SoftwareUpgradeProposal self = SoftwareUpgradeProposal(selfAddr);
         Upgradability(self.upgradeableContract()).upgradeTo(self.newImplementation());
     }

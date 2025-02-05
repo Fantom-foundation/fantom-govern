@@ -1,7 +1,9 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
-import "./base/DelegatecallExecutableProposal.sol";
-import "./base/Cancelable.sol";
+import {DelegatecallExecutableProposal} from "./base/DelegatecallExecutableProposal.sol";
+import {Cancelable} from "./base/Cancelable.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 /// @notice An interface to update slashing penalty ratio
 interface SFC {
@@ -17,8 +19,8 @@ contract SlashingRefundProposal is DelegatecallExecutableProposal, Cancelable {
 
     constructor(uint256 __validatorID, string memory __description,
         uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd,
-        address __sfc, address verifier) public {
-        _name = string(abi.encodePacked("Refund for Slashed Validator #", uint256ToStr(__validatorID)));
+        address __sfc, address verifier) {
+        _name = string(abi.encodePacked("Refund for Slashed Validator #", Strings.toString(__validatorID)));
         _description = __description;
         _options.push(bytes32("0%"));
         _options.push(bytes32("20%"));
@@ -40,11 +42,11 @@ contract SlashingRefundProposal is DelegatecallExecutableProposal, Cancelable {
         }
     }
 
-    function pType() public view returns (uint256) {
+    function pType() public override pure returns (uint256) {
         return 5003;
     }
 
-    function execute_delegatecall(address selfAddr, uint256 optionID) external {
+    function execute_delegatecall(address selfAddr, uint256 optionID) external override {
         SlashingRefundProposal self = SlashingRefundProposal(selfAddr);
         uint256 penaltyRatio = 1e18 * optionID * 20 / 100;
         SFC(self.sfc()).updateSlashingRefundRatio(self.validatorID(), penaltyRatio);
@@ -57,20 +59,5 @@ contract SlashingRefundProposal is DelegatecallExecutableProposal, Cancelable {
             num /= 10;
         }
         return decimals;
-    }
-
-    function uint256ToStr(uint256 num) internal pure returns (string memory) {
-        if (num == 0) {
-            return "0";
-        }
-        uint decimals = decimalsNum(num);
-        bytes memory bstr = new bytes(decimals);
-        uint strIdx = decimals - 1;
-        while (num != 0) {
-            bstr[strIdx] = byte(uint8(48 + num % 10));
-            num /= 10;
-            strIdx--;
-        }
-        return string(bstr);
     }
 }

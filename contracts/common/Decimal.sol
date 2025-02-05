@@ -1,4 +1,5 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
 /// @dev Decimal is a library for handling decimal numbers
 library Decimal {

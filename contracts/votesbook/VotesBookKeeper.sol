@@ -1,6 +1,8 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
-import "../ownership/Ownable.sol";
+import {Ownable} from "../ownership/Ownable.sol";
+import {Initializable} from "../common/Initializable.sol";
 
 /// @notice Interface for the governance contract
 interface GovernanceI {
@@ -114,11 +116,11 @@ contract VotesBookKeeper is Initializable, Ownable {
         uint256 len = list.length;
         if (len == idx) {
             // last element
-            list.length--;
+            list.pop();
         } else {
             uint256 last = list[len - 1];
             list[idx - 1] = last;
-            list.length--;
+            list.pop();
             votesIndex[voter][delegatedTo][last] = idx;
         }
     }

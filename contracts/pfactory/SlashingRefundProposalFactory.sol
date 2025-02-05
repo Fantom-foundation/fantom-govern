@@ -1,14 +1,15 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
-import "../governance/Governance.sol";
-import "../proposal/SlashingRefundProposal.sol";
-import "../verifiers/ScopedVerifier.sol";
+import {Governance} from "../governance/Governance.sol";
+import {SlashingRefundProposal, SFC} from "../proposal/SlashingRefundProposal.sol";
+import {ScopedVerifier} from "../verifiers/ScopedVerifier.sol";
 
 /// @notice SlashingRefundProposalFactory is a factory contract to create SlashingRefundProposal
 contract SlashingRefundProposalFactory is ScopedVerifier {
     Governance internal gov;
     address internal sfcAddress;
-    constructor(address _govAddress, address _sfcAddress) public {
+    constructor(address _govAddress, address _sfcAddress) {
         gov = Governance(_govAddress);
         sfcAddress = _sfcAddress;
     }
@@ -36,7 +37,7 @@ contract SlashingRefundProposalFactory is ScopedVerifier {
         proposal.transferOwnership(msg.sender);
 
         unlockedFor = address(proposal);
-        gov.createProposal.value(msg.value)(address(proposal));
+        gov.createProposal{value: msg.value}(address(proposal));
         unlockedFor = address(0);
     }
 }

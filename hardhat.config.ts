@@ -3,8 +3,9 @@ import "@nomicfoundation/hardhat-toolbox";
 
 const config: HardhatUserConfig = {
     solidity: {
-        version: '0.5.17', // todo update solidity to 0.8.xx
+        version: '0.8.27',
         settings: {
+            evmVersion: 'cancun',
             optimizer: {
                 enabled: true,
                 runs: 200,

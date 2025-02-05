@@ -1,9 +1,10 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
-import "../../common/SafeMath.sol";
-import "./IProposal.sol";
-import "../../verifiers/IProposalVerifier.sol";
-import "../../governance/Proposal.sol";
+import {SafeMath} from "../../common/SafeMath.sol";
+import {IProposal} from "./IProposal.sol";
+import {IProposalVerifier} from "../../verifiers/IProposalVerifier.sol";
+import {Proposal} from "../../governance/Proposal.sol";
 
 /// @notice A base for any proposal
 contract BaseProposal is IProposal {
@@ -32,12 +33,12 @@ contract BaseProposal is IProposal {
         return proposalVerifier.verifyProposalParams(pType(), executable(), minVotes(), minAgreement(), opinionScales(), votingStartTime(), votingMinEndTime(), votingMaxEndTime());
     }
 
-    function pType() public view returns (uint256) {
+    function pType() public virtual view returns (uint256) {
         require(false, "must be overridden");
         return uint256(StdProposalTypes.NOT_INIT);
     }
 
-    function executable() public view returns (Proposal.ExecType) {
+    function executable() public virtual view returns (Proposal.ExecType) {
         require(false, "must be overridden");
         return Proposal.ExecType.NONE;
     }
@@ -58,15 +59,15 @@ contract BaseProposal is IProposal {
         return _options;
     }
 
-    function votingStartTime() public view returns (uint256) {
+    function votingStartTime() public virtual view returns (uint256) {
         return block.timestamp + _start;
     }
 
-    function votingMinEndTime() public view returns (uint256) {
+    function votingMinEndTime() public virtual view returns (uint256) {
         return votingStartTime() + _minEnd;
     }
 
-    function votingMaxEndTime() public view returns (uint256) {
+    function votingMaxEndTime() public virtual view returns (uint256) {
         return votingStartTime() + _maxEnd;
     }
 
@@ -78,11 +79,11 @@ contract BaseProposal is IProposal {
         return _description;
     }
 
-    function execute_delegatecall(address, uint256) external {
+    function execute_delegatecall(address, uint256) external virtual {
         require(false, "not delegatecall-executable");
     }
 
-    function execute_call(uint256) external {
+    function execute_call(uint256) external virtual {
         require(false, "not call-executable");
     }
 }

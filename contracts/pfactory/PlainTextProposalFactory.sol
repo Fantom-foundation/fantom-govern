@@ -1,13 +1,14 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
-import "../governance/Governance.sol";
-import "../proposal/PlainTextProposal.sol";
-import "../verifiers/ScopedVerifier.sol";
+import {Governance} from "../governance/Governance.sol";
+import {PlainTextProposal} from "../proposal/PlainTextProposal.sol";
+import {ScopedVerifier} from "../verifiers/ScopedVerifier.sol";
 
 /// @notice PlainTextProposalFactory is a factory contract to create PlainTextProposal
 contract PlainTextProposalFactory is ScopedVerifier {
     Governance internal gov;
-    constructor(address _govAddress) public {
+    constructor(address _govAddress) {
         gov = Governance(_govAddress);
     }
 
@@ -51,7 +52,7 @@ contract PlainTextProposalFactory is ScopedVerifier {
         proposal.transferOwnership(msg.sender);
 
         unlockedFor = address(proposal);
-        gov.createProposal.value(msg.value)(address(proposal));
+        gov.createProposal{value: msg.value}(address(proposal));
         unlockedFor = address(0);
     }
 }

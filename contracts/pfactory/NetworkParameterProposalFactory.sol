@@ -1,9 +1,10 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
-import "../common/SafeMath.sol";
-import "../governance/Governance.sol";
-import "../proposal/NetworkParameterProposal.sol";
-import "../verifiers/ScopedVerifier.sol";
+import {SafeMath} from "../common/SafeMath.sol";
+import {Governance} from "../governance/Governance.sol";
+import {NetworkParameterProposal} from "../proposal/NetworkParameterProposal.sol";
+import {ScopedVerifier} from "../verifiers/ScopedVerifier.sol";
 
 /// @notice NetworkParameterProposalFactory is a factory contract to create NetworkParameterProposal
 contract NetworkParameterProposalFactory is ScopedVerifier {
@@ -12,7 +13,7 @@ contract NetworkParameterProposalFactory is ScopedVerifier {
     address internal constsAddress; // address of the Constants contract
     address public lastNetworkProposal; // address of the last created NetworkParameterProposal
 
-    constructor(address _governance, address _constsAddress) public {
+    constructor(address _governance, address _constsAddress) {
         gov = Governance(_governance);
         constsAddress = _constsAddress;
     }
@@ -47,7 +48,7 @@ contract NetworkParameterProposalFactory is ScopedVerifier {
         lastNetworkProposal = address(proposal);
 
         unlockedFor = address(proposal);
-        gov.createProposal.value(msg.value)(address(proposal));
+        gov.createProposal{value: msg.value}(address(proposal));
         unlockedFor = address(0);
     }
 }

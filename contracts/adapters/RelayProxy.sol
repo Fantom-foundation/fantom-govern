@@ -1,13 +1,12 @@
-pragma solidity ^0.5.0;
-
-import "../ownership/Ownable.sol";
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
 /// @notice RelayProxy relays calls from the owner to the predefined destination contract
 contract RelayProxy {
     address public __destination;
     address public __owner;
 
-    constructor(address _owner, address _destination) public {
+    constructor(address _owner, address _destination) {
         __owner = _owner;
         __destination = _destination;
     }
@@ -47,7 +46,7 @@ contract RelayProxy {
         _;
     }
 
-    function() payable external {
+    fallback() payable external {
         require(isOwner(), "Relay: caller is not the owner");
         _relay(__destination);
     }
@@ -57,19 +56,19 @@ contract RelayProxy {
             // Copy msg.data. We take full control of memory in this inline assembly
             // block because it will not return to Solidity code. We overwrite the
             // Solidity scratch pad at memory position 0.
-            calldatacopy(0, 0, calldatasize)
+            calldatacopy(0, 0, calldatasize())
 
             // Call the destination.
             // out and outsize are 0 because we don't know the size yet.
-            let result := call(gas, destination, callvalue, 0, calldatasize, 0, 0)
+            let result := call(gas(), destination, callvalue(), 0, calldatasize(), 0, 0)
 
             // Copy the returned data.
-            returndatacopy(0, 0, returndatasize)
+            returndatacopy(0, 0, returndatasize())
 
             switch result
             // call returns 0 on error.
-            case 0 {revert(0, returndatasize)}
-            default {return (0, returndatasize)}
+            case 0 {revert(0, returndatasize())}
+            default {return (0, returndatasize())}
         }
     }
 }

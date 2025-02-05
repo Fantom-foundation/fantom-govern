@@ -1,7 +1,11 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
-import "./base/Cancelable.sol";
-import "./base/DelegatecallExecutableProposal.sol";
+import {Cancelable} from "./base/Cancelable.sol";
+import {DelegatecallExecutableProposal} from "./base/DelegatecallExecutableProposal.sol";
+import {Proposal} from "../governance/Proposal.sol";
+import {SafeMath} from "../common/SafeMath.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 interface ConstsI {
     function updateMinSelfStake(uint256 v) external;
@@ -50,7 +54,7 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         address __consts,
         uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd,
         address verifier
-    ) public {
+    ) {
         require(__methodID >= 1 && __methodID <= 15, "wrong methodID");
         if (__methodID == 1) {
             _name = "Update minimum self-stake";
@@ -114,7 +118,7 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         }
     }
 
-    function pType() public view returns (uint256) {
+    function pType() public override pure returns (uint256) {
         return 6003;
     }
 
@@ -128,7 +132,7 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
     /// @dev Depending on the methodID, the corresponding network parameter will be updated
     /// @param selfAddr The address of the proposal
     /// @param winnerOptionID The winning option ID
-    function execute_delegatecall(address selfAddr, uint256 winnerOptionID) external {
+    function execute_delegatecall(address selfAddr, uint256 winnerOptionID) external override {
         NetworkParameterProposal self = NetworkParameterProposal(selfAddr);
         uint256 __methodID = self.methodID();
 
@@ -176,47 +180,22 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         return decimals;
     }
 
-    /// @dev Convert a uint256 to a bytes
-    /// @param num The number to be converted
-    /// @return The converted bytes
-    function uint256ToB(uint256 num) internal pure returns (bytes memory) {
-        if (num == 0) {
-            return bytes("0");
-        }
-        uint decimals = decimalsNum(num);
-        bytes memory bstr = new bytes(decimals);
-        uint strIdx = decimals - 1;
-        while (num != 0) {
-            bstr[strIdx] = byte(uint8(48 + num % 10));
-            num /= 10;
-            strIdx--;
-        }
-        return bstr;
-    }
-
-    /// @dev Convert a uint256 to a string
-    /// @param num The number to be converted
-    /// @return The converted string
-    function uint256ToStr(uint256 num) internal pure returns (string memory) {
-        return string(uint256ToB(num));
-    }
-
     /// @dev Convert a decimal to a string
-    /// @param interger The interger part of the decimal
+    /// @param integer The integer part of the decimal
     /// @param fractional The fractional part of the decimal
     /// @return The converted string
-    function decimalToStr(uint256 interger, uint256 fractional) internal pure returns (string memory) {
-        bytes memory intStr = uint256ToB(interger);
-        bytes memory fraStr = uint256ToB(fractional);
+    function decimalToStr(uint256 integer, uint256 fractional) internal pure returns (string memory) {
+        bytes memory intStr = bytes(Strings.toString(integer));
+        bytes memory fraStr = bytes(Strings.toString(fractional));
         // replace leading 1 with .
-        fraStr[0] = byte(uint8(46));
+        fraStr[0] = bytes1(uint8(46));
         return string(abi.encodePacked(intStr, fraStr));
     }
 
     /// @dev Unpack a decimal number
     /// @param num The number to be unpacked
     /// @param unit The unit of the number
-    function unpackDecimal(uint256 num, uint256 unit) internal pure returns (uint256 interger, uint256 fractional) {
+    function unpackDecimal(uint256 num, uint256 unit) internal pure returns (uint256 integer, uint256 fractional) {
         assert(unit <= 1e18);
         fractional = (num % unit).mul(1e18).div(unit);
         return (num / unit, trimFractional(1e18 + fractional));
@@ -242,19 +221,20 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
     function uintsToStrs(uint256[] memory vals, uint256 unit, string memory symbol) internal pure returns (bytes32[] memory) {
         bytes32[] memory res = new bytes32[](vals.length);
         for (uint256 i = 0; i < vals.length; i++) {
-            (uint256 interger, uint256 fractional) = unpackDecimal(vals[i], unit);
+            (uint256 integer, uint256 fractional) = unpackDecimal(vals[i], unit);
             if (fractional == 1) {
-                res[i] = strToB32(string(abi.encodePacked(uint256ToStr(interger), symbol)));
+                res[i] = strToB32(string(abi.encodePacked(Strings.toString(integer), symbol)));
             } else {
-                res[i] = strToB32(string(abi.encodePacked(decimalToStr(interger, fractional), symbol)));
+                res[i] = strToB32(string(abi.encodePacked(decimalToStr(integer, fractional), symbol)));
             }
         }
         return res;
     }
 
+
     /// @dev Convert a string to a bytes32
     /// @param str The string to be converted
-    /// @return The converted bytes32
+    /// @return result The converted bytes32
     function strToB32(string memory str) internal pure returns (bytes32 result) {
         bytes memory tempEmptyStringTest = bytes(str);
         require(tempEmptyStringTest.length <= 32, "string is too long");

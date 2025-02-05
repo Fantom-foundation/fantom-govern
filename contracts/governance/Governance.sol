@@ -1,17 +1,19 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
-import "../common/ReentrancyGuard.sol";
-import "../common/SafeMath.sol";
-import "../model/Governable.sol";
-import "../proposal/base/IProposal.sol";
-import "../verifiers/IProposalVerifier.sol";
-import "../proposal/SoftwareUpgradeProposal.sol";
-import "./Proposal.sol";
-import "./Constants.sol";
-import "./GovernanceSettings.sol";
-import "./LRC.sol";
-import "../version/Version.sol";
-import "../votesbook/VotesBookKeeper.sol";
+import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
+import {SafeMath} from "../common/SafeMath.sol";
+import {Governable} from "../model/Governable.sol";
+import {IProposal} from "../proposal/base/IProposal.sol";
+import {IProposalVerifier} from "../verifiers/IProposalVerifier.sol";
+import {SoftwareUpgradeProposal} from "../proposal/SoftwareUpgradeProposal.sol";
+import {Proposal} from "./Proposal.sol";
+import {Constants} from "./Constants.sol";
+import {GovernanceSettings} from "./GovernanceSettings.sol";
+import {LRC} from "./LRC.sol";
+import {Version} from "../version/Version.sol";
+import {VotesBookKeeper} from "../votesbook/VotesBookKeeper.sol";
+import {Initializable} from "../common/Initializable.sol";
 
 /// @notice Governance contract for voting on proposals
 contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Version {
@@ -183,7 +185,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     /// @return votes Sum of total weight of votes
     /// @return status The status of the proposal.
     function proposalState(uint256 proposalID) public view returns (uint256 winnerOptionID, uint256 votes, uint256 status) {
-        ProposalState memory p = proposals[proposalID];
+        ProposalState storage p = proposals[proposalID];
         return (p.winnerOptionID, p.votes, p.status);
     }
 
@@ -327,7 +329,8 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
 
         emit TasksHandled(startIdx, i, handled);
         // reward the sender
-        msg.sender.transfer(handled.mul(taskHandlingReward()));
+        (bool success, ) = payable(msg.sender).call{value: handled.mul(taskHandlingReward())}("");
+        require(success, "transfer failed");
     }
 
     /// @notice Clean up inactive tasks.
@@ -337,7 +340,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         uint256 erased;
         for (erased = 0; tasks.length > 0 && erased < quantity; erased++) {
             if (!tasks[tasks.length - 1].active) {
-                tasks.length--;
+                tasks.pop();
             } else {
                 break;
                 // stop when first active task was met
@@ -346,7 +349,8 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         require(erased > 0, "no tasks erased");
         emit TasksErased(erased);
         // reward the sender
-        msg.sender.transfer(erased.mul(taskErasingReward()));
+        (bool success, ) = payable(msg.sender).call{value: erased.mul(taskErasingReward())}("");
+        require(success, "transfer failed");
     }
 
     /// @dev Handle a single specific task.
@@ -677,7 +681,8 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     /// @dev Burn a specified amount of tokens.
     /// @param amount The amount of tokens to burn.
     function burn(uint256 amount) internal {
-        address(0).transfer(amount);
+        (bool success, ) = payable(address(0)).call{value: amount}("");
+        require(success, "transfer failed");
     }
 
     /// @dev Sanitize the winner ID of a resolved proposal.
