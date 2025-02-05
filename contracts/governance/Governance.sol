@@ -328,7 +328,8 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
 
         emit TasksHandled(startIdx, i, handled);
         // reward the sender
-        payable(msg.sender).transfer(handled.mul(taskHandlingReward()));
+        (bool success, ) = payable(msg.sender).call{value: handled.mul(taskHandlingReward())}("");
+        require(success, "transfer failed");
     }
 
     /// @notice Clean up inactive tasks.
@@ -347,7 +348,8 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         require(erased > 0, "no tasks erased");
         emit TasksErased(erased);
         // reward the sender
-        payable(msg.sender).transfer(erased.mul(taskErasingReward()));
+        (bool success, ) = payable(msg.sender).call{value: erased.mul(taskErasingReward())}("");
+        require(success, "transfer failed");
     }
 
     /// @dev Handle a single specific task.
@@ -678,7 +680,8 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     /// @dev Burn a specified amount of tokens.
     /// @param amount The amount of tokens to burn.
     function burn(uint256 amount) internal {
-        payable(address(0)).transfer(amount);
+        (bool success, ) = payable(address(0)).call{value: amount}("");
+        require(success, "transfer failed");
     }
 
     /// @dev Sanitize the winner ID of a resolved proposal.
