@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-
 /// @notice RelayProxy relays calls from the owner to the predefined destination contract
 contract RelayProxy {
     address public __destination;
@@ -46,7 +45,6 @@ contract RelayProxy {
         require(isOwner(), "Relay: caller is not the owner");
         _;
     }
-
 
     fallback() payable external {
         require(isOwner(), "Relay: caller is not the owner");

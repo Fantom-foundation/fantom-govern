@@ -2,9 +2,9 @@
 pragma solidity 0.8.27;
 
 import {SafeMath} from "../common/SafeMath.sol";
-import "../governance/Governance.sol";
-import "../proposal/NetworkParameterProposal.sol";
-import "../verifiers/ScopedVerifier.sol";
+import {Governance} from "../governance/Governance.sol";
+import {NetworkParameterProposal} from "../proposal/NetworkParameterProposal.sol";
+import {ScopedVerifier} from "../verifiers/ScopedVerifier.sol";
 
 /// @notice NetworkParameterProposalFactory is a factory contract to create NetworkParameterProposal
 contract NetworkParameterProposalFactory is ScopedVerifier {
