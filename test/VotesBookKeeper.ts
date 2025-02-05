@@ -9,7 +9,7 @@ describe("VotesBookKeeper", function () {
         const [defaultAcc, otherAcc] = await ethers.getSigners();
         const votesBookKeeper = await ethers.deployContract("VotesBookKeeper");
         // Only one vote per address is allowed
-        const fakeGov = await ethers.deployContract("UnitTestVoteRecounter");
+        const fakeGov = await ethers.deployContract("FakeVoteRecounter");
 
         return { defaultAcc, otherAcc, votesBookKeeper, fakeGov };
     }
