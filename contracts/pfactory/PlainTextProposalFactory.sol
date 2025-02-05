@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "../governance/Governance.sol";
-import "../proposal/PlainTextProposal.sol";
-import "../verifiers/ScopedVerifier.sol";
+import {Governance} from "../governance/Governance.sol";
+import {PlainTextProposal} from "../proposal/PlainTextProposal.sol";
+import {ScopedVerifier} from "../verifiers/ScopedVerifier.sol";
 
 /// @notice PlainTextProposalFactory is a factory contract to create PlainTextProposal
 contract PlainTextProposalFactory is ScopedVerifier {

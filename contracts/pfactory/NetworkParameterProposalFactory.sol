@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "../common/SafeMath.sol";
+import {SafeMath} from "../common/SafeMath.sol";
 import "../governance/Governance.sol";
 import "../proposal/NetworkParameterProposal.sol";
 import "../verifiers/ScopedVerifier.sol";

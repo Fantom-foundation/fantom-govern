@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "../common/SafeMath.sol";
-import "../common/Decimal.sol";
+import {SafeMath} from "../common/SafeMath.sol";
+import {Decimal} from "../common/Decimal.sol";
 
 /// @notice StatusConstants defines status of governance proposals.
 contract StatusConstants {

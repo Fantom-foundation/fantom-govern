@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "./base/Cancelable.sol";
-import "./base/NonExecutableProposal.sol";
+import {Cancelable} from "./base/Cancelable.sol";
+import {NonExecutableProposal} from "./base/NonExecutableProposal.sol";
 
 /// @notice A plain text proposal
 contract PlainTextProposal is NonExecutableProposal, Cancelable {

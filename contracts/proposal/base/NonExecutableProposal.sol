@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "./BaseProposal.sol";
-import "../../governance/Proposal.sol";
+import {BaseProposal} from "./BaseProposal.sol";
+import {Proposal} from "../../governance/Proposal.sol";
 
 /// @notice extended BaseProposal for any proposals that cannot be executed
 contract NonExecutableProposal is BaseProposal {

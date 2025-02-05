@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "../governance/Proposal.sol";
+import {Proposal} from "../governance/Proposal.sol";
 
 
 /// @notice A verifier can verify a proposal's inputs such as proposal parameters and proposal contract.

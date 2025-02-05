@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "../ownership/Ownable.sol";
+import {Ownable} from "../ownership/Ownable.sol";
+import {Initializable} from "../common/Initializable.sol";
 
 /// @notice Interface for the governance contract
 interface GovernanceI {

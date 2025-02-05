@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "../common/Decimal.sol";
-import "../common/SafeMath.sol";
-import "../model/Governable.sol";
-import "../proposal/SoftwareUpgradeProposal.sol";
-import "./Constants.sol";
+import {Decimal} from "../common/Decimal.sol";
+import {SafeMath} from "../common/SafeMath.sol";
+import {Governable} from "../model/Governable.sol";
+import {SoftwareUpgradeProposal} from "../proposal/SoftwareUpgradeProposal.sol";
+import {Constants} from "./Constants.sol";
 
 /// @notice GovernanceSettings is a contract for managing governance settings
 contract GovernanceSettings is Constants {

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "./base/DelegatecallExecutableProposal.sol";
-import "./base/Cancelable.sol";
+import {DelegatecallExecutableProposal} from "./base/DelegatecallExecutableProposal.sol";
+import {Cancelable} from "./base/Cancelable.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 /// @notice An interface to update slashing penalty ratio

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "../PlainTextProposal.sol";
-import "../../governance/Governance.sol";
-import "../../governance/Proposal.sol";
+import {PlainTextProposal} from "../PlainTextProposal.sol";
+import {Governance} from "../../governance/Governance.sol";
+import {Proposal} from "../../governance/Proposal.sol";
 
 /// @dev A proposal that can be stores data about NonDelegateCall
 /// @dev Used for testing purposes

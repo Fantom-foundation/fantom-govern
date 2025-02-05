@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "../common/Decimal.sol";
-import "../proposal/base/IProposal.sol";
-import "./IProposalVerifier.sol";
-import "../ownership/Ownable.sol";
-import "../version/Version.sol";
-import "../common/Initializable.sol";
+import {Decimal} from "../common/Decimal.sol";
+import {IProposal} from "../proposal/base/IProposal.sol";
+import {IProposalVerifier} from "./IProposalVerifier.sol";
+import {Ownable} from "../ownership/Ownable.sol";
+import {Version} from "../version/Version.sol";
+import {Initializable} from "../common/Initializable.sol";
+import {Proposal} from "../governance/Proposal.sol";
 
 // @notice A storage of current proposal templates. Any new proposal will be verified against the stored template of its type.
 // Verification checks for parameters and calls additional verifier (if any).

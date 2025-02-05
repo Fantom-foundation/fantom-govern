@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "../common/Decimal.sol";
-import "../common/SafeMath.sol";
+import {Decimal} from "../common/Decimal.sol";
+import {SafeMath} from "../common/SafeMath.sol";
 
 
 /// @notice LRC implements the "least resistant consensus" paper. More detailed description can be found in Sonic's docs.

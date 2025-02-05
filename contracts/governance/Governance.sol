@@ -1,18 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "../common/ReentrancyGuard.sol";
-import "../common/SafeMath.sol";
-import "../model/Governable.sol";
-import "../proposal/base/IProposal.sol";
-import "../verifiers/IProposalVerifier.sol";
-import "../proposal/SoftwareUpgradeProposal.sol";
-import "./Proposal.sol";
-import "./Constants.sol";
-import "./GovernanceSettings.sol";
-import "./LRC.sol";
-import "../version/Version.sol";
-import "../votesbook/VotesBookKeeper.sol";
+import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
+import {SafeMath} from "../common/SafeMath.sol";
+import {Governable} from "../model/Governable.sol";
+import {IProposal} from "../proposal/base/IProposal.sol";
+import {IProposalVerifier} from "../verifiers/IProposalVerifier.sol";
+import {SoftwareUpgradeProposal} from "../proposal/SoftwareUpgradeProposal.sol";
+import {Proposal} from "./Proposal.sol";
+import {Constants} from "./Constants.sol";
+import {GovernanceSettings} from "./GovernanceSettings.sol";
+import {LRC} from "./LRC.sol";
+import {Version} from "../version/Version.sol";
+import {VotesBookKeeper} from "../votesbook/VotesBookKeeper.sol";
+import {Initializable} from "../common/Initializable.sol";
 
 /// @notice Governance contract for voting on proposals
 contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Version {

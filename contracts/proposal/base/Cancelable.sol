@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "../../ownership/Ownable.sol";
-import "../../governance/Governance.sol";
+import {Ownable} from "../../ownership/Ownable.sol";
+import {Governance} from "../../governance/Governance.sol";
 
 /// @notice Extends any contract with the ability to cancel a proposal
 contract Cancelable is Ownable {

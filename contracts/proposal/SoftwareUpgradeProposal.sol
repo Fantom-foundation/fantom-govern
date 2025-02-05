@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "./base/Cancelable.sol";
-import "./base/DelegatecallExecutableProposal.sol";
+import {Cancelable} from "./base/Cancelable.sol";
+import {DelegatecallExecutableProposal} from "./base/DelegatecallExecutableProposal.sol";
 
 /// @notice An interface to update this contract to a destination address
 interface Upgradability {

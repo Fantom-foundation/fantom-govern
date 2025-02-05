@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "../ownership/Ownable.sol";
-import "../common/Decimal.sol";
+import {Ownable} from "../ownership/Ownable.sol";
+import {Decimal} from "../common/Decimal.sol";
 
 /// @dev UnitTestConstantsManager is a contract for managing constants for unit tests
 contract UnitTestConstantsManager is Ownable {

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
-import "./Initializable.sol";
+import {Initializable} from "./Initializable.sol";
 
 /**
  * @dev Contract module that helps prevent reentrant calls to a function.
