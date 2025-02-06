@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
+import {SFC} from "../adapters/SFCToGovernable.sol";
 import {Governance} from "../governance/Governance.sol";
-import {SlashingRefundProposal, SFC} from "../proposal/SlashingRefundProposal.sol";
 import {ScopedVerifier} from "../verifiers/ScopedVerifier.sol";
+import {SlashingRefundProposal} from "../proposal/SlashingRefundProposal.sol";
 
 /// @notice SlashingRefundProposalFactory is a factory contract to create SlashingRefundProposal
 contract SlashingRefundProposalFactory is ScopedVerifier {

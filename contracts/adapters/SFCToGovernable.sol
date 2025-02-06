@@ -42,7 +42,7 @@ interface SFC {
 
 // @dev SFCToGovernable is an adapter allowing to use the network SFC contract as Governable (governance votes weights provider).
 contract SFCToGovernable is Governable {
-    SFC internal sfc;
+    SFC internal immutable sfc;
 
     constructor(address _sfcAddress) public {
         sfc = SFC(_sfcAddress);

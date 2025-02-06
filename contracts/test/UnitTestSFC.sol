@@ -1,6 +1,7 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.27;
 
-import "../adapters/SFCToGovernable.sol";
+import {SFC} from "../adapters/SFCToGovernable.sol";
 
 /// @dev UnitTestSFC is a dummy SFC used for testing
 contract UnitTestSFC is SFC {

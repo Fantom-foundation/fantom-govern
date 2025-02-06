@@ -4,7 +4,7 @@ pragma solidity 0.8.27;
 import {DelegatecallExecutableProposal} from "./base/DelegatecallExecutableProposal.sol";
 import {Cancelable} from "./base/Cancelable.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {SFCToGovernable} from "../adapters/SFCToGovernable.sol";
+import {SFC} from "../adapters/SFCToGovernable.sol";
 
 /// @notice A proposal to refund a slashed validator
 contract SlashingRefundProposal is DelegatecallExecutableProposal, Cancelable {
