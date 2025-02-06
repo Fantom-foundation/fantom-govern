@@ -34,7 +34,7 @@ contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
         }
     }
 
-    function execute_delegatecall(address selfAddr, uint256) external override {
+    function executeDelegateCall(address selfAddr, uint256) external override {
         SoftwareUpgradeProposal self = SoftwareUpgradeProposal(selfAddr);
         Upgradability(self.upgradeableContract()).upgradeTo(self.newImplementation());
     }

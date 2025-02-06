@@ -2,7 +2,6 @@
 pragma solidity 0.8.27;
 
 import {Decimal} from "../common/Decimal.sol";
-import {IProposal} from "../proposal/base/IProposal.sol";
 import {IProposalVerifier} from "./IProposalVerifier.sol";
 import {Version} from "../version/Version.sol";
 import {Proposal} from "../governance/Proposal.sol";
@@ -34,7 +33,7 @@ contract ProposalTemplates is IProposalVerifier, OwnableUpgradeable, Version {
     }
 
     // templates library
-    mapping(uint256 => ProposalTemplate) proposalTemplates; // proposal type => ProposalTemplate
+    mapping(uint256 => ProposalTemplate) public proposalTemplates; // proposal type => ProposalTemplate
 
     function initialize(address _owner) public initializer {
         __Ownable_init(_owner);

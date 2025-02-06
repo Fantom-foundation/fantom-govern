@@ -16,10 +16,10 @@ contract VotesBookKeeper is OwnableUpgradeable {
 
     uint256 public maxProposalsPerVoter; // Maximum number of proposals a voter can vote on
 
-    mapping(address => mapping(address => uint256[])) votesList; // voter => delegatedTo => []proposal IDs
+    mapping(address => mapping(address => uint256[])) public votesList; // voter => delegatedTo => []proposal IDs
 
     // voter => delegatedTo => proposal ID => {index in the list + 1}
-    mapping(address => mapping(address => mapping(uint256 => uint256))) votesIndex;
+    mapping(address => mapping(address => mapping(uint256 => uint256))) public votesIndex;
 
     /// @notice Initialize the contract
     /// @param _owner The owner of the contract
@@ -126,7 +126,7 @@ contract VotesBookKeeper is OwnableUpgradeable {
 
     /// @notice Set the maximum number of proposals a voter can vote on
     /// @param v The new maximum number of proposals
-    function setMaxProposalsPerVoter(uint256 v) onlyOwner external {
+    function setMaxProposalsPerVoter(uint256 v) external onlyOwner {
         maxProposalsPerVoter = v;
     }
 }

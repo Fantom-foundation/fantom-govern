@@ -17,7 +17,7 @@ contract GovernanceSettings is Ownable {
     uint256 public taskErasingReward;
     /// @notice maxOptions is the maximum number of options that can be offered in a single proposal
     uint256 public maxOptions;
-    /// @notice maxExecutionPeriod is the period after the end of voting during which the proposal can be executed 
+    /// @notice maxExecutionPeriod is the period after the end of voting during which the proposal can be executed
     uint256 public maxExecutionPeriod;
 
     // reverted when proposal fee would be under the sum of burnt fee and rewards
