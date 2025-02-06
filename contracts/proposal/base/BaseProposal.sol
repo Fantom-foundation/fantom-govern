@@ -7,20 +7,20 @@ import {Proposal} from "../../governance/Proposal.sol";
 
 /// @notice A base for any proposal
 contract BaseProposal is IProposal {
-    string _name;
-    string _description;
-    bytes32[] _options;
+    string public _name;
+    string public _description;
+    bytes32[]public  _options;
 
-    uint256 _minVotes;
-    uint256 _minAgreement;
+    uint256 public _minVotes;
+    uint256 public _minAgreement;
     // Static scale for front end
     // i.e. [1, 2, 3, 4] will result in the scale being divided into 4 parts
     // where 1 means the least agreement and 4 means the most
-    uint256[] _opinionScales;
+    uint256[] public _opinionScales;
 
-    uint256 _start; // Start of the voting
-    uint256 _minEnd; // Minimal end time of the voting
-    uint256 _maxEnd; // Maxinal end time of the voting
+    uint256 public _start; // Start of the voting
+    uint256 public _minEnd; // Minimal end time of the voting
+    uint256 public _maxEnd; // Maxinal end time of the voting
 
     /// @notice Verify the parameters of the proposal using a given verifier.
     /// @param verifier The address of the verifier contract.
@@ -76,11 +76,11 @@ contract BaseProposal is IProposal {
         return _description;
     }
 
-    function execute_delegatecall(address, uint256) external virtual {
+    function executeDelegateCall(address, uint256) external virtual {
         require(false, "not delegatecall-executable");
     }
 
-    function execute_call(uint256) external virtual {
+    function executeCall(uint256) external virtual {
         require(false, "not call-executable");
     }
 }

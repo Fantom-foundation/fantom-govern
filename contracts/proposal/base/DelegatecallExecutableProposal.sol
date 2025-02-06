@@ -14,7 +14,7 @@ contract DelegatecallExecutableProposal is BaseProposal {
         return uint256(StdProposalTypes.UNKNOWN_DELEGATECALL_EXECUTABLE);
     }
 
-    function execute_delegatecall(address, uint256) external override virtual{
+    function executeDelegateCall(address, uint256) external override virtual{
         require(false, "must be overridden");
     }
 }

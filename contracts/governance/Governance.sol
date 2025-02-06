@@ -4,9 +4,7 @@ pragma solidity 0.8.27;
 import {Governable} from "../model/Governable.sol";
 import {IProposal} from "../proposal/base/IProposal.sol";
 import {IProposalVerifier} from "../verifiers/IProposalVerifier.sol";
-import {SoftwareUpgradeProposal} from "../proposal/SoftwareUpgradeProposal.sol";
 import {Proposal} from "./Proposal.sol";
-import {Constants} from "./Constants.sol";
 import {GovernanceSettings} from "./GovernanceSettings.sol";
 import {LRC} from "./LRC.sol";
 import {Version} from "../version/Version.sol";
@@ -45,20 +43,20 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         uint256 proposalID;
     }
 
-    Governable governableContract; // SFC to Governable adapter refer to SFCToGovernable.sol
-    IProposalVerifier proposalVerifier;
+    Governable public governableContract; // SFC to Governable adapter refer to SFCToGovernable.sol
+    IProposalVerifier public proposalVerifier;
     uint256 public lastProposalID;
 
-    Task[] tasks; // Tasks of all current proposals
+    Task[] public tasks; // Tasks of all current proposals
 
     // ProposalID => ProposalState
-    mapping(uint256 => ProposalState) proposals;
+    mapping(uint256 => ProposalState) public proposals;
     // voter address => proposalID => weight
     mapping(address => mapping(uint256 => uint256)) public overriddenWeight;
     // voter => delegationReceiver => proposalID => Vote
-    mapping(address => mapping(address => mapping(uint256 => Vote))) _votes;
+    mapping(address => mapping(address => mapping(uint256 => Vote))) public _votes;
 
-    VotesBookKeeper votebook;
+    VotesBookKeeper public votebook;
 
     /// @notice Emitted when a new proposal is created.
     /// @param proposalID ID of newly created proposal.
@@ -217,14 +215,14 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     /// @param proposalID The ID of the proposal.
     /// @param choices The choices of the vote.
-    function vote(address delegatedTo, uint256 proposalID, uint256[] calldata choices) nonReentrant external {
+    function vote(address delegatedTo, uint256 proposalID, uint256[] calldata choices) external nonReentrant {
         if (delegatedTo == address(0)) {
             delegatedTo = msg.sender;
         }
 
         ProposalState storage prop = proposals[proposalID];
 
-        require(prop.params.proposalContract != address(0), "proposal with a given ID doesnt exist");
+        require(prop.params.proposalContract != address(0), "given proposalID doesn't exist");
         require(isInitialStatus(prop.status), "proposal isn't active");
         require(block.timestamp >= prop.params.deadlines.votingStartTime, "proposal voting hasn't begun");
         require(_votes[msg.sender][delegatedTo][proposalID].weight == 0, "vote already exists");
@@ -236,7 +234,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
 
     /// @notice Create a new proposal.
     /// @param proposalContract The address of the proposal contract.
-    function createProposal(address proposalContract) nonReentrant external payable {
+    function createProposal(address proposalContract) external nonReentrant payable {
         require(msg.value == proposalFee(), "paid proposal fee is wrong");
 
         lastProposalID++;
@@ -266,7 +264,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         uint256 votingMaxEndTime = p.votingMaxEndTime();
         bytes32[] memory options = p.options();
         // check the parameters and contract
-        require(options.length != 0, "proposal options are empty - nothing to vote for");
+        require(options.length != 0, "proposal options are empty");
         require(options.length <= maxOptions(), "too many options");
         bool ok;
         ok = proposalVerifier.verifyProposalParams(
@@ -279,9 +277,9 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
             votingMinEndTime,
             votingMaxEndTime
         );
-        require(ok, "proposal parameters failed verification");
+        require(ok, "parameters failed verification");
         ok = proposalVerifier.verifyProposalContract(pType, proposalContract);
-        require(ok, "proposal contract failed verification");
+        require(ok, "contract failed verification");
         // save the parameters
         ProposalState storage prop = proposals[proposalID];
         prop.params.pType = pType;
@@ -298,12 +296,12 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
 
     /// @notice Cancel a proposal if no votes have been cast - Only the proposal contract can cancel the proposal.
     /// @param proposalID The ID of the proposal.
-    function cancelProposal(uint256 proposalID) nonReentrant external {
+    function cancelProposal(uint256 proposalID) external nonReentrant {
         ProposalState storage prop = proposals[proposalID];
-        require(prop.params.proposalContract != address(0), "proposal with a given ID doesnt exist");
+        require(prop.params.proposalContract != address(0), "given proposalID doesn't exist");
         require(isInitialStatus(prop.status), "proposal isn't active");
         require(prop.votes == 0, "voting has already begun");
-        require(msg.sender == prop.params.proposalContract, "must be sent from the proposal contract");
+        require(msg.sender == prop.params.proposalContract, "sender not the proposal address");
 
         prop.status = statusCanceled();
         emit ProposalCanceled(proposalID);
@@ -313,7 +311,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @dev Emits TasksHandled event.
     /// @param startIdx The starting index of the tasks.
     /// @param quantity The number of tasks to handle.
-    function handleTasks(uint256 startIdx, uint256 quantity) nonReentrant external {
+    function handleTasks(uint256 startIdx, uint256 quantity) external nonReentrant {
         uint256 handled = 0;
         uint256 i;
         for (i = startIdx; i < tasks.length && i < startIdx + quantity; i++) {
@@ -333,7 +331,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @notice Clean up inactive tasks.
     /// @dev Emits TasksErased event.
     /// @param quantity The number of tasks to clean up.
-    function tasksCleanup(uint256 quantity) nonReentrant external {
+    function tasksCleanup(uint256 quantity) external nonReentrant {
         uint256 erased;
         for (erased = 0; tasks.length > 0 && erased < quantity; erased++) {
             if (!tasks[tasks.length - 1].active) {
@@ -435,9 +433,9 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         bool success;
         bytes memory result;
         if (prop.params.executable == Proposal.ExecType.CALL) {
-            (success, result) = propAddr.call(abi.encodeWithSignature("execute_call(uint256)", winnerOptionID));
+            (success, result) = propAddr.call(abi.encodeWithSignature("executeCall(uint256)", winnerOptionID));
         } else {
-            (success, result) = propAddr.delegatecall(abi.encodeWithSignature("execute_delegatecall(address,uint256)", propAddr, winnerOptionID));
+            (success, result) = propAddr.delegatecall(abi.encodeWithSignature("executeDelegateCall(address,uint256)", propAddr, winnerOptionID));
         }
         result;
         return (success, false);
@@ -486,7 +484,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @notice Cancel a vote for a proposal.
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     /// @param proposalID The ID of the proposal.
-    function cancelVote(address delegatedTo, uint256 proposalID) nonReentrant external {
+    function cancelVote(address delegatedTo, uint256 proposalID) external nonReentrant {
         if (delegatedTo == address(0)) {
             delegatedTo = msg.sender;
         }
@@ -580,7 +578,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @param voterAddr The address of the voter.
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     /// @param proposalID The ID of the proposal.
-    function recountVote(address voterAddr, address delegatedTo, uint256 proposalID) nonReentrant external {
+    function recountVote(address voterAddr, address delegatedTo, uint256 proposalID) external nonReentrant {
         Vote storage v = _votes[voterAddr][delegatedTo][proposalID];
         Vote storage vSuper = _votes[delegatedTo][delegatedTo][proposalID];
         require(v.choices.length > 0, "doesn't exist");

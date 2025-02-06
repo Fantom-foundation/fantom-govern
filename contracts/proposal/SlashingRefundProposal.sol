@@ -40,14 +40,14 @@ contract SlashingRefundProposal is DelegatecallExecutableProposal, Cancelable {
         return 5003;
     }
 
-    function execute_delegatecall(address selfAddr, uint256 optionID) external override {
+    function executeDelegateCall(address selfAddr, uint256 optionID) external override {
         SlashingRefundProposal self = SlashingRefundProposal(selfAddr);
         uint256 penaltyRatio = 1e18 * optionID * 20 / 100;
         ISFC(self.sfc()).updateSlashingRefundRatio(self.validatorID(), penaltyRatio);
     }
 
     function decimalsNum(uint256 num) internal pure returns (uint256) {
-        uint decimals;
+        uint256 decimals;
         while (num != 0) {
             decimals++;
             num /= 10;

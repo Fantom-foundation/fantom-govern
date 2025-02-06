@@ -24,7 +24,7 @@ contract SlashingRefundProposalFactory is ScopedVerifier {
     /// @param __minEnd The minimum end time
     /// @param __maxEnd The maximum end time
     function create(uint256 __validatorID, string calldata __description,
-        uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd) payable external {
+        uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd) external payable {
         // use memory to avoid stack overflow
         uint256[] memory params = new uint256[](5);
         params[0] = __minVotes;

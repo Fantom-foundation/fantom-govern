@@ -12,3 +12,7 @@ checksum:
 .PHONY: test
 test:
 	npx hardhat test --typecheck
+
+.PHONY: lint
+lint:
+	 solhint 'contracts/**/*.sol'

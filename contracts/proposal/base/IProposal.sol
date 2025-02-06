@@ -46,13 +46,13 @@ interface IProposal {
     /// @dev execute proposal logic on approval (if executable == call)
     /// @dev Called via call opcode from governance contract
     /// @param optionID The index of the option to execute
-    function execute_call(uint256 optionID) external;
+    function executeCall(uint256 optionID) external;
 
     /// @dev execute proposal logic on approval (if executable == delegatecall)
     /// @dev Called via delegatecall opcode from governance contract, hence selfAddress is provided
     /// @param selfAddress The address of the proposal contract
     /// @param optionID The index of the option to execute
-    function execute_delegatecall(address selfAddress, uint256 optionID) external;
+    function executeDelegateCall(address selfAddress, uint256 optionID) external;
 
     /// @dev Get human-readable name
     /// @return Human-readable name

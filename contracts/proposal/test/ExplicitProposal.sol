@@ -7,8 +7,8 @@ import {Proposal} from "../../governance/Proposal.sol";
 /// @dev A proposal with all parameters explicitly set
 /// @dev Used for testing purposes
 contract ExplicitProposal is BaseProposal {
-    uint256 _pType;
-    Proposal.ExecType _exec;
+    uint256 public _pType;
+    Proposal.ExecType public _exec;
 
     function setType(uint256 v) public {
         _pType = v;
@@ -74,6 +74,6 @@ contract ExplicitProposal is BaseProposal {
         return _maxEnd;
     }
 
-    function execute_delegatecall(address, uint256) external override {}
-    function execute_call(uint256) external override {}
+    function executeDelegateCall(address, uint256) external override {}
+    function executeCall(uint256) external override {}
 }
