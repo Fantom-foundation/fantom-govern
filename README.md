@@ -15,106 +15,84 @@ The contract is designed to be universal and flexible:
 
 Check out the wiki to get more details.
 
+# Compile
+To compile the contracts, run: `make`
+
 # Test
+To run hardhat tests, run: `make test`\
+Make sure you compile the contracts first. 
 
-1. Install nodejs 10.5.0
-2. `npm install -g truffle@v5.1.4` # install truffle v5.1.4
-3. `npm update`
-4. `npm test`
-
-If everything is allright, it should output something along this:
+If everything is all right, it should output something along this:
 ```
-> governance@1.0.0 test /home/up/w/fantom-govern
-> truffle test
-
-
-Compiling your contracts...
-===========================
-> Compiling ./contracts/Migrations.sol
-> Compiling ./contracts/common/Decimal.sol
-> Compiling ./contracts/common/GetCode.sol
-> Compiling ./contracts/common/ReentrancyGuard.sol
-> Compiling ./contracts/common/SafeMath.sol
-> Compiling ./contracts/governance/Constants.sol
-> Compiling ./contracts/governance/Governance.sol
-> Compiling ./contracts/governance/GovernanceSettings.sol
-> Compiling ./contracts/governance/LRC.sol
-> Compiling ./contracts/governance/Proposal.sol
-> Compiling ./contracts/governance/ProposalTemplates.sol
-> Compiling ./contracts/model/Governable.sol
-> Compiling ./contracts/ownership/Ownable.sol
-> Compiling ./contracts/proposal/BaseProposal.sol
-> Compiling ./contracts/proposal/IProposal.sol
-> Compiling ./contracts/proposal/IProposalVerifier.sol
-> Compiling ./contracts/proposal/PlainTextProposal.sol
-> Compiling ./contracts/proposal/SoftwareUpgradeProposal.sol
-> Compiling ./contracts/test/AlteredPlainTextProposal.sol
-> Compiling ./contracts/test/ExecLoggingProposal.sol
-> Compiling ./contracts/test/ExplicitProposal.sol
-> Compiling ./contracts/test/UnitTestGovernable.sol
-> Compiling ./contracts/test/UnitTestGovernance.sol
-> Compiling ./contracts/upgrade/Upgradability.sol
-> Compiling ./contracts/version/Version.sol
-
-
-
-  Contract: Governance test
-    ✓ checking deployment of a plaintext proposal contract (1686ms)
-    ✓ checking creation of a plaintext proposal (1208ms)
-    ✓ checking proposal verification with explicit timestamps and opinions (997ms)
-    ✓ checking self-vote creation (589ms)
-    ✓ checking voting tally for a self-voter (938ms)
-    ✓ checking proposal execution via call (427ms)
-    ✓ checking proposal execution via delegatecall (440ms)
-    ✓ checking proposal rejecting before max voting end is reached (369ms)
-    ✓ checking voting tally with low turnout (456ms)
-    ✓ checking execution expiration (438ms)
-    ✓ checking proposal is rejected if low agreement after max voting end (408ms)
-    ✓ checking proposal is rejected if low turnout after max voting end (555ms)
-    ✓ checking execution doesn't expire earlier than needed (411ms)
-    ✓ checking proposal cancellation (702ms)
-    ✓ checking handling multiple tasks (1822ms)
-    ✓ checking delegation vote creation (828ms)
-    ✓ checking voting with custom parameters (607ms)
-    ✓ checking OwnableVerifier (850ms)
+  Governance test
+    ✔ checking deployment of a plaintext proposal contract (107ms)
+    ✔ checking creation of a plaintext proposal (54ms)
+    ✔ checking proposal verification with explicit timestamps and opinions
+    ✔ checking creation and execution of network parameter proposals via proposal factory
+    ✔ checking self-vote creation
+    ✔ checking voting tally for a self-voter
+    ✔ checking proposal execution via call
+    ✔ checking proposal execution via delegatecall
+    ✔ checking non-executable proposal resolving
+    ✔ checking proposal rejecting before max voting end is reached
+    ✔ checking voting tally with low turnout
+    ✔ checking execution expiration
+    ✔ checking proposal is rejected if low agreement after max voting end
+    ✔ checking execution doesn't expire earlier than needed
+    ✔ checking proposal cancellation
+    ✔ checking handling multiple tasks (62ms)
+    ✔ checking proposal is rejected if low turnout after max voting end
+    ✔ checking delegation vote creation (40ms)
+    ✔ checking voting with custom parameters
+    ✔ checking OwnableVerifier (61ms)
+    ✔ checking SlashingRefundProposal naming scheme (42ms)
     checking votes for a self-voter
-      ✓ checking voting state (293ms)
-      ✓ cancel vote (110ms)
-      ✓ recount vote (380ms)
-      ✓ cancel vote via recounting (94ms)
+      ✔ checking voting state
+      ✔ cancel vote
+      ✔ recount vote
+      ✔ cancel vote via recounting
+      ✔ cancel vote via recounting from VotesBookKeeper
     checking votes for 1 delegation and 2 self-voters
-      ✓ cancel votes (229ms)
-      ✓ cancel votes in reversed order (131ms)
-      ✓ checking voting state (311ms)
-      ✓ checking voting state after delegator re-voting (472ms)
-      ✓ checking voting state after first voter re-voting (392ms)
-      ✓ checking voting state after second voter re-voting (403ms)
-      ✓ checking voting state after delegator vote canceling (237ms)
-      ✓ checking voting state after first staker vote canceling (291ms)
-      ✓ checking voting state after delegator recounting (362ms)
-      ✓ checking voting state after first staker recounting (300ms)
-      ✓ checking voting state after cross-delegations between voters (679ms)
-      ✓ cancel votes via recounting (200ms)
-      ✓ cancel votes via recounting gradually (213ms)
-      ✓ cancel votes via recounting in reversed order (328ms)
-      ✓ cancel votes via recounting gradually in reversed order (251ms)
+      ✔ cancel votes
+      ✔ cancel votes in reversed order
+      ✔ checking voting state
+      ✔ checking voting state after delegator re-voting
+      ✔ checking voting state after first voter re-voting
+      ✔ checking voting state after second voter re-voting
+      ✔ checking voting state after delegator vote canceling
+      ✔ checking voting state after first staker vote canceling
+      ✔ checking voting state after delegator recounting
+      ✔ checking voting state after first staker recounting
+      ✔ checking voting state after cross-delegations between voters
+      ✔ cancel votes via recounting
+      ✔ cancel votes via recounting gradually
+      ✔ cancel votes via recounting in reversed order
+      ✔ cancel votes via recounting gradually in reversed order
     checking votes for 2 self-voters and 1 delegation
-      ✓ cancel votes (205ms)
-      ✓ cancel votes in reversed order (212ms)
-      ✓ checking voting state (334ms)
-      ✓ checking voting state after delegator re-voting (481ms)
-      ✓ checking voting state after first voter re-voting (410ms)
-      ✓ checking voting state after second voter re-voting (440ms)
-      ✓ checking voting state after delegator vote canceling (247ms)
-      ✓ checking voting state after first staker vote canceling (231ms)
-      ✓ checking voting state after delegator recounting (360ms)
-      ✓ checking voting state after first staker recounting (311ms)
-      ✓ checking voting state after cross-delegations between voters (616ms)
-      ✓ cancel votes via recounting (203ms)
-      ✓ cancel votes via recounting gradually (242ms)
-      ✓ cancel votes via recounting in reversed order (221ms)
-      ✓ cancel votes via recounting gradually in reversed order (267ms)
+      ✔ cancel votes
+      ✔ cancel votes in reversed order
+      ✔ checking voting state
+      ✔ checking voting state after delegator re-voting
+      ✔ checking voting state after first voter re-voting
+      ✔ checking voting state after second voter re-voting
+      ✔ checking voting state after delegator vote canceling
+      ✔ checking voting state after first staker vote canceling
+      ✔ checking voting state after delegator recounting
+      ✔ checking voting state after first staker recounting
+      ✔ checking voting state after cross-delegations between voters
+      ✔ cancel votes via recounting
+      ✔ cancel votes via recounting gradually
+      ✔ cancel votes via recounting in reversed order
+      ✔ cancel votes via recounting gradually in reversed order
+
+  VotesBookKeeper
+    ✔ onVoted() should record two votes from one voter to two different proposals
+    ✔ onVoted() should revert when received too many votes from one voter
+    ✔ onVoteCanceled() removes vote
+    ✔ checking VotesBookKeeper proposals cap
+    ✔ checking VotesBookKeeper pruning outdated votes
+    ✔ checking VotesBookKeeper indexes
 
 
-  52 passing (1m)
+  62 passing (2s)
 ```
