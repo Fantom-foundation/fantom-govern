@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import {SafeMath} from "../common/SafeMath.sol";
 import {Decimal} from "../common/Decimal.sol";
 
 /// @notice StatusConstants defines status of governance proposals.
@@ -49,8 +48,6 @@ contract StatusConstants {
 
 /// @dev Constants is a contract for managing constants
 contract Constants is StatusConstants {
-    using SafeMath for uint256;
-
     /// @notice calculates the minimum number of votes required for a proposal
     /// @param totalWeight The total weight of the voters
     /// @param minVotesRatio The minimum ratio of votes required

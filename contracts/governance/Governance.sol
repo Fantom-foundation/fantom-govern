@@ -2,7 +2,6 @@
 pragma solidity 0.8.27;
 
 import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
-import {SafeMath} from "../common/SafeMath.sol";
 import {Governable} from "../model/Governable.sol";
 import {IProposal} from "../proposal/base/IProposal.sol";
 import {IProposalVerifier} from "../verifiers/IProposalVerifier.sol";
@@ -17,7 +16,6 @@ import {Initializable} from "../common/Initializable.sol";
 
 /// @notice Governance contract for voting on proposals
 contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Version {
-    using SafeMath for uint256;
     using LRC for LRC.Option;
 
     struct Vote {
@@ -329,7 +327,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
 
         emit TasksHandled(startIdx, i, handled);
         // reward the sender
-        (bool success, ) = payable(msg.sender).call{value: handled.mul(taskHandlingReward())}("");
+        (bool success, ) = payable(msg.sender).call{value: handled * taskHandlingReward()}("");
         require(success, "transfer failed");
     }
 
@@ -349,7 +347,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
         require(erased > 0, "no tasks erased");
         emit TasksErased(erased);
         // reward the sender
-        (bool success, ) = payable(msg.sender).call{value: erased.mul(taskErasingReward())}("");
+        (bool success, ) = payable(msg.sender).call{value: erased * taskErasingReward()}("");
         require(success, "transfer failed");
     }
 
@@ -617,11 +615,11 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     /// @param weight The weight of the vote.
     function overrideDelegationWeight(address delegatedTo, uint256 proposalID, uint256 weight) internal {
         uint256 overridden = overriddenWeight[delegatedTo][proposalID];
-        overridden = overridden.add(weight);
+        overridden = overridden + weight;
         overriddenWeight[delegatedTo][proposalID] = overridden;
         Vote storage v = _votes[delegatedTo][delegatedTo][proposalID];
         if (v.choices.length > 0) {
-            v.weight = v.weight.sub(weight);
+            v.weight = v.weight - weight;
             removeChoicesFromProp(proposalID, v.choices, weight);
         }
         emit VoteWeightOverridden(delegatedTo, weight);
@@ -634,11 +632,11 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     /// @param weight The weight of the vote.
     function unOverrideDelegationWeight(address delegatedTo, uint256 proposalID, uint256 weight) internal {
         uint256 overridden = overriddenWeight[delegatedTo][proposalID];
-        overridden = overridden.sub(weight);
+        overridden = overridden - weight;
         overriddenWeight[delegatedTo][proposalID] = overridden;
         Vote storage v = _votes[delegatedTo][delegatedTo][proposalID];
         if (v.choices.length > 0) {
-            v.weight = v.weight.add(weight);
+            v.weight = v.weight + weight;
             addChoicesToProp(proposalID, v.choices, weight);
         }
         emit VoteWeightUnOverridden(delegatedTo, weight);
@@ -651,7 +649,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     function addChoicesToProp(uint256 proposalID, uint256[] memory choices, uint256 weight) internal {
         ProposalState storage prop = proposals[proposalID];
 
-        prop.votes = prop.votes.add(weight);
+        prop.votes = prop.votes + weight;
 
         for (uint256 i = 0; i < prop.params.options.length; i++) {
             prop.options[i].addVote(choices[i], weight, prop.params.opinionScales);
@@ -665,7 +663,7 @@ contract Governance is Initializable, ReentrancyGuard, GovernanceSettings, Versi
     function removeChoicesFromProp(uint256 proposalID, uint256[] memory choices, uint256 weight) internal {
         ProposalState storage prop = proposals[proposalID];
 
-        prop.votes = prop.votes.sub(weight);
+        prop.votes = prop.votes - weight;
 
         for (uint256 i = 0; i < prop.params.options.length; i++) {
             prop.options[i].removeVote(choices[i], weight, prop.params.opinionScales);
