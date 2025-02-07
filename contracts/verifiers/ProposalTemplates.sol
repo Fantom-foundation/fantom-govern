@@ -6,12 +6,12 @@ import {IProposal} from "../proposal/base/IProposal.sol";
 import {IProposalVerifier} from "./IProposalVerifier.sol";
 import {Version} from "../version/Version.sol";
 import {Proposal} from "../governance/Proposal.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 // @notice A storage of current proposal templates. Any new proposal will be verified against the stored template of its type.
 // Verification checks for parameters and calls additional verifier (if any).
 // Supposed to be owned by the governance contract
-contract ProposalTemplates is IProposalVerifier, Ownable, Version {
+contract ProposalTemplates is IProposalVerifier, OwnableUpgradeable, Version {
     /// @notice Event emitted when a new template is added
     /// @param pType The type of the template
     event AddedTemplate(uint256 pType);
@@ -36,7 +36,9 @@ contract ProposalTemplates is IProposalVerifier, Ownable, Version {
     // templates library
     mapping(uint256 => ProposalTemplate) proposalTemplates; // proposal type => ProposalTemplate
 
-    constructor() Ownable(msg.sender) {}
+    function initialize(address _owner) public initializer {
+        __Ownable_init(_owner);
+    }
 
     // exists returns true if proposal template is present
     function exists(uint256 pType) public view returns (bool) {

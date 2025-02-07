@@ -18,6 +18,7 @@ const governanceFixture = async function () {
     const votebook = await ethers.deployContract("VotesBookKeeper");
     const gov = await ethers.deployContract("Governance");
     const [defaultAcc, otherAcc, firstVoterAcc, secondVoterAcc, delegatorAcc] = await ethers.getSigners();
+    await verifier.initialize(defaultAcc.getAddress());
     await votebook.initialize(defaultAcc.getAddress(), gov.getAddress(), 1000);
     await gov.initialize(govable.getAddress(), verifierAddress, votebook.getAddress());
     const proposalFee = await gov.proposalFee();
