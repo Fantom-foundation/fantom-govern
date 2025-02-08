@@ -4,7 +4,6 @@ pragma solidity 0.8.27;
 import {Cancelable} from "./base/Cancelable.sol";
 import {DelegatecallExecutableProposal} from "./base/DelegatecallExecutableProposal.sol";
 import {Proposal} from "../governance/Proposal.sol";
-import {SafeMath} from "../common/SafeMath.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 interface ConstsI {
@@ -41,7 +40,6 @@ interface ConstsI {
 
 /// @notice A proposal to update network parameters
 contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable {
-    using SafeMath for uint256;
     Proposal.ExecType _exec;
     ConstsI public consts;
     uint8 public methodID;
@@ -197,7 +195,7 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
     /// @param unit The unit of the number
     function unpackDecimal(uint256 num, uint256 unit) internal pure returns (uint256 integer, uint256 fractional) {
         assert(unit <= 1e18);
-        fractional = (num % unit).mul(1e18).div(unit);
+        fractional = (num % unit) * 1e18 / unit;
         return (num / unit, trimFractional(1e18 + fractional));
     }
 

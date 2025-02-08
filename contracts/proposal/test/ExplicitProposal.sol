@@ -2,14 +2,11 @@
 pragma solidity 0.8.27;
 
 import {BaseProposal} from "../base/BaseProposal.sol";
-import {SafeMath} from "../../common/SafeMath.sol";
 import {Proposal} from "../../governance/Proposal.sol";
 
 /// @dev A proposal with all parameters explicitly set
 /// @dev Used for testing purposes
 contract ExplicitProposal is BaseProposal {
-    using SafeMath for uint256;
-
     uint256 _pType;
     Proposal.ExecType _exec;
 

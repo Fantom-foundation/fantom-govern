@@ -2,13 +2,9 @@
 pragma solidity 0.8.27;
 
 import {Decimal} from "../common/Decimal.sol";
-import {SafeMath} from "../common/SafeMath.sol";
-
 
 /// @notice LRC implements the "least resistant consensus" paper. More detailed description can be found in Sonic's docs.
 library LRC {
-    using SafeMath for uint256;
-
     // Option represents a single option in the proposal
     struct Option {
         uint256 votes;
@@ -23,7 +19,7 @@ library LRC {
             // avoid division by zero
             return 0;
         }
-        return self.agreement.mul(Decimal.unit()).div(self.votes);
+        return self.agreement * Decimal.unit() / self.votes;
     }
 
     /// @dev maxAgreementScale returns the maximum agreement scale
@@ -43,8 +39,8 @@ library LRC {
 
         uint256 scale = opinionScales[opinionID];
 
-        self.votes = self.votes.add(weight);
-        self.agreement = self.agreement.add(weight.mul(scale).div(maxAgreementScale(opinionScales)));
+        self.votes = self.votes + weight;
+        self.agreement = self.agreement + weight * scale / maxAgreementScale(opinionScales);
     }
 
     /// @dev removeVote removes a vote from the option
@@ -57,7 +53,7 @@ library LRC {
 
         uint256 scale = opinionScales[opinionID];
 
-        self.votes = self.votes.sub(weight);
-        self.agreement = self.agreement.sub(weight.mul(scale).div(maxAgreementScale(opinionScales)));
+        self.votes = self.votes - weight;
+        self.agreement = self.agreement - weight * scale / maxAgreementScale(opinionScales);
     }
 }
