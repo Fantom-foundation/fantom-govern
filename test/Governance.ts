@@ -1149,15 +1149,15 @@ describe("Governance test", function () {
         const option = ethers.encodeBytes32String("opt");
         const proposal = await ethers.deployContract("PlainTextProposal", ["paintext", "plaintext-descr", [option], ethers.parseEther("0.5"), ethers.parseEther("0.8"), 30, 121, 1199, this.verifierAddress]);
 
-        await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
-        await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
+        await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("contract failed verification");
+        await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("contract failed verification");
         await expect(ownableVerifier.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWithCustomError(
             ownableVerifier,
             'OwnableUnauthorizedAccount',
         );
         await ownableVerifier.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee});
-        await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
-        await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
+        await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("contract failed verification");
+        await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("contract failed verification");
         await expect(ownableVerifier.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWithCustomError(
             ownableVerifier,
             'OwnableUnauthorizedAccount',
@@ -1166,8 +1166,8 @@ describe("Governance test", function () {
         // Transfer ownership to otherAcc
         await ownableVerifier.connect(this.defaultAcc).transferOwnership(this.otherAcc);
 
-        await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
-        await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
+        await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("contract failed verification");
+        await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("contract failed verification");
         await expect(ownableVerifier.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWithCustomError(
             ownableVerifier,
             'OwnableUnauthorizedAccount',
