@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import {Proposal} from "../../governance/Proposal.sol";
+import {Proposal} from "../governance/Proposal.sol";
 
 /// @notice The proposal interface
 interface IProposal {

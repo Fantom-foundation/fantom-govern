@@ -2,7 +2,7 @@
 pragma solidity 0.8.27;
 
 import {Governable} from "../model/Governable.sol";
-import {IProposal} from "../proposal/base/IProposal.sol";
+import {IProposal} from "../interfaces/IProposal.sol";
 import {IProposalVerifier} from "../verifiers/IProposalVerifier.sol";
 import {Proposal} from "./Proposal.sol";
 import {GovernanceSettings} from "./GovernanceSettings.sol";
@@ -419,7 +419,6 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @dev Execute a proposal.
     /// @param prop The state of the proposal.
     /// @param winnerOptionID The ID of the winning option.
-    /// @return success Whether the execution was successful.
     /// @return expired Whether the execution period has expired.
     function executeProposal(ProposalState storage prop, uint256 winnerOptionID) internal returns (bool, bool) {
         bool executable = prop.params.executable == Proposal.ExecType.CALL || prop.params.executable == Proposal.ExecType.DELEGATECALL;
@@ -433,14 +432,16 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
             return (true, true);
         }
         address propAddr = prop.params.proposalContract;
-        bool success;
-        bytes memory result;
+        bool success = true;
         if (prop.params.executable == Proposal.ExecType.CALL) {
-            (success, result) = propAddr.call(abi.encodeWithSignature("executeCall(uint256)", winnerOptionID));
+            IProposal(propAddr).executeCall(winnerOptionID);
         } else {
-            (success, result) = propAddr.delegatecall(abi.encodeWithSignature("executeDelegateCall(address,uint256)", propAddr, winnerOptionID));
+            // Call must be delegated
+            (success, ) = propAddr.delegatecall(
+                abi.encodeCall(IProposal(propAddr).executeDelegateCall,
+                    (propAddr, winnerOptionID)
+                ));
         }
-        result;
         return (success, false);
     }
 
