@@ -53,42 +53,51 @@ describe("Governance test", function () {
             .to.be.revertedWithCustomError(
                 this.verifier,
                 "ParametersVerificationFailed"
-            );
+            )
+            .withArgs("maxDuration too long");
         await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("0.6"), 0, 119, 1201, this.verifierAddress]))
             .to.be.revertedWithCustomError(
                 this.verifier,
                 "ParametersVerificationFailed"
-            );
+            )
+            .withArgs("minDuration too short");
         await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("0.6"), 61, 119, 1201, this.verifierAddress]))
             .to.be.revertedWithCustomError(
                 this.verifier,
                 "ParametersVerificationFailed"
-            );
+            )
+            .withArgs("minDuration too short");
         await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("0.6"), 0, 501, 500, this.verifierAddress]))
             .to.be.revertedWithCustomError(
                 this.verifier,
                 "ParametersVerificationFailed"
-            );
+            )
+            .withArgs("minEnd is after maxEnd");
         await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.399"), ethers.parseEther("0.6"), 0, 501, 500, this.verifierAddress]))
             .to.be.revertedWithCustomError(
                 this.verifier,
                 "ParametersVerificationFailed"
-            );
+            )
+            .withArgs("minVotes too small");
         await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("1.01"), ethers.parseEther("0.6"), 0, 501, 500, this.verifierAddress]))
             .to.be.revertedWithCustomError(
                 this.verifier,
                 "ParametersVerificationFailed"
-            );
+            )
+            .withArgs("minVotes too big");
         await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("0.599"), 60, 120, 1200, this.verifierAddress]))
             .to.be.revertedWithCustomError(
                 this.verifier,
                 "ParametersVerificationFailed"
-            );
+            )
+            .withArgs("minAgreement too small");
         await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("1.01"), 60, 120, 1200, this.verifierAddress]))
             .to.be.revertedWithCustomError(
                 this.verifier,
                 "ParametersVerificationFailed"
-            );
+            )
+            .withArgs("minAgreement too big");
+
         await ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("0.6"), 60, 120, 1200, this.verifierAddress]);
         await ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("0.6"), 0, 1200, 1200, this.verifierAddress]);
         await ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("0.6"), 0, 120, 120, this.verifierAddress]);
@@ -118,22 +127,26 @@ describe("Governance test", function () {
             .to.be.revertedWithCustomError(
                 this.gov,
                 "TooManyOptions"
-            );
+            )
+            .withArgs(tooManyOptions.getAddress());
         await expect(this.gov.createProposal(wrongVotes.getAddress(), {value: this.proposalFee}))
             .to.be.revertedWithCustomError(
                 this.verifier,
                 "ParametersVerificationFailed"
-            );
+            )
+            .withArgs("minVotes too small");
         await expect(this.gov.createProposal(manyOptions.getAddress()))
             .to.be.revertedWithCustomError(
                 this.gov,
                 "IncorrectProposalFee"
-            );
+            )
+            .withArgs(0n, this.proposalFee);
         await expect(this.gov.createProposal(manyOptions.getAddress(), {value: this.proposalFee+1n}))
             .to.be.revertedWithCustomError(
                 this.gov,
                 "IncorrectProposalFee"
-            );
+            )
+            .withArgs(this.proposalFee+1n, this.proposalFee);
         await this.gov.createProposal(manyOptions.getAddress(), {value: this.proposalFee});
         await this.gov.createProposal(oneOption.getAddress(), {value: this.proposalFee});
 
@@ -191,7 +204,8 @@ describe("Governance test", function () {
             .to.be.revertedWithCustomError(
                 this.verifier,
                 "ParametersVerificationFailed"
-            );
+            )
+            .withArgs("start is after minEnd");
         await proposal.setVotingMinEndTime(minEnd);
 
         await proposal.setVotingMaxEndTime(start-1); // must end before the start
@@ -199,7 +213,8 @@ describe("Governance test", function () {
             .to.be.revertedWithCustomError(
                 this.verifier,
                 "ParametersVerificationFailed"
-            );
+            )
+            .withArgs("minEnd is after maxEnd");
         await proposal.setVotingMaxEndTime(maxEnd);
 
         await proposal.setVotingMaxEndTime(minEnd-1); // min > max
@@ -207,7 +222,8 @@ describe("Governance test", function () {
             .to.be.revertedWithCustomError(
                 this.verifier,
                 "ParametersVerificationFailed"
-            );
+            )
+            .withArgs("minEnd is after maxEnd");
         await proposal.setVotingMaxEndTime(maxEnd);
 
         await proposal.setType(pType - 1); // wrong type
@@ -215,7 +231,8 @@ describe("Governance test", function () {
             .to.be.revertedWithCustomError(
                 this.verifier,
                 "ParametersVerificationFailed"
-            );
+            )
+            .withArgs("non-existing template");
         await proposal.setType(pType);
 
         await proposal.setOpinionScales([]); // wrong scales
@@ -223,19 +240,22 @@ describe("Governance test", function () {
             .to.be.revertedWithCustomError(
                 this.verifier,
                 "ParametersVerificationFailed"
-            );
+            )
+            .withArgs("incorrect opinion length");
         await proposal.setOpinionScales([1]); // wrong scales
         await expect(proposal.verifyProposalParams(this.verifierAddress))
             .to.be.revertedWithCustomError(
                 this.verifier,
                 "ParametersVerificationFailed"
-            );
+            )
+            .withArgs("incorrect opinion length");
         await proposal.setOpinionScales([1, 2, 3, 4, 5]); // wrong scales
         await expect(proposal.verifyProposalParams(this.verifierAddress))
             .to.be.revertedWithCustomError(
                 this.verifier,
                 "ParametersVerificationFailed"
-            );
+            )
+            .withArgs("wrong opinion scales");
         await proposal.setOpinionScales(scales);
 
         await proposal.verifyProposalParams(this.verifierAddress)
@@ -317,33 +337,38 @@ describe("Governance test", function () {
             .to.be.revertedWithCustomError(
                 this.gov,
                 "ZeroWeightVote"
-            );
+            )
+            .withArgs(this.defaultAcc.getAddress(), proposalID);
         await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.0"));
         // Non-existent proposal
         await expect(this.gov.vote(this.defaultAcc, proposalID+1n, choices))
             .to.be.revertedWithCustomError(
                 this.gov,
                 "UnknownProposalID"
-            );
+            )
+            .withArgs(proposalID+1n);
         // Incorrect choices
         await expect(this.gov.vote(this.defaultAcc, proposalID, [3n, 4n]))
             .to.be.revertedWithCustomError(
                 this.gov,
                 "WrongNumberOfChoices"
-            );
+            )
+            .withArgs(2, optionsNum);
         // Non-existent opinion
         await expect(this.gov.vote(this.defaultAcc, proposalID, [5n, 3n, 4n]))
             .to.be.revertedWithCustomError(
                 this.gov,
                 "WrongOpinionID"
-            );
+            )
+            .withArgs(5n, 4n);
         await this.gov.vote(this.defaultAcc, proposalID, choices);
         // Same address vote to same proposal
         await expect(this.gov.vote(this.defaultAcc, proposalID, [1n, 3n, 4n]))
             .to.be.revertedWithCustomError(
                 this.gov,
                 "VoteExists"
-            );
+            )
+            .withArgs(this.defaultAcc.getAddress(), proposalID);
     });
 
     describe("checking votes for a self-voter", async function () {
@@ -391,12 +416,14 @@ describe("Governance test", function () {
                     .to.be.revertedWithCustomError(
                         this.gov,
                         "UnknownVote"
-                    );
+                    )
+                .withArgs(this.defaultAcc.getAddress(), this.defaultAcc.getAddress(), this.proposalID+1n);
             await expect(this.gov.cancelVote(this.otherAcc, this.proposalID))
                     .to.be.revertedWithCustomError(
                         this.gov,
                         "UnknownVote"
-                    );
+                    )
+                    .withArgs(this.defaultAcc.getAddress(), this.otherAcc.getAddress(), this.proposalID);
             await this.gov.cancelVote(this.defaultAcc, this.proposalID);
             // vote should be erased, checked by afterEach
         });
@@ -407,12 +434,14 @@ describe("Governance test", function () {
                     .to.be.revertedWithCustomError(
                         this.gov,
                         "UnknownVote"
-                    );
+                    )
+                    .withArgs(this.otherAcc.getAddress(), this.defaultAcc.getAddress(), this.proposalID);
             await expect(this.gov.recountVote(this.defaultAcc, this.otherAcc, this.proposalID, {from: this.defaultAcc}))
                     .to.be.revertedWithCustomError(
                         this.gov,
                         "UnknownVote"
-                    );
+                    )
+                    .withArgs(this.defaultAcc.getAddress(), this.otherAcc.getAddress(), this.proposalID);
             await this.gov.recountVote(this.defaultAcc, this.defaultAcc, this.proposalID, {from: this.defaultAcc}); // anyone can send
             await expect(this.gov.recountVote(this.defaultAcc, this.defaultAcc, this.proposalID, {from: this.defaultAcc}))
                 .to.be.revertedWithCustomError(
@@ -561,7 +590,8 @@ describe("Governance test", function () {
             .to.be.revertedWithCustomError(
                 this.gov,
                 "InactiveProposal"
-            );
+            )
+            .withArgs(proposalID);
 
         // try to recount vote
         await this.sfc.stake(this.defaultAcc, ethers.parseEther("5.0"));
@@ -569,7 +599,8 @@ describe("Governance test", function () {
             .to.be.revertedWithCustomError(
                 this.gov,
                 "InactiveProposal"
-            );
+            )
+            .withArgs(proposalID);
 
         // cleanup task
         const taskDeactivated = await this.gov.getTask(0);
@@ -802,7 +833,8 @@ describe("Governance test", function () {
             .to.be.revertedWithCustomError(
                 this.gov,
                 "UnknownProposalID"
-            );
+            )
+            .withArgs(proposalID+1n);
         await expect(this.gov.cancelProposal(proposalID))
             .to.be.revertedWithCustomError(
                 this.gov,
@@ -813,18 +845,21 @@ describe("Governance test", function () {
             .to.be.revertedWithCustomError(
                 this.gov,
                 "SenderNotProposal"
-            );
+            )
+            .withArgs(this.defaultAcc.getAddress(), proposalContract.getAddress());
         await proposalContract.cancel(proposalID, this.gov.getAddress());
         await expect(this.gov.cancelProposal(proposalID))
             .to.be.revertedWithCustomError(
                 this.gov,
                 "InactiveProposal"
-            );
+            )
+            .withArgs(proposalID);
         await expect(this.gov.vote(this.defaultAcc, proposalID, choices))
             .to.be.revertedWithCustomError(
                 this.gov,
                 "InactiveProposal"
-            );
+            )
+            .withArgs(proposalID);
 
         // check proposal status
         const proposalStateInfo = await this.gov.proposalState(proposalID);
@@ -960,44 +995,51 @@ describe("Governance test", function () {
             .to.be.revertedWithCustomError(
                 this.gov,
                 "ZeroWeightVote"
-            );
+            )
+            .withArgs(this.firstVoterAcc.getAddress(), proposalID);
         await this.sfc.connect(this.delegatorAcc).stake(this.firstVoterAcc, ethers.parseEther("10.0"));
         await expect(this.gov.connect(this.delegatorAcc).vote(this.delegatorAcc, proposalID, choices1))
             .to.be.revertedWithCustomError(
                 this.gov,
                 "ZeroWeightVote"
-            );
+            )
+            .withArgs(this.delegatorAcc.getAddress(), proposalID);
         await expect(this.gov.connect(this.delegatorAcc).vote(this.otherAcc, proposalID, choices1))
             .to.be.revertedWithCustomError(
                 this.gov,
                 "ZeroWeightVote"
-            );
+            )
+            .withArgs(this.otherAcc.getAddress(), proposalID);
         await expect(this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID, choices1))
             .to.be.revertedWithCustomError(
                 this.gov,
                 "ZeroWeightVote"
             );
-        await expect(this.gov.vote(this.firstVoterAcc, proposalID + 1n, choices1))
+        await expect(this.gov.vote(this.firstVoterAcc, proposalID+1n, choices1))
             .to.be.revertedWithCustomError(
                 this.gov,
                 "UnknownProposalID"
-            );
+            )
+            .withArgs(proposalID+1n);
         await expect(this.gov.connect(this.delegatorAcc).vote(this.firstVoterAcc, proposalID, [3n, 4n]))
             .to.be.revertedWithCustomError(
                 this.gov,
                 "WrongNumberOfChoices"
-            );
+            )
+            .withArgs(2n, 3n);
         await expect(this.gov.connect(this.delegatorAcc).vote(this.firstVoterAcc, proposalID, [3n, 4n, 5n]))
             .to.be.revertedWithCustomError(
                 this.gov,
                 "WrongOpinionID"
-            );
+            )
+            .withArgs(5n, 4n);
         await this.gov.connect(this.delegatorAcc).vote(this.firstVoterAcc, proposalID, choices1);
         await expect(this.gov.connect(this.delegatorAcc).vote(this.firstVoterAcc, proposalID, [1n, 3n, 4n]))
             .to.be.revertedWithCustomError(
                 this.gov,
                 "VoteExists"
-            );
+            )
+            .withArgs(this.firstVoterAcc.getAddress(), proposalID);
     });
 
     var votersAndDelegatorsTests = (delegatorFirst: boolean) => {
@@ -1039,6 +1081,7 @@ describe("Governance test", function () {
                         this.gov,
                         "UnknownVote"
                     )
+                    .withArgs(this.delegatorAcc.getAddress(), this.firstVoterAcc.getAddress(), this.proposalID+1n);
                 await this.gov.connect(this.delegatorAcc).cancelVote(this.firstVoterAcc, this.proposalID);
             });
 
@@ -1063,7 +1106,8 @@ describe("Governance test", function () {
                     .to.be.revertedWithCustomError(
                         this.gov,
                         "UnknownVote"
-                    );
+                    )
+                    .withArgs(this.defaultAcc.getAddress(), this.firstVoterAcc.getAddress(), this.proposalID);
                 await this.gov.connect(this.delegatorAcc).vote(this.firstVoterAcc, this.proposalID, [1n, 2n, 3n]);
                 // check
                 await checkFullVotes(this.firstVoterAcc, this.secondVoterAcc, this.delegatorAcc, this.proposalID, this.gov);
@@ -1079,7 +1123,8 @@ describe("Governance test", function () {
                     .to.be.revertedWithCustomError(
                         this.gov,
                         "UnknownVote"
-                    );
+                    )
+                    .withArgs(this.firstVoterAcc.getAddress(), this.firstVoterAcc.getAddress(), this.proposalID);
                 await this.gov.connect(this.firstVoterAcc).vote(this.firstVoterAcc, this.proposalID, [3n, 2n, 0n]);
                 // check
                 await checkFullVotes(this.firstVoterAcc, this.secondVoterAcc, this.delegatorAcc, this.proposalID, this.gov);
@@ -1095,7 +1140,8 @@ describe("Governance test", function () {
                     .to.be.revertedWithCustomError(
                         this.gov,
                         "UnknownVote"
-                    );
+                    )
+                    .withArgs(this.secondVoterAcc.getAddress(), this.secondVoterAcc.getAddress(), this.proposalID);
                 await this.gov.connect(this.secondVoterAcc).vote(this.secondVoterAcc, this.proposalID, [2n, 3n, 4n]);
                 // check
                 await checkFullVotes(this.firstVoterAcc, this.secondVoterAcc, this.delegatorAcc, this.proposalID, this.gov);
@@ -1300,7 +1346,8 @@ describe("Governance test", function () {
                     .to.be.revertedWithCustomError(
                         this.gov,
                         "UnknownVote"
-                    );
+                    )
+                    .withArgs(this.firstVoterAcc.getAddress(), this.firstVoterAcc.getAddress(), this.proposalID);
             });
 
             it("cancel votes via recounting gradually in reversed order", async function () {
@@ -1357,17 +1404,20 @@ describe("Governance test", function () {
                     .to.be.revertedWithCustomError(
                         this.gov,
                         "UnknownVote"
-                    );
+                    )
+                    .withArgs(this.firstVoterAcc.getAddress(), this.firstVoterAcc.getAddress(), this.proposalID);
                 await expect(this.gov.connect(this.otherAcc).recountVote(this.delegatorAcc, this.firstVoterAcc, this.proposalID))
                     .to.be.revertedWithCustomError(
                         this.gov,
                         "UnknownVote"
-                    );
+                    )
+                    .withArgs(this.delegatorAcc.getAddress(), this.firstVoterAcc.getAddress(), this.proposalID);
                 await expect(this.gov.connect(this.otherAcc).recountVote(this.secondVoterAcc, this.secondVoterAcc, this.proposalID))
                     .to.be.revertedWithCustomError(
                         this.gov,
                         "UnknownVote"
-                    );
+                    )
+                    .withArgs(this.secondVoterAcc.getAddress(), this.secondVoterAcc.getAddress(), this.proposalID);
             });
         }
     }
@@ -1429,7 +1479,8 @@ describe("Governance test", function () {
         await expect(this.gov.vote(this.defaultAcc, proposalID, [1n]))            .to.be.revertedWithCustomError(
             this.gov,
             "WrongOpinionID"
-        );
+        )
+            .withArgs(1n, 0n);
         await this.gov.vote(this.defaultAcc, proposalID, [0n]);
 
         // check voting
@@ -1453,25 +1504,39 @@ describe("Governance test", function () {
             .to.be.revertedWithCustomError(
                 ownableVerifier,
                 "ContractVerificationFailed"
-            );
+            )
+            .withArgs("incorrect prop address");
         await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee}))
             .to.be.revertedWithCustomError(
                 ownableVerifier,
                 "ContractVerificationFailed"
-            );
-        await expect(ownableVerifier.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("Ownable: caller is not the owner");
+            )
+            .withArgs("incorrect prop address");
+        await expect(ownableVerifier.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee}))
+            .to.be.revertedWithCustomError(
+                ownableVerifier,
+                "OwnableUnauthorizedAccount"
+            )
+            .withArgs(this.otherAcc.getAddress());
         await ownableVerifier.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee});
         await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee}))
             .to.be.revertedWithCustomError(
                 ownableVerifier,
                 "ContractVerificationFailed"
-            );
+            )
+            .withArgs("incorrect prop address");
         await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee}))
             .to.be.revertedWithCustomError(
                 ownableVerifier,
                 "ContractVerificationFailed"
-            );
-        await expect(ownableVerifier.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("Ownable: caller is not the owner");
+            )
+            .withArgs("incorrect prop address");
+        await expect(ownableVerifier.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee}))
+            .to.be.revertedWithCustomError(
+                ownableVerifier,
+                "OwnableUnauthorizedAccount"
+            )
+            .withArgs(this.otherAcc.getAddress());
 
         // Transfer ownership to otherAcc
         await ownableVerifier.connect(this.defaultAcc).transferOwnership(this.otherAcc);
@@ -1480,13 +1545,20 @@ describe("Governance test", function () {
             .to.be.revertedWithCustomError(
                 ownableVerifier,
                 "ContractVerificationFailed"
-            );
+            )
+            .withArgs("incorrect prop address");
         await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee}))
             .to.be.revertedWithCustomError(
                 ownableVerifier,
                 "ContractVerificationFailed"
-            );
-        await expect(ownableVerifier.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("Ownable: caller is not the owner");
+            )
+            .withArgs("incorrect prop address");
+        await expect(ownableVerifier.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee}))
+            .to.be.revertedWithCustomError(
+                ownableVerifier,
+                "OwnableUnauthorizedAccount"
+            )
+            .withArgs(this.defaultAcc.getAddress());
         await ownableVerifier.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee});
     });
 
