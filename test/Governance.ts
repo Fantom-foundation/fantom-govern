@@ -15,10 +15,10 @@ const governanceFixture = async function () {
     const govable = await ethers.deployContract("UnitTestGovernable")
     const verifier = await ethers.deployContract("ProposalTemplates")
     const verifierAddress = await verifier.getAddress();
-    await verifier.initialize();
     const votebook = await ethers.deployContract("VotesBookKeeper");
     const gov = await ethers.deployContract("Governance");
     const [defaultAcc, otherAcc, firstVoterAcc, secondVoterAcc, delegatorAcc] = await ethers.getSigners();
+    await verifier.initialize(defaultAcc.getAddress());
     await votebook.initialize(defaultAcc.getAddress(), gov.getAddress(), 1000);
     await gov.initialize(govable.getAddress(), verifierAddress, votebook.getAddress());
     const proposalFee = await gov.proposalFee();
@@ -155,7 +155,6 @@ describe("Governance test", function () {
 
     const initConsts = async function (defaultAcc: HardhatEthersSigner) {
         const consts = await ethers.deployContract("UnitTestConstantsManager",{from: defaultAcc});
-        await consts.initialize();
         await consts.updateMinSelfStake(317500000000000000n, {from: defaultAcc});
         await consts.updateMaxDelegatedRatio(16000000000000000000n, {from: defaultAcc});
         await consts.updateBurntFeeShare(2n, {from: defaultAcc});
@@ -1139,18 +1138,27 @@ describe("Governance test", function () {
 
         await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
         await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
-        await expect(ownableVerifier.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("Ownable: caller is not the owner");
+        await expect(ownableVerifier.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWithCustomError(
+            ownableVerifier,
+            'OwnableUnauthorizedAccount',
+        );
         await ownableVerifier.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee});
         await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
         await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
-        await expect(ownableVerifier.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("Ownable: caller is not the owner");
+        await expect(ownableVerifier.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWithCustomError(
+            ownableVerifier,
+            'OwnableUnauthorizedAccount',
+        );
 
         // Transfer ownership to otherAcc
         await ownableVerifier.connect(this.defaultAcc).transferOwnership(this.otherAcc);
 
         await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
         await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
-        await expect(ownableVerifier.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("Ownable: caller is not the owner");
+        await expect(ownableVerifier.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWithCustomError(
+            ownableVerifier,
+            'OwnableUnauthorizedAccount',
+        );
         await ownableVerifier.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee});
     });
 

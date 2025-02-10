@@ -3,6 +3,7 @@ pragma solidity 0.8.27;
 
 import {Decimal} from "../common/Decimal.sol";
 
+
 /// @notice LRC implements the "least resistant consensus" paper. More detailed description can be found in Sonic's docs.
 library LRC {
     // Option represents a single option in the proposal
