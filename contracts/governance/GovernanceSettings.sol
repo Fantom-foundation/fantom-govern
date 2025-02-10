@@ -14,7 +14,7 @@ contract GovernanceSettings is Ownable {
     uint256 private _maxOptions;
     uint256 private _maxExecutionPeriod;
 
-    // When rewards are changed but proposalFee is not at least sum of rewards and proposalBurntFee
+    // reverted when proposal fee would be under the sum of burnt fee and rewards
     error ProposalFeeTooLow(uint256 necessaryValue);
 
     constructor() Ownable(msg.sender) {
