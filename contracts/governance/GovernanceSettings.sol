@@ -132,15 +132,4 @@ contract GovernanceSettings is Ownable {
     function minVotesAbsolute(uint256 totalWeight, uint256 minVotesRatio) public pure returns (uint256) {
         return totalWeight * minVotesRatio / Decimal.unit();
     }
-
-    /// @notice converts bytes32 to string
-    /// @param _bytes32 The bytes32 to convert
-    /// @return The converted string
-    function bytes32ToString(bytes32 _bytes32) public pure returns (string memory) {
-        bytes memory bytesArray = new bytes(32);
-        for (uint256 i; i < 32; i++) {
-            bytesArray[i] = _bytes32[i];
-        }
-        return string(bytesArray);
-    }
 }
