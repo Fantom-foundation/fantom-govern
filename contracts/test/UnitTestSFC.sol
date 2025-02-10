@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import {SFC} from "../adapters/SFCToGovernable.sol";
+import {ISFC} from "../interfaces/ISFC.sol";
 
 /// @dev UnitTestSFC is a dummy SFC used for testing
-contract UnitTestSFC is SFC {
+contract UnitTestSFC is ISFC {
     struct Validator {
         uint256 status;
         uint256 receivedStake;

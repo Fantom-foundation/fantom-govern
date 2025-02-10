@@ -16,7 +16,7 @@ const governanceFixture = async function () {
     const sfc = await ethers.deployContract("UnitTestSFC");
     await sfc.addValidator(1, 0, defaultAcc)
     await sfc.addValidator(2, 0, firstVoterAcc)
-    const govable = await ethers.deployContract("SFCToGovernable", [await sfc.getAddress()]);
+    const govable = await ethers.deployContract("SFCGovernableAdapter", [await sfc.getAddress()]);
     const verifier = await ethers.deployContract("ProposalTemplates")
     const verifierAddress = await verifier.getAddress();
     const votebook = await ethers.deployContract("VotesBookKeeper");

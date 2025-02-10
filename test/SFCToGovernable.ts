@@ -3,18 +3,18 @@ import {ethers} from "hardhat";
 import {expect} from "chai";
 
 
-const sfcToGovernableFixture = async () => {
+const fixture = async () => {
     const sfc = await ethers.deployContract("UnitTestSFC");
-    const govable = await ethers.deployContract("SFCToGovernable", [await sfc.getAddress()]);
+    const govable = await ethers.deployContract("SFCGovernableAdapter", [await sfc.getAddress()]);
     const [validator1, validator2, acc1, acc2] = await ethers.getSigners();
     await sfc.addValidator(1, 0, validator1);
     await sfc.addValidator(2, 0, validator2);
     return {sfc, govable, validator1, validator2, acc1, acc2}
 }
 
-describe("SFCToGovernable test", function () {
+describe("SFCGovernableAdapter test", function () {
     beforeEach(async function (){
-        Object.assign(this, await loadFixture(sfcToGovernableFixture));
+        Object.assign(this, await loadFixture(fixture));
     });
     it("getTotalWeight() returns sum of all stakes", async function () {
         // add stake
