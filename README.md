@@ -20,5 +20,4 @@ Before compiling for the first time you need to install the dependencies using `
 To compile the contracts, run: `make`
 
 # Test
-To run hardhat tests, run: `make test`\
-Make sure you compile the contracts first.
+To run hardhat tests, run: `make test`
