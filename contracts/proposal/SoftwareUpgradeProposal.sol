@@ -28,10 +28,11 @@ contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
         _maxEnd = __maxEnd;
         upgradeableContract = __upgradeableContract;
         newImplementation = __newImplementation;
-        // verify the proposal right away to avoid deploying a wrong proposal
-        if (verifier != address(0)) {
-            require(verifyProposalParams(verifier), "failed verification");
+        // Skip verification if no verifier is set
+        if (verifier == address(0)) {
+            return;
         }
+        verifyProposalParams(verifier);
     }
 
     function execute_delegatecall(address selfAddr, uint256) external override {

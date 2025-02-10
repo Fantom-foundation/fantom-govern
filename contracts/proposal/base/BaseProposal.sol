@@ -4,6 +4,7 @@ pragma solidity 0.8.27;
 import {IProposal} from "./IProposal.sol";
 import {IProposalVerifier} from "../../verifiers/IProposalVerifier.sol";
 import {Proposal} from "../../governance/Proposal.sol";
+import {ProposalErrors} from "./ProposalErrors.sol";
 
 /// @notice A base for any proposal
 contract BaseProposal is IProposal {
@@ -24,20 +25,17 @@ contract BaseProposal is IProposal {
 
     /// @notice Verify the parameters of the proposal using a given verifier.
     /// @param verifier The address of the verifier contract.
-    /// @return bool indicating whether the proposal parameters are valid.
-    function verifyProposalParams(address verifier) public view returns (bool) {
+    function verifyProposalParams(address verifier) public view {
         IProposalVerifier proposalVerifier = IProposalVerifier(verifier);
-        return proposalVerifier.verifyProposalParams(pType(), executable(), minVotes(), minAgreement(), opinionScales(), votingStartTime(), votingMinEndTime(), votingMaxEndTime());
+        proposalVerifier.verifyProposalParams(pType(), executable(), minVotes(), minAgreement(), opinionScales(), votingStartTime(), votingMinEndTime(), votingMaxEndTime());
     }
 
     function pType() public virtual view returns (uint256) {
-        require(false, "must be overridden");
-        return uint256(StdProposalTypes.NOT_INIT);
+        revert ProposalErrors.MustBeOverridden();
     }
 
     function executable() public virtual view returns (Proposal.ExecType) {
-        require(false, "must be overridden");
-        return Proposal.ExecType.NONE;
+        revert ProposalErrors.MustBeOverridden();
     }
 
     function minVotes() public view returns (uint256) {
@@ -77,10 +75,10 @@ contract BaseProposal is IProposal {
     }
 
     function execute_delegatecall(address, uint256) external virtual {
-        require(false, "not delegatecall-executable");
+        revert ProposalErrors.NotDelegateCallExecutable();
     }
 
     function execute_call(uint256) external virtual {
-        require(false, "not call-executable");
+        revert ProposalErrors.NotCallExecutable();
     }
 }

@@ -88,6 +88,7 @@ contract VotesBookKeeper is OwnableUpgradeable {
         }
         votesList[voter][delegatedTo].push(proposalID);
         idx = votesList[voter][delegatedTo].length;
+        // this file is getting removed, no need to replace
         require(idx <= maxProposalsPerVoter, "too many votes");
         votesIndex[voter][delegatedTo][proposalID] = idx;
     }

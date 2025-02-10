@@ -11,6 +11,7 @@ import {GovernanceSettings} from "./GovernanceSettings.sol";
 import {LRC} from "./LRC.sol";
 import {Version} from "../version/Version.sol";
 import {VotesBookKeeper} from "../votesbook/VotesBookKeeper.sol";
+import {VerifierErrors} from "../verifiers/VerifierErrors.sol";
 import {ReentrancyGuardTransient} from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
@@ -61,31 +62,29 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     VotesBookKeeper votebook;
 
     // Proposal
-    error UnknownProposalID();
-    error InactiveProposal();
+    error UnknownProposalID(uint256 proposalID);
+    error InactiveProposal(uint256 proposalID);
     error EmptyProposalAddress();
     error EmptyProposalOptions();
-    error ProposalNotResolved();
-    error ProposalIsExecutable();
-    error IncorrectProposalFee();
-    error ContractVerificationFailed();
-    error ParametersVerificationFailed();
-    error NothingChanged();
-    error WinnerIDIsCorrect();
+    error ProposalNotResolved(uint256 proposalID);
+    error ProposalIsExecutable(uint256 proposalID);
+    error IncorrectProposalFee(uint256 got, uint256 want);
+    error RecountChangedNothing();
+    error WinnerIDIsCorrect(uint256 proposalID);
 
     // Auth
-    error SenderNotProposal();
+    error SenderNotProposal(address sender, address proposal);
 
     // Voting
-    error VotingBegun();
+    error VotingStarted();
     error VotingNotStarted();
 
     // Vote
-    error UnknownVote();
-    error VoteExists();
-    error WrongNumberOfChoices();
-    error ZeroWeightVote();
-    error TooManyOptions();
+    error UnknownVote(address voter, address delegatedTo, uint256 proposalID);
+    error VoteExists(address delegatedTo, uint256 proposalID);
+    error WrongNumberOfChoices(uint256 got, uint256 want);
+    error ZeroWeightVote(address delegatedTo, uint256 proposalID);
+    error TooManyOptions(address proposalContract);
 
 
     // Rewards and burn
@@ -94,7 +93,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     // Tasks
     error NoTasksHandled();
     error NoTasksErased();
-    error UnknownTaskIndex();
+    error UnknownTaskIndex(uint256 taskIdx);
 
     /// @notice Emitted when a new proposal is created.
     /// @param proposalID ID of newly created proposal.
@@ -261,24 +260,24 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         ProposalState storage prop = proposals[proposalID];
 
         if (prop.params.proposalContract == address(0)) {
-            revert UnknownProposalID();
+            revert UnknownProposalID(proposalID);
         }
         if (!isInitialStatus(prop.status)) {
-            revert InactiveProposal();
+            revert InactiveProposal(proposalID);
         }
         if (block.timestamp < prop.params.deadlines.votingStartTime) {
             revert VotingNotStarted();
         }
         if (_votes[msg.sender][delegatedTo][proposalID].weight != 0) {
-            revert VoteExists();
+            revert VoteExists(delegatedTo, proposalID);
         }
         if (choices.length != prop.params.options.length) {
-            revert WrongNumberOfChoices();
+            revert WrongNumberOfChoices(choices.length, prop.params.options.length);
         }
 
         uint256 weight = _processNewVote(proposalID, msg.sender, delegatedTo, choices);
         if (weight == 0) {
-            revert ZeroWeightVote();
+            revert ZeroWeightVote(delegatedTo, proposalID);
         }
     }
 
@@ -286,7 +285,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @param proposalContract The address of the proposal contract.
     function createProposal(address proposalContract) nonReentrant external payable {
         if (msg.value != proposalFee()) {
-            revert IncorrectProposalFee();
+            revert IncorrectProposalFee(msg.value, proposalFee());
         }
 
         lastProposalID++;
@@ -323,11 +322,10 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
             revert EmptyProposalOptions();
         }
         if (options.length > maxOptions()) {
-            revert TooManyOptions();
+            revert TooManyOptions(proposalContract);
         }
-
-        bool ok;
-        ok = proposalVerifier.verifyProposalParams(
+        // Verify
+        proposalVerifier.verifyProposalParams(
             pType,
             executable,
             minVotes,
@@ -337,13 +335,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
             votingMinEndTime,
             votingMaxEndTime
         );
-        if (!ok) {
-            revert ParametersVerificationFailed();
-        }
-        ok = proposalVerifier.verifyProposalContract(pType, proposalContract);
-        if (!ok) {
-            revert ContractVerificationFailed();
-        }
+        proposalVerifier.verifyProposalContract(pType, proposalContract);
 
         // save the parameters
         ProposalState storage prop = proposals[proposalID];
@@ -364,16 +356,16 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     function cancelProposal(uint256 proposalID) nonReentrant external {
         ProposalState storage prop = proposals[proposalID];
         if (prop.params.proposalContract == address(0)) {
-            revert UnknownProposalID();
+            revert UnknownProposalID(proposalID);
         }
         if (!isInitialStatus(prop.status)) {
-            revert InactiveProposal();
+            revert InactiveProposal(proposalID);
         }
-        if (block.timestamp >= prop.params.deadlines.votingStartTime) {
-            revert VotingBegun();
+        if (prop.votes != 0) {
+            revert VotingStarted();
         }
         if (msg.sender != prop.params.proposalContract) {
-            revert SenderNotProposal();
+            revert SenderNotProposal(msg.sender, prop.params.proposalContract);
         }
 
         prop.status = statusCanceled();
@@ -436,7 +428,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @return handled Whether the task was handled.
     function handleTask(uint256 taskIdx) internal returns (bool handled) {
         if (taskIdx >= tasks.length) {
-            revert UnknownTaskIndex();
+            revert UnknownTaskIndex(taskIdx);
         }
         Task storage task = tasks[taskIdx];
         if (!task.active) {
@@ -575,10 +567,10 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         }
         Vote memory v = _votes[msg.sender][delegatedTo][proposalID];
         if (v.weight == 0) {
-            revert UnknownVote();
+            revert UnknownVote(msg.sender, delegatedTo, proposalID);
         }
         if (!isInitialStatus(proposals[proposalID].status)) {
-            revert InactiveProposal();
+            revert InactiveProposal(proposalID);
         }
         _cancelVote(msg.sender, delegatedTo, proposalID);
     }
@@ -671,10 +663,10 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         Vote storage v = _votes[voterAddr][delegatedTo][proposalID];
         Vote storage vSuper = _votes[delegatedTo][delegatedTo][proposalID];
         if (v.choices.length == 0) {
-            revert UnknownVote();
+            revert UnknownVote(voterAddr, delegatedTo, proposalID);
         }
         if (!isInitialStatus(proposals[proposalID].status)) {
-            revert InactiveProposal();
+            revert InactiveProposal(proposalID);
         }
         uint256 beforeSelf = v.weight;
         uint256 beforeSuper = vSuper.weight;
@@ -682,8 +674,8 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         uint256 afterSelf = v.weight;
         uint256 afterSuper = vSuper.weight;
         // check that some weight has changed due to recounting
-        if (beforeSelf == afterSelf || beforeSuper == afterSuper) {
-            revert NothingChanged();
+        if (beforeSelf == afterSelf && beforeSuper == afterSuper) {
+            revert RecountChangedNothing();
         }
     }
 
@@ -782,13 +774,13 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     function sanitizeWinnerID(uint256 proposalID) external {
         ProposalState storage prop = proposals[proposalID];
         if (prop.status != STATUS_RESOLVED) {
-            revert ProposalNotResolved();
+            revert ProposalNotResolved(proposalID);
         }
         if (prop.params.executable != Proposal.ExecType.NONE) {
-            revert ProposalIsExecutable();
+            revert ProposalIsExecutable(proposalID);
         }
         if (prop.winnerOptionID != 0) {
-            revert WinnerIDIsCorrect();
+            revert WinnerIDIsCorrect(proposalID);
         }
         (, prop.winnerOptionID) = _calculateVotingTally(prop);
     }

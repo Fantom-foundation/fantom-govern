@@ -45,6 +45,9 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
     uint8 public methodID;
     uint256[] public getOptionVal;
 
+    error UnknownMethodID(uint256 methodID);
+    error StringOver32Bytes(string str);
+
     constructor(
         string memory __description,
         uint8 __methodID,
@@ -53,7 +56,9 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd,
         address verifier
     ) {
-        require(__methodID >= 1 && __methodID <= 15, "wrong methodID");
+        if (__methodID < 1 || __methodID > 15) {
+            revert UnknownMethodID(__methodID);
+        }
         if (__methodID == 1) {
             _name = "Update minimum self-stake";
             _options = uintsToStrs(__optionsVals, 1e18, " FTM");
@@ -110,10 +115,11 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         getOptionVal = __optionsVals;
         _opinionScales = [0, 1, 2, 3, 4];
         consts = ConstsI(__consts);
-        // verify the proposal right away to avoid deploying a wrong proposal
-        if (verifier != address(0)) {
-            require(verifyProposalParams(verifier), "failed verification");
+        // Skip verification if no verifier is set
+        if (verifier == address(0)) {
+            return;
         }
+        verifyProposalParams(verifier);
     }
 
     function pType() public override pure returns (uint256) {
@@ -235,7 +241,9 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
     /// @return result The converted bytes32
     function strToB32(string memory str) internal pure returns (bytes32 result) {
         bytes memory tempEmptyStringTest = bytes(str);
-        require(tempEmptyStringTest.length <= 32, "string is too long");
+        if (tempEmptyStringTest.length > 32) {
+            revert StringOver32Bytes(str);
+        }
         if (tempEmptyStringTest.length == 0) {
             return 0x0;
         }

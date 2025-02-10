@@ -17,9 +17,10 @@ contract PlainTextProposal is NonExecutableProposal, Cancelable {
         _start = __start;
         _minEnd = __minEnd;
         _maxEnd = __maxEnd;
-        // verify the proposal right away to avoid deploying a wrong proposal
-        if (verifier != address(0)) {
-            require(verifyProposalParams(verifier), "failed verification");
+        // Skip verification if no verifier is set
+        if (verifier == address(0)) {
+            return;
         }
+        verifyProposalParams(verifier);
     }
 }

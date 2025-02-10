@@ -3,6 +3,7 @@ pragma solidity 0.8.27;
 
 import {BaseProposal} from "./BaseProposal.sol";
 import {Proposal} from "../../governance/Proposal.sol";
+import {ProposalErrors} from "./ProposalErrors.sol";
 
 /// @notice extended BaseProposal for any proposals that can be executed
 contract CallExecutableProposal is BaseProposal {
@@ -16,6 +17,6 @@ contract CallExecutableProposal is BaseProposal {
     }
 
     function execute_call(uint256) external override virtual {
-        require(false, "must be overridden");
+        revert ProposalErrors.MustBeOverridden();
     }
 }

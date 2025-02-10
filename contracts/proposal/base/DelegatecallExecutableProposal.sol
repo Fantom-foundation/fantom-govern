@@ -3,6 +3,7 @@ pragma solidity 0.8.27;
 
 import {BaseProposal} from "./BaseProposal.sol";
 import {Proposal} from "../../governance/Proposal.sol";
+import {ProposalErrors} from "./ProposalErrors.sol";
 
 /// @notice extended BaseProposal for any proposals with delegate call
 contract DelegatecallExecutableProposal is BaseProposal {
@@ -15,6 +16,6 @@ contract DelegatecallExecutableProposal is BaseProposal {
     }
 
     function execute_delegatecall(address, uint256) external override virtual{
-        require(false, "must be overridden");
+        revert ProposalErrors.MustBeOverridden();
     }
 }

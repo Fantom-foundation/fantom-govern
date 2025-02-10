@@ -30,10 +30,11 @@ contract SlashingRefundProposal is DelegatecallExecutableProposal, Cancelable {
         _maxEnd = __maxEnd;
         validatorID = __validatorID;
         sfc = __sfc;
-        // verify the proposal right away to avoid deploying a wrong proposal
-        if (verifier != address(0)) {
-            require(verifyProposalParams(verifier), "failed verification");
+        // Skip verification if no verifier is set
+        if (verifier == address(0)) {
+            return;
         }
+        verifyProposalParams(verifier);
     }
 
     function pType() public override pure returns (uint256) {

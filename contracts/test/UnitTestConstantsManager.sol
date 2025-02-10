@@ -32,88 +32,134 @@ contract UnitTestConstantsManager is Ownable {
     uint256 public offlinePenaltyThresholdTime;
     uint256 public targetGasPowerPerSecond;
     uint256 public gasPriceBalancingCounterweight;
+    
+    error ValueTooLarge();
+    error ValueTooSmall();
 
     constructor() Ownable(msg.sender) {}
 
     function updateMinSelfStake(uint256 v) external {
-        require(v <= 1000000000 * 1e18, "too large value");
+        if (v > 1000000000 * Decimal.unit()) {
+            revert ValueTooLarge();
+        }
         minSelfStake = v;
     }
 
     function updateMaxDelegatedRatio(uint256 v) external {
-        require(v >= Decimal.unit(), "too small value");
-        require(v <= 1000000 * Decimal.unit(), "too large value");
+        if (v < Decimal.unit()) {
+            revert ValueTooSmall();
+        }
+        if (v > 1000000 * Decimal.unit()) {
+            revert ValueTooLarge();
+        }
         maxDelegatedRatio = v;
     }
 
     function updateValidatorCommission(uint256 v) external {
-        require(v <= Decimal.unit(), "too large value");
+        if (v > Decimal.unit()) {
+            revert ValueTooLarge();
+        }
         validatorCommission = v;
     }
 
     function updateBurntFeeShare(uint256 v) external {
-        require(v <= Decimal.unit(), "too large value");
+        if (v > Decimal.unit()) {
+            revert ValueTooLarge();
+        }
         burntFeeShare = v;
     }
 
     function updateTreasuryFeeShare(uint256 v) external {
-        require(v <= Decimal.unit(), "too large value");
+                if (v > Decimal.unit()) {
+            revert ValueTooLarge();
+        }
         treasuryFeeShare = v;
     }
 
     function updateUnlockedRewardRatio(uint256 v) external {
-        require(v <= Decimal.unit(), "too large value");
+                if (v > Decimal.unit()) {
+            revert ValueTooLarge();
+        }
         unlockedRewardRatio = v;
     }
 
     function updateMinLockupDuration(uint256 v) external {
-        require(v >= 43200, "too small value");
-        require(v <= 2147483648, "too large value");
-        minLockupDuration = v;
+        if (v < 43200) {
+            revert ValueTooSmall();
+        }
+        if (v > 2147483648) {
+            revert ValueTooLarge();
+        }
     }
 
     function updateMaxLockupDuration(uint256 v) external {
-        require(v >= minLockupDuration, "too small value");
-        require(v <= 2147483648, "too large value");
+        if (v < minLockupDuration) {
+            revert ValueTooSmall();
+        }
+        if (v > 2147483648) {
+            revert ValueTooLarge();
+        }
         maxLockupDuration = v;
     }
 
     function updateWithdrawalPeriodEpochs(uint256 v) external {
-        require(v >= 1, "too small value");
-        require(v <= 100000000, "too large value");
+        if (v < 1) {
+            revert ValueTooSmall();
+        }
+        if (v > 100000000) {
+            revert ValueTooLarge();
+        }
         withdrawalPeriodEpochs = v;
     }
 
     function updateWithdrawalPeriodTime(uint256 v) external {
-        require(v >= 3600, "too small value");
-        require(v <= 2147483648, "too large value");
+        if (v < 3600) {
+            revert ValueTooSmall();
+        }
+        if (v > 2147483648) {
+            revert ValueTooLarge();
+        }
         withdrawalPeriodTime = v;
     }
 
     function updateBaseRewardPerSecond(uint256 v) external {
-        require(v <= 32.967977168935185184 * 1e18, "too large reward per second");
+        if (v > 32.967977168935185184 * 1e18) {
+            revert ValueTooLarge();
+        }
         baseRewardPerSecond = v;
     }
 
     function updateOfflinePenaltyThresholdTime(uint256 v) external {
-        require(v >= 60 minutes, "too small value");
+        if (v < 60) {
+            revert ValueTooSmall();
+        }
         offlinePenaltyThresholdTime = v;
     }
 
     function updateOfflinePenaltyThresholdBlocksNum(uint256 v) external {
-        require(v >= 10, "too small value");
+        if (v < 10) {
+            revert ValueTooSmall();
+        }
         offlinePenaltyThresholdBlocksNum = v;
     }
 
     function updateTargetGasPowerPerSecond(uint256 v) external {
-        require(v >= 1000, "too small value");
-        require(v <= 500000000, "too large value");
+        if (v < 1000) {
+            revert ValueTooSmall();
+        }
+        if (v > 500000000) {
+            revert ValueTooLarge();
+        }
         targetGasPowerPerSecond = v;
     }
 
     function updateGasPriceBalancingCounterweight(uint256 v) external {
-        require(v >= 1, "too small value");
-        require(v <= 1000000000, "too large value");
+        if (v < 1) {
+            revert ValueTooSmall();
+        }
+        if (v > 1000000000) {
+            revert ValueTooLarge();
+        }
         gasPriceBalancingCounterweight = v;
     }
 }

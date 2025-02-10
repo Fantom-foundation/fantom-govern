@@ -10,6 +10,9 @@ import {SlashingRefundProposal} from "../proposal/SlashingRefundProposal.sol";
 contract SlashingRefundProposalFactory is ScopedVerifier {
     Governance internal gov;
     address internal sfcAddress;
+
+    error ValidatorNotSlashed(uint256 validatorID);
+
     constructor(address _govAddress, address _sfcAddress) {
         gov = Governance(_govAddress);
         sfcAddress = _sfcAddress;
@@ -32,7 +35,10 @@ contract SlashingRefundProposalFactory is ScopedVerifier {
         params[2] = __start;
         params[3] = __minEnd;
         params[4] = __maxEnd;
-        require(ISFC(sfcAddress).isSlashed(__validatorID), "validator isn't slashed");
+        if (ISFC(sfcAddress).isSlashed(__validatorID)) {
+            revert ValidatorNotSlashed(__validatorID);
+        }
+
         SlashingRefundProposal proposal = new SlashingRefundProposal(__validatorID, __description,
             params[0], params[1], params[2], params[3], params[4], sfcAddress, address(0));
         proposal.transferOwnership(msg.sender);
