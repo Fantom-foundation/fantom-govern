@@ -15,6 +15,7 @@ contract StatusConstants {
     uint256 constant public STATUS_FAILED = 1 << 1;
     uint256 constant public STATUS_CANCELED = 1 << 2;
     uint256 constant public STATUS_EXECUTION_EXPIRED = 1 << 3;
+    uint256 constant public TASK_VOTING = 1;
 
     function statusInitial() internal pure returns (uint256) {
         return STATUS_INITIAL;
@@ -39,7 +40,4 @@ contract StatusConstants {
     function isInitialStatus(uint256 status) internal pure returns (bool) {
         return status == STATUS_INITIAL;
     }
-
-    // task assignments
-    uint256 constant TASK_VOTING = 1;
 }
