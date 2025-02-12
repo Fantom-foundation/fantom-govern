@@ -40,7 +40,7 @@ interface ConstsI {
 
 /// @notice A proposal to update network parameters
 contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable {
-    Proposal.ExecType public _exec;
+    Proposal.ExecType internal _exec;
     ConstsI public consts;
     uint8 public methodID;
     uint256[] public getOptionVal;

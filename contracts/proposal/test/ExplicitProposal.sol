@@ -7,8 +7,8 @@ import {Proposal} from "../../governance/Proposal.sol";
 /// @dev A proposal with all parameters explicitly set
 /// @dev Used for testing purposes
 contract ExplicitProposal is BaseProposal {
-    uint256 public _pType;
-    Proposal.ExecType public _exec;
+    uint256 internal _pType;
+    Proposal.ExecType internal _exec;
 
     function setType(uint256 v) public {
         _pType = v;
