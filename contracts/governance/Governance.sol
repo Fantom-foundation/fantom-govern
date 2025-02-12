@@ -10,12 +10,12 @@ import {Constants} from "./Constants.sol";
 import {GovernanceSettings} from "./GovernanceSettings.sol";
 import {LRC} from "./LRC.sol";
 import {Version} from "../version/Version.sol";
-import {ReentrancyGuardTransient} from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
+import {ReentrancyGuardTransientUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /// @notice Governance contract for voting on proposals
-contract Governance is ReentrancyGuardTransient, GovernanceSettings, Version, UUPSUpgradeable, OwnableUpgradeable {
+contract Governance is ReentrancyGuardTransientUpgradeable, GovernanceSettings, Version, UUPSUpgradeable, OwnableUpgradeable {
     using LRC for LRC.Option;
 
     struct Vote {
@@ -123,6 +123,11 @@ contract Governance is ReentrancyGuardTransient, GovernanceSettings, Version, UU
     /// @param proposalID ID of the proposal.
     event VoteCanceled(address voter, address delegatedTo, uint256 proposalID);
 
+    /** @custom:oz-upgrades-unsafe-allow constructor */
+    constructor() {
+        _disableInitializers();
+    }
+
     /// @notice Initialize the contract.
     /// @param _owner The address of the owner.
     /// @param _governableContract The address of the governable contract.
@@ -135,6 +140,7 @@ contract Governance is ReentrancyGuardTransient, GovernanceSettings, Version, UU
         uint256 _maxProposalsPerVoter
     ) public initializer {
         __Ownable_init(_owner);
+        __ReentrancyGuardTransient_init();
         __UUPSUpgradeable_init();
         governableContract = Governable(_governableContract);
         proposalVerifier = IProposalVerifier(_proposalVerifier);
