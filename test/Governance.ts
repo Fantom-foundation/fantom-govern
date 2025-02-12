@@ -1476,10 +1476,11 @@ describe("Governance test", function () {
         await time.increase(minEnd + 10);
         await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.0"));
         // only 1 opinion is defined
-        await expect(this.gov.vote(this.defaultAcc, proposalID, [1n]))            .to.be.revertedWithCustomError(
-            this.gov,
-            "WrongOpinionID"
-        )
+        await expect(this.gov.vote(this.defaultAcc, proposalID, [1n]))
+            .to.be.revertedWithCustomError(
+                this.gov,
+                "WrongOpinionID"
+            )
             .withArgs(1n, 0n);
         await this.gov.vote(this.defaultAcc, proposalID, [0n]);
 
