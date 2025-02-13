@@ -7,10 +7,13 @@ import {IProposalVerifier} from "../interfaces/IProposalVerifier.sol";
 import {Proposal} from "./Proposal.sol";
 import {GovernanceSettings} from "./GovernanceSettings.sol";
 import {LRC} from "./LRC.sol";
-import {Version} from "../version/Version.sol";
-import {ReentrancyGuardTransientUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Proposal} from "./Proposal.sol";
+import {ReentrancyGuardTransientUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
+import {SoftwareUpgradeProposal} from "../proposal/SoftwareUpgradeProposal.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {Version} from "../version/Version.sol";
+import {console} from "hardhat/console.sol";
 
 /// @notice Governance contract for voting on proposals
 contract Governance is ReentrancyGuardTransientUpgradeable, GovernanceSettings, Version, UUPSUpgradeable, OwnableUpgradeable {
@@ -124,11 +127,6 @@ contract Governance is ReentrancyGuardTransientUpgradeable, GovernanceSettings, 
     /// @param delegatedTo The address which the voter has delegated their stake to.
     /// @param proposalID ID of the proposal.
     event VoteCanceled(address voter, address delegatedTo, uint256 proposalID);
-
-    /** @custom:oz-upgrades-unsafe-allow constructor */
-    constructor() {
-        _disableInitializers();
-    }
 
     /// @notice Initialize the contract.
     /// @param _owner The address of the owner.
