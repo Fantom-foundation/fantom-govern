@@ -7,14 +7,14 @@ import {DelegateCallType, initConsts, NonExecutableType} from "./utils";
 const proposalFactoryFixture = async function () {
     const [acc1, acc2] = await ethers.getSigners();
     const verifier = await ethers.deployContract("ProposalTemplates")
-    await verifier.initialize();
+    await verifier.initialize(acc1);
     const gov = await ethers.deployContract("Governance");
     // Governable and VoteBook are not necessary for this test
     await gov.initialize(ethers.ZeroAddress, await verifier.getAddress(), ethers.ZeroAddress)
     return {gov, verifier, acc1, acc2}
 }
 
-describe.only("ProposalFactory test", function () {
+describe("ProposalFactory test", function () {
     beforeEach("create vote", async function () {
         Object.assign(this, await loadFixture(proposalFactoryFixture));
     });
