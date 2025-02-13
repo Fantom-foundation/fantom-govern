@@ -7,7 +7,6 @@ const DelegateCallType = 2n;
 
 const initConsts = async function (defaultAcc: HardhatEthersSigner) {
     const consts = await ethers.deployContract("UnitTestConstantsManager",{from: defaultAcc});
-    await consts.initialize();
     await consts.updateMinSelfStake(317500000000000000n, {from: defaultAcc});
     await consts.updateMaxDelegatedRatio(16000000000000000000n, {from: defaultAcc});
     await consts.updateBurntFeeShare(2n, {from: defaultAcc});

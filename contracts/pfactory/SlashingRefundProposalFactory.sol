@@ -34,7 +34,7 @@ contract SlashingRefundProposalFactory is ScopedVerifier {
         uint256 __minEnd,
         uint256 __maxEnd
     ) payable external {
-        require(SFC(sfcAddress).isSlashed(__validatorID), "validator isn't slashed");
+        require(ISFC(sfcAddress).isSlashed(__validatorID), "validator isn't slashed");
         SlashingRefundProposal proposal = new SlashingRefundProposal(
             __validatorID,
             __description,
