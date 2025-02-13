@@ -12,17 +12,19 @@ const DelegateCallType = 2n;
 const scales = [0, 2, 3, 4, 5];
 
 const governanceFixture = async function () {
+    // Extract accounts
     const [defaultAcc, otherAcc, firstVoterAcc, secondVoterAcc, delegatorAcc] = await ethers.getSigners();
+    // Deploy SFC and add validators
     const sfc = await ethers.deployContract("UnitTestSFC");
     await sfc.addValidator(1, 0, defaultAcc)
     await sfc.addValidator(2, 0, firstVoterAcc)
     const govable = await ethers.deployContract("SFCGovernableAdapter", [await sfc.getAddress()]);
-    const verifier = await ethers.deployContract("ProposalTemplates")
 
+    // Deploy verifier with governance
+    const verifier = await ethers.deployContract("ProposalTemplates")
+    await verifier.initialize(defaultAcc);
     const verifierAddress = await verifier.getAddress();
     const gov = await ethers.deployContract("Governance");
-    const [defaultAcc, otherAcc, firstVoterAcc, secondVoterAcc, delegatorAcc] = await ethers.getSigners();
-    await verifier.initialize(defaultAcc);
     await gov.initialize(defaultAcc, govable.getAddress(), verifierAddress, 1000);
     const proposalFee = await gov.proposalFee();
 
