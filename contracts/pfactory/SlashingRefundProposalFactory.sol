@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
+import {ISFC} from "../interfaces/ISFC.sol";
 import {Governance} from "../governance/Governance.sol";
-import {SlashingRefundProposal, SFC} from "../proposal/SlashingRefundProposal.sol";
 import {ScopedVerifier} from "../verifiers/ScopedVerifier.sol";
+import {SlashingRefundProposal} from "../proposal/SlashingRefundProposal.sol";
 
 /// @notice SlashingRefundProposalFactory is a factory contract to create SlashingRefundProposal
 contract SlashingRefundProposalFactory is ScopedVerifier {
@@ -31,7 +32,7 @@ contract SlashingRefundProposalFactory is ScopedVerifier {
         params[2] = __start;
         params[3] = __minEnd;
         params[4] = __maxEnd;
-        require(SFC(sfcAddress).isSlashed(__validatorID), "validator isn't slashed");
+        require(ISFC(sfcAddress).isSlashed(__validatorID), "validator isn't slashed");
         SlashingRefundProposal proposal = new SlashingRefundProposal(__validatorID, __description,
             params[0], params[1], params[2], params[3], params[4], sfcAddress, address(0));
         proposal.transferOwnership(msg.sender);

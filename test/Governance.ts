@@ -12,18 +12,22 @@ const DelegateCallType = 2n;
 const scales = [0, 2, 3, 4, 5];
 
 const governanceFixture = async function () {
-    const govable = await ethers.deployContract("UnitTestGovernable")
+    const [defaultAcc, otherAcc, firstVoterAcc, secondVoterAcc, delegatorAcc] = await ethers.getSigners();
+    const sfc = await ethers.deployContract("UnitTestSFC");
+    await sfc.addValidator(1, 0, defaultAcc)
+    await sfc.addValidator(2, 0, firstVoterAcc)
+    const govable = await ethers.deployContract("SFCGovernableAdapter", [await sfc.getAddress()]);
     const verifier = await ethers.deployContract("ProposalTemplates")
     const verifierAddress = await verifier.getAddress();
     const votebook = await ethers.deployContract("VotesBookKeeper");
     const gov = await ethers.deployContract("Governance");
-    const [defaultAcc, otherAcc, firstVoterAcc, secondVoterAcc, delegatorAcc] = await ethers.getSigners();
     await verifier.initialize(defaultAcc.getAddress());
     await votebook.initialize(defaultAcc.getAddress(), gov.getAddress(), 1000);
     await gov.initialize(govable.getAddress(), verifierAddress, votebook.getAddress());
     const proposalFee = await gov.proposalFee();
 
     return {
+        sfc,
         govable,
         verifier,
         verifierAddress,
@@ -197,7 +201,7 @@ describe("Governance test", function () {
                 this.verifierAddress,
             ])
         // make new vote
-        await this.govable.stake(this.defaultAcc, ethers.parseEther("10.0"));
+        await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.0"));
         await this.gov.createProposal(updateMinSelfStake.getAddress(), {value: this.proposalFee});
 
         const proposalIdOne = await this.gov.lastProposalID();
@@ -222,7 +226,7 @@ describe("Governance test", function () {
         await time.increase(60);
         // Voting with no stake
         await expect(this.gov.vote(this.defaultAcc, proposalID, choices)).to.be.revertedWith("zero weight");
-        await this.govable.stake(this.defaultAcc, ethers.parseEther("10.0"));
+        await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.0"));
         // Non-existent proposal
         await expect(this.gov.vote(this.defaultAcc, proposalID+1n, choices)).to.be.revertedWith("proposal with a given ID doesnt exist");
         // Incorrect choices
@@ -243,12 +247,12 @@ describe("Governance test", function () {
             this.proposalID = await this.gov.lastProposalID();
             // // Make new vote
             await time.increase(60);
-            await this.govable.stake(this.defaultAcc, ethers.parseEther("10.0"));
+            await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.0"));
             await this.gov.vote(this.defaultAcc, this.proposalID, choices);
         });
 
         it("checking voting state", async function () {
-            await this.govable.stake(this.defaultAcc, ethers.parseEther("5.0"));
+            await this.sfc.stake(this.defaultAcc, ethers.parseEther("5.0"));
             // check
             const proposalStateInfo = await this.gov.proposalState(this.proposalID);
             expect(proposalStateInfo.winnerOptionID).to.be.equal(0n);
@@ -282,7 +286,7 @@ describe("Governance test", function () {
         });
 
         it("recount vote", async function () {
-            await this.govable.stake(this.defaultAcc, ethers.parseEther("5.0"));
+            await this.sfc.stake(this.defaultAcc, ethers.parseEther("5.0"));
             await expect(this.gov.recountVote(this.otherAcc, this.defaultAcc, this.proposalID, {from: this.defaultAcc})).to.be.revertedWith("doesn't exist");
             await expect(this.gov.recountVote(this.defaultAcc, this.otherAcc, this.proposalID, {from: this.defaultAcc})).to.be.revertedWith("doesn't exist");
             await this.gov.recountVote(this.defaultAcc, this.defaultAcc, this.proposalID, {from: this.defaultAcc}); // anyone can send
@@ -313,14 +317,14 @@ describe("Governance test", function () {
         });
 
         it("cancel vote via recounting", async function () {
-            this.govable.unstake(this.defaultAcc, ethers.parseEther("10.0"));
+            this.sfc.unstake(this.defaultAcc, ethers.parseEther("10.0"));
             await this.gov.recountVote(this.defaultAcc, this.defaultAcc, this.proposalID, {from: this.defaultAcc});
             await expect(this.gov.recountVote(this.defaultAcc, this.defaultAcc, this.proposalID, {from: this.defaultAcc})).to.be.revertedWith("doesn't exist");
             // vote should be erased, checked by afterEach
         });
 
         it("cancel vote via recounting from VotesBookKeeper", async function () {
-            this.govable.unstake(this.defaultAcc, ethers.parseEther("10.0"));
+            this.sfc.unstake(this.defaultAcc, ethers.parseEther("10.0"));
             await this.votebook.recountVotes(this.defaultAcc, this.defaultAcc, {from: this.defaultAcc});
             expect(await this.votebook.getProposalIDs(this.defaultAcc, this.defaultAcc)).to.be.empty
             await expect(this.gov.recountVote(this.defaultAcc, this.defaultAcc, this.proposalID, {from: this.defaultAcc})).to.be.revertedWith("doesn't exist");
@@ -359,7 +363,7 @@ describe("Governance test", function () {
         const proposalID = await this.gov.lastProposalID();
         // make new vote
         await time.increase(60);
-        await this.govable.stake(this.defaultAcc, ethers.parseEther("10.0"));
+        await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.0"));
         await this.gov.vote(this.defaultAcc, proposalID, choices);
 
         // check proposal isn't executed
@@ -400,7 +404,7 @@ describe("Governance test", function () {
         await expect(this.gov.cancelVote(this.defaultAcc, proposalID)).to.be.revertedWith("proposal isn't active");
 
         // try to recount vote
-        await this.govable.stake(this.defaultAcc, ethers.parseEther("5.0"));
+        await this.sfc.stake(this.defaultAcc, ethers.parseEther("5.0"));
         await expect(this.gov.recountVote(this.defaultAcc, this.defaultAcc, proposalID, {from: this.defaultAcc})).to.be.revertedWith("proposal isn't active");
 
         // cleanup task
@@ -420,7 +424,7 @@ describe("Governance test", function () {
         const proposalContract = await createProposal(this.gov, this.verifier, CallType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"), 0, 120);
         const proposalID = await this.gov.lastProposalID();
         // make new vote
-        await this.govable.stake(this.defaultAcc, ethers.parseEther("10.0"));
+        await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.0"));
         await this.gov.vote(this.defaultAcc, proposalID, choices);
 
         // finalize voting by handling its task
@@ -440,7 +444,7 @@ describe("Governance test", function () {
         const proposalContract = await createProposal(this.gov, this.verifier, DelegateCallType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"), 0, 120);
         const proposalID = await this.gov.lastProposalID();
         // make new vote
-        await this.govable.stake(this.defaultAcc, ethers.parseEther("10.0"));
+        await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.0"));
         await this.gov.vote(this.defaultAcc, proposalID, choices);
 
         // finalize voting by handling its task
@@ -460,7 +464,7 @@ describe("Governance test", function () {
         const proposalContract = await createProposal(this.gov, this.verifier, NonExecutableType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"), 0, 120);
         const proposalID = await this.gov.lastProposalID();
         // make new vote
-        await this.govable.stake(this.defaultAcc, ethers.parseEther("10.0"));
+        await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.0"));
         await this.gov.vote(this.defaultAcc, proposalID, choices);
 
         // finalize voting by handling its task
@@ -482,7 +486,7 @@ describe("Governance test", function () {
         const proposalContract = await createProposal(this.gov, this.verifier,  CallType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"), 0, 120, 240);
         const proposalID = await this.gov.lastProposalID();
         // make new vote
-        await this.govable.stake(this.defaultAcc, ethers.parseEther("10.0"));
+        await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.0"));
         await this.gov.vote(this.defaultAcc, proposalID, choices);
 
         // finalize voting by handling its task
@@ -507,12 +511,12 @@ describe("Governance test", function () {
         const proposalID = await this.gov.lastProposalID();
         // Advance time to be between min and max end
         await time.increase(start + minEnd + 10);
-        await this.govable.stake(this.defaultAcc, ethers.parseEther("10.0"));
+        await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.0"));
         await this.gov.vote(this.defaultAcc, proposalID, choices);
 
-        await this.govable.stake(this.defaultAcc, ethers.parseEther("10.1")); // turnout is less than 50% now, and maxEnd has occurred
+        await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.1")); // turnout is less than 50% now, and maxEnd has occurred
         await expect(this.gov.handleTasks(0, 1)).to.be.revertedWith("no tasks handled");
-        await this.govable.unstake(this.defaultAcc, ethers.parseEther("0.1")); // turnout is exactly 50% now
+        await this.sfc.unstake(this.defaultAcc, ethers.parseEther("0.1")); // turnout is exactly 50% now
         // finalize voting by handling its task
         await this.gov.handleTasks(0, 10);
 
@@ -534,7 +538,7 @@ describe("Governance test", function () {
         const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
         // Advance time to be over maxExecutionPeriod
         await time.increase(maxExecutionPeriod + BigInt(start) + BigInt(maxEnd) + 10n);
-        await this.govable.stake(this.defaultAcc, ethers.parseEther("10.0"));
+        await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.0"));
         await this.gov.vote(this.defaultAcc, proposalID, choices);
 
         // finalize voting by handling its task
@@ -561,7 +565,7 @@ describe("Governance test", function () {
         const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
         // Advance time to be over maxExecutionPeriod
         await time.increase(maxExecutionPeriod + BigInt(start) + BigInt(maxEnd) + 10n);
-        await this.govable.stake(this.defaultAcc, ethers.parseEther("10.0"));
+        await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.0"));
         await this.gov.vote(this.defaultAcc, proposalID, choices);
 
         // finalize voting by handling its task
@@ -591,7 +595,7 @@ describe("Governance test", function () {
         const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
         // Advance time not to exceed maxExecutionPeriod
         await time.increase(maxExecutionPeriod + BigInt(start) + BigInt(maxEnd) - 10n);
-        await this.govable.stake(this.defaultAcc, ethers.parseEther("10.0"));
+        await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.0"));
         await this.gov.vote(this.defaultAcc, proposalID, choices);
 
         // finalize voting by handling its task
@@ -618,7 +622,7 @@ describe("Governance test", function () {
         const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
         // Advance time not to exceed maxExecutionPeriod
         await time.increase(maxExecutionPeriod + BigInt(start) + BigInt(maxEnd) - 10n);
-        await this.govable.stake(this.defaultAcc, ethers.parseEther("10.0"));
+        await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.0"));
         await this.gov.vote(this.defaultAcc, proposalID, choices);
 
         // try to cancel proposal
@@ -651,7 +655,7 @@ describe("Governance test", function () {
     });
 
     it("checking handling multiple tasks", async function () {
-        await this.govable.stake(this.defaultAcc, ethers.parseEther("10.0"));
+        await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.0"));
         const optionsNum = 1; // use maximum number of options to test gas usage
         const start = 0;
         const minEnd = 500;
@@ -717,8 +721,8 @@ describe("Governance test", function () {
         const maxExecutionPeriod = await this.gov.maxExecutionPeriod();
         // Advance time to be over maxExecutionPeriod
         await time.increase(maxExecutionPeriod + BigInt(start) + BigInt(maxEnd) + 10n);
-        await this.govable.stake(this.defaultAcc, ethers.parseEther("10.0")); // defaultAcc has less than 50% of weight
-        await this.govable.stake(this.firstVoterAcc, ethers.parseEther("11.0"));
+        await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.0")); // defaultAcc has less than 50% of weight
+        await this.sfc.stake(this.firstVoterAcc, ethers.parseEther("11.0"));
         await this.gov.vote(this.defaultAcc, proposalID, choices);
 
         // finalize voting by handling its task
@@ -745,10 +749,10 @@ describe("Governance test", function () {
         const proposalID = await this.gov.lastProposalID();
         // Advance time to start voting
         await time.increase(start);
-        await this.govable.connect(this.firstVoterAcc).stake(this.firstVoterAcc, ethers.parseEther("10.0"));
+        await this.sfc.connect(this.firstVoterAcc).stake(this.firstVoterAcc, ethers.parseEther("10.0"));
         await this.gov.connect(this.firstVoterAcc).vote(this.firstVoterAcc, proposalID, choices0);
         await expect(this.gov.connect(this.delegatorAcc).vote(this.firstVoterAcc, proposalID, choices1)).to.be.revertedWith("zero weight");
-        await this.govable.connect(this.delegatorAcc).stake(this.firstVoterAcc, ethers.parseEther("10.0"));
+        await this.sfc.connect(this.delegatorAcc).stake(this.firstVoterAcc, ethers.parseEther("10.0"));
         await expect(this.gov.connect(this.delegatorAcc).vote(this.delegatorAcc, proposalID, choices1)).to.be.revertedWith("zero weight");
         await expect(this.gov.connect(this.delegatorAcc).vote(this.otherAcc, proposalID, choices1)).to.be.revertedWith("zero weight");
         await expect(this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID, choices1)).to.be.revertedWith("zero weight");
@@ -763,6 +767,7 @@ describe("Governance test", function () {
         return async function () {
             const optionsNum = 3;
             beforeEach("create vote", async function () {
+                await this.sfc.addValidator(3, 0, this.secondVoterAcc)
                 const start = 60;
                 const minEnd = 500;
                 const maxEnd = 1000;
@@ -771,15 +776,15 @@ describe("Governance test", function () {
                 // make the new votes
                 await time.increase(start + 10);
                 if (delegatorFirst) {
-                    await this.govable.connect(this.delegatorAcc).stake(this.firstVoterAcc, ethers.parseEther("30.0"));
+                    await this.sfc.connect(this.delegatorAcc).stake(this.firstVoterAcc, ethers.parseEther("30.0"));
                     await this.gov.connect(this.delegatorAcc).vote(this.firstVoterAcc, this.proposalID, [1n, 2n, 3n]);
                 }
-                await this.govable.connect(this.firstVoterAcc).stake(this.firstVoterAcc, ethers.parseEther("10.0"));
+                await this.sfc.connect(this.firstVoterAcc).stake(this.firstVoterAcc, ethers.parseEther("10.0"));
                 await this.gov.connect(this.firstVoterAcc).vote(this.firstVoterAcc, this.proposalID, [3n, 2n, 0n]);
-                await this.govable.connect(this.secondVoterAcc).stake(this.secondVoterAcc, ethers.parseEther("20.0"));
+                await this.sfc.connect(this.secondVoterAcc).stake(this.secondVoterAcc, ethers.parseEther("20.0"));
                 await this.gov.connect(this.secondVoterAcc).vote(this.secondVoterAcc, this.proposalID, [2n, 3n, 4n]);
                 if (!delegatorFirst) {
-                    await this.govable.connect(this.delegatorAcc).stake(this.firstVoterAcc, ethers.parseEther("30.0"));
+                    await this.sfc.connect(this.delegatorAcc).stake(this.firstVoterAcc, ethers.parseEther("30.0"));
                     await this.gov.connect(this.delegatorAcc).vote(this.firstVoterAcc, this.proposalID, [1n, 2n, 3n]);
                 }
             });
@@ -910,7 +915,7 @@ describe("Governance test", function () {
             });
 
             it("checking voting state after delegator recounting", async function () {
-                await this.govable.connect(this.delegatorAcc).unstake(this.firstVoterAcc, ethers.parseEther("5.0"));
+                await this.sfc.connect(this.delegatorAcc).unstake(this.firstVoterAcc, ethers.parseEther("5.0"));
                 await this.gov.connect(this.otherAcc).recountVote(this.delegatorAcc, this.firstVoterAcc, this.proposalID);
                 // check
                 expect(await this.gov.overriddenWeight(this.firstVoterAcc, this.proposalID-1n)).to.be.equal(ethers.parseEther("0.0"));
@@ -942,7 +947,7 @@ describe("Governance test", function () {
             });
             //
             it("checking voting state after first staker recounting", async function () {
-                await this.govable.connect(this.firstVoterAcc).stake(this.firstVoterAcc, ethers.parseEther("10.0"));
+                await this.sfc.connect(this.firstVoterAcc).stake(this.firstVoterAcc, ethers.parseEther("10.0"));
                 await this.gov.connect(this.otherAcc).recountVote(this.firstVoterAcc, this.firstVoterAcc, this.proposalID);
                 // check
                 expect(await this.gov.overriddenWeight(this.firstVoterAcc, this.proposalID-1n)).to.be.equal(ethers.parseEther("0.0"));
@@ -974,8 +979,8 @@ describe("Governance test", function () {
             });
 
             it("checking voting state after cross-delegations between voters", async function () {
-                await this.govable.connect(this.secondVoterAcc).stake(this.firstVoterAcc, ethers.parseEther("10.0"));
-                await this.govable.connect(this.firstVoterAcc).stake(this.secondVoterAcc, ethers.parseEther("5.0"));
+                await this.sfc.connect(this.secondVoterAcc).stake(this.firstVoterAcc, ethers.parseEther("10.0"));
+                await this.sfc.connect(this.firstVoterAcc).stake(this.secondVoterAcc, ethers.parseEther("5.0"));
                 await this.gov.connect(this.secondVoterAcc).vote(this.firstVoterAcc, this.proposalID, [0n, 1n, 2n]);
                 await expect(this.gov.connect(this.otherAcc).recountVote(this.firstVoterAcc, this.firstVoterAcc, this.proposalID)).to.be.revertedWith("nothing changed");
                 await this.gov.connect(this.otherAcc).recountVote(this.secondVoterAcc, this.secondVoterAcc, this.proposalID);
@@ -1010,27 +1015,27 @@ describe("Governance test", function () {
             });
 
             it("cancel votes via recounting", async function () {
-                await this.govable.connect(this.firstVoterAcc).unstake(this.firstVoterAcc, ethers.parseEther("10.0"));
-                await this.govable.connect(this.secondVoterAcc).unstake(this.secondVoterAcc, ethers.parseEther("20.0"));
-                await this.govable.connect(this.delegatorAcc).unstake(this.firstVoterAcc, ethers.parseEther("30.0"));
+                await this.sfc.connect(this.firstVoterAcc).unstake(this.firstVoterAcc, ethers.parseEther("10.0"));
+                await this.sfc.connect(this.secondVoterAcc).unstake(this.secondVoterAcc, ethers.parseEther("20.0"));
+                await this.sfc.connect(this.delegatorAcc).unstake(this.firstVoterAcc, ethers.parseEther("30.0"));
                 await this.gov.connect(this.otherAcc).recountVote(this.firstVoterAcc, this.firstVoterAcc, this.proposalID);
                 await this.gov.connect(this.otherAcc).recountVote(this.secondVoterAcc, this.secondVoterAcc, this.proposalID);
                 await this.gov.connect(this.otherAcc).recountVote(this.delegatorAcc, this.firstVoterAcc, this.proposalID);
             });
 
             it("cancel votes via recounting gradually", async function () {
-                await this.govable.connect(this.firstVoterAcc).unstake(this.firstVoterAcc, ethers.parseEther("10.0"));
+                await this.sfc.connect(this.firstVoterAcc).unstake(this.firstVoterAcc, ethers.parseEther("10.0"));
                 await this.gov.connect(this.otherAcc).recountVote(this.firstVoterAcc, this.firstVoterAcc, this.proposalID);
-                await this.govable.connect(this.secondVoterAcc).unstake(this.secondVoterAcc, ethers.parseEther("20.0"));
+                await this.sfc.connect(this.secondVoterAcc).unstake(this.secondVoterAcc, ethers.parseEther("20.0"));
                 await this.gov.connect(this.otherAcc).recountVote(this.secondVoterAcc, this.secondVoterAcc, this.proposalID);
-                await this.govable.connect(this.delegatorAcc).unstake(this.firstVoterAcc, ethers.parseEther("30.0"));
+                await this.sfc.connect(this.delegatorAcc).unstake(this.firstVoterAcc, ethers.parseEther("30.0"));
                 await this.gov.connect(this.otherAcc).recountVote(this.delegatorAcc, this.firstVoterAcc, this.proposalID);
             });
 
             it("cancel votes via recounting in reversed order", async function () {
-                await this.govable.connect(this.firstVoterAcc).unstake(this.firstVoterAcc, ethers.parseEther("10.0"));
-                await this.govable.connect(this.secondVoterAcc).unstake(this.secondVoterAcc, ethers.parseEther("20.0"));
-                await this.govable.connect(this.delegatorAcc).unstake(this.firstVoterAcc, ethers.parseEther("30.0"));
+                await this.sfc.connect(this.firstVoterAcc).unstake(this.firstVoterAcc, ethers.parseEther("10.0"));
+                await this.sfc.connect(this.secondVoterAcc).unstake(this.secondVoterAcc, ethers.parseEther("20.0"));
+                await this.sfc.connect(this.delegatorAcc).unstake(this.firstVoterAcc, ethers.parseEther("30.0"));
                 await this.gov.connect(this.otherAcc).recountVote(this.delegatorAcc, this.firstVoterAcc, this.proposalID);
                 await this.gov.connect(this.otherAcc).recountVote(this.secondVoterAcc, this.secondVoterAcc, this.proposalID);
                 // firstVoterAcc"s self-vote is erased after delegator"s recounting
@@ -1038,11 +1043,11 @@ describe("Governance test", function () {
             });
 
             it("cancel votes via recounting gradually in reversed order", async function () {
-                await this.govable.connect(this.delegatorAcc).unstake(this.firstVoterAcc, ethers.parseEther("30.0"));
+                await this.sfc.connect(this.delegatorAcc).unstake(this.firstVoterAcc, ethers.parseEther("30.0"));
                 await this.gov.connect(this.otherAcc).recountVote(this.delegatorAcc, this.firstVoterAcc, this.proposalID);
-                await this.govable.connect(this.secondVoterAcc).unstake(this.secondVoterAcc, ethers.parseEther("20.0"));
+                await this.sfc.connect(this.secondVoterAcc).unstake(this.secondVoterAcc, ethers.parseEther("20.0"));
                 await this.gov.connect(this.otherAcc).recountVote(this.secondVoterAcc, this.secondVoterAcc, this.proposalID);
-                await this.govable.connect(this.firstVoterAcc).unstake(this.firstVoterAcc, ethers.parseEther("10.0"));
+                await this.sfc.connect(this.firstVoterAcc).unstake(this.firstVoterAcc, ethers.parseEther("10.0"));
                 await this.gov.connect(this.otherAcc).recountVote(this.firstVoterAcc, this.firstVoterAcc, this.proposalID);
             });
 
@@ -1114,7 +1119,7 @@ describe("Governance test", function () {
         const proposalID = await this.gov.lastProposalID();
         // Advance time not to over mininal end time
         await time.increase(minEnd + 10);
-        await this.govable.stake(this.defaultAcc, ethers.parseEther("10.0"));
+        await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.0"));
         // only 1 opinion is defined
         await expect(this.gov.vote(this.defaultAcc, proposalID, [1n])).to.be.revertedWith("wrong opinion ID");
         await this.gov.vote(this.defaultAcc, proposalID, [0n]);

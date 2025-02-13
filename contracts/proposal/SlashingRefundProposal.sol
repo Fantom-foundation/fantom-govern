@@ -4,13 +4,7 @@ pragma solidity 0.8.27;
 import {DelegatecallExecutableProposal} from "./base/DelegatecallExecutableProposal.sol";
 import {Cancelable} from "./base/Cancelable.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-
-/// @notice An interface to update slashing penalty ratio
-interface SFC {
-    function updateSlashingRefundRatio(uint256 validatorID, uint256 ratio) external;
-
-    function isSlashed(uint256 validatorID) external returns(bool);
-}
+import {ISFC} from "../interfaces/ISFC.sol";
 
 /// @notice A proposal to refund a slashed validator
 contract SlashingRefundProposal is DelegatecallExecutableProposal, Cancelable {
@@ -49,7 +43,7 @@ contract SlashingRefundProposal is DelegatecallExecutableProposal, Cancelable {
     function execute_delegatecall(address selfAddr, uint256 optionID) external override {
         SlashingRefundProposal self = SlashingRefundProposal(selfAddr);
         uint256 penaltyRatio = 1e18 * optionID * 20 / 100;
-        SFC(self.sfc()).updateSlashingRefundRatio(self.validatorID(), penaltyRatio);
+        ISFC(self.sfc()).updateSlashingRefundRatio(self.validatorID(), penaltyRatio);
     }
 
     function decimalsNum(uint256 num) internal pure returns (uint256) {
