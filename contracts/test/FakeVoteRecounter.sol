@@ -19,7 +19,7 @@ contract FakeVoteRecounter {
     function recountVote(address voterAddr, address delegatedTo, uint256 proposalID) external {
         for (uint256 i = 0; i < outdatedProposals.length; i++) {
             if (proposalID == outdatedProposals[i]) {
-                revert();
+                revert("outdated proposal");
             }
         }
         if (voterAddr != expectVoterAddr || delegatedTo != expectDelegatedTo) {

@@ -30,7 +30,7 @@ contract PlainTextProposalFactory is ScopedVerifier {
         uint256 __start,
         uint256 __minEnd,
         uint256 __maxEnd
-    ) payable external {
+    ) external payable {
         // use memory to avoid stack overflow
         uint256[] memory params = new uint256[](5);
         params[0] = __minVotes;

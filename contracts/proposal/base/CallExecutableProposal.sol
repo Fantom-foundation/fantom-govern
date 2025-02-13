@@ -15,7 +15,7 @@ contract CallExecutableProposal is BaseProposal {
         return uint256(StdProposalTypes.UNKNOWN_CALL_EXECUTABLE);
     }
 
-    function execute_call(uint256) external override virtual {
+    function executeCall(uint256) external override virtual {
         require(false, "must be overridden");
     }
 }
