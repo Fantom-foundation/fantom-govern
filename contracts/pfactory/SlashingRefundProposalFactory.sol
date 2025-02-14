@@ -10,7 +10,6 @@ import {SlashingRefundProposal} from "../proposal/SlashingRefundProposal.sol";
 contract SlashingRefundProposalFactory is ScopedVerifier {
     Governance internal gov;
     address internal sfcAddress;
-    mapping(string => uint256) internal params;
 
     constructor(address _govAddress, address _sfcAddress) public {
         gov = Governance(_govAddress);
