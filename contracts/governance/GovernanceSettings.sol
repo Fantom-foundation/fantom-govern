@@ -7,122 +7,88 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @notice GovernanceSettings is a contract for managing governance settings
 contract GovernanceSettings is Ownable {
-    uint256 private _proposalFee;
-    uint256 private _proposalBurntFee;
-    uint256 private _taskHandlingReward;
-    uint256 private _taskErasingReward;
-    uint256 private _maxOptions;
-    uint256 private _maxExecutionPeriod;
+    /// @notice proposalFee is the fee of a proposal
+    uint256 public proposalFee;
+    /// @notice proposalBurntFee is the burnt part of the fee for a proposal
+    uint256 public proposalBurntFee;
+    /// @notice taskHandlingReward is a reward for handling each task
+    uint256 public taskHandlingReward;
+    /// @notice taskErasingReward is a reward for erasing each task
+    uint256 public taskErasingReward;
+    /// @notice maxOptions is the maximum number of options that can be offered in a single proposal
+    uint256 public maxOptions;
+    /// @notice maxExecutionPeriod is the period after the end of voting during which the proposal can be executed 
+    uint256 public maxExecutionPeriod;
 
     // reverted when proposal fee would be under the sum of burnt fee and rewards
     error ProposalFeeTooLow(uint256 necessaryValue);
 
     constructor() Ownable(msg.sender) {
         // Set default values
-        _proposalBurntFee = 50 * 1e18;
-        _taskHandlingReward = 40 * 1e18;
-        _taskErasingReward = 10 * 1e18;
-        _maxOptions = 10;
-        _maxExecutionPeriod = 72 hours;
-        _proposalFee = _proposalBurntFee + _taskHandlingReward + _taskErasingReward;
+        proposalBurntFee = 50 * 1e18;
+        taskHandlingReward = 40 * 1e18;
+        taskErasingReward = 10 * 1e18;
+        maxOptions = 10;
+        maxExecutionPeriod = 72 hours;
+        proposalFee = proposalBurntFee + taskHandlingReward + taskErasingReward;
     }
-
-    /// @notice proposalFee is the fee for a proposal
-    /// @return proposal fee
-    function proposalFee() public view returns (uint256) {
-        return _proposalFee;
-    }
-
-    /// @notice proposalBurntFee is the burnt part of fee for a proposal
-    /// @return proposal burn fee
-    function proposalBurntFee() public view returns (uint256) {
-        return _proposalBurntFee;
-    }
-
-    /// @notice taskHandlingReward is a reward for handling each task
-    /// @return task handling reward
-    function taskHandlingReward() public view returns (uint256) {
-        return _taskHandlingReward;
-    }
-
-    /// @notice taskErasingReward is a reward for erasing each task
-    /// @return task erasing reward
-    function taskErasingReward() public view returns (uint256) {
-        return _taskErasingReward;
-    }
-
-    /// @notice maxOptions maximum number of options to choose
-    /// @return maximum number of options
-    function maxOptions() public view returns (uint256) {
-        return _maxOptions;
-    }
-
-    /// @notice maxExecutionPeriod is maximum time for which proposal is executable after maximum voting end date
-    /// @return maximum execution period in hours
-    function maxExecutionPeriod() public view returns (uint256) {
-        return _maxExecutionPeriod;
-    }
-
 
     /// @notice setProposalFee sets the fee for a proposal
-    /// @param __proposalFee new proposal fee in native tokens
-    function setProposalFee(uint256 __proposalFee) public onlyOwner {
-        __proposalFee = __proposalFee * 1e18;
-        uint256 necessarySum = _proposalBurntFee + _taskHandlingReward + _taskErasingReward;
-        if(__proposalFee < necessarySum) {
+    /// @param _proposalFee new proposal fee in wei
+    function setProposalFee(uint256 _proposalFee) public onlyOwner {
+        uint256 necessarySum = proposalBurntFee + taskHandlingReward + taskErasingReward;
+        if(_proposalFee < necessarySum) {
             revert ProposalFeeTooLow(necessarySum);
         }
-        _proposalFee = __proposalFee;
+        proposalFee = _proposalFee;
     }
 
-    /// @notice setProposalBurntFee sets the burnt part of fee for a proposal and
-    /// @param __proposalBurntFee new proposal burn fee in native tokens
-    function setProposalBurntFee(uint256 __proposalBurntFee) public onlyOwner {
-        __proposalBurntFee = __proposalBurntFee * 1e18;
-        uint256 newProposalFee = __proposalBurntFee + _taskHandlingReward + _taskErasingReward;
+    /// @notice setProposalBurntFee sets the burnt part of fee for a proposal
+    /// @param _proposalBurntFee new proposal burn fee in native tokens
+    function setProposalBurntFee(uint256 _proposalBurntFee) public onlyOwner {
+        _proposalBurntFee = _proposalBurntFee * 1e18;
+        uint256 newProposalFee = _proposalBurntFee + taskHandlingReward + taskErasingReward;
         // Proposal fee must always be greater than or equal to sum of burntFee and rewards
-        if (newProposalFee > _proposalFee) {
+        if (newProposalFee > proposalFee) {
             revert ProposalFeeTooLow(newProposalFee);
         }
-        _proposalBurntFee = __proposalBurntFee;
+        proposalBurntFee = _proposalBurntFee;
     }
 
-    /// @notice setTaskHandlingReward sets a reward for handling each task and
-    /// @notice and if necessary updates proposalFee accordingly
-    /// @param __taskHandlingReward new task handling reward in native tokens
-    function setTaskHandlingReward(uint256 __taskHandlingReward) public onlyOwner {
-        __taskHandlingReward = __taskHandlingReward * 1e18;
-        uint256 newProposalFee = _proposalBurntFee + __taskHandlingReward + _taskErasingReward;
+    /// @notice setTaskHandlingReward sets a reward for handling each task
+    /// @param _taskHandlingReward new task handling reward in native tokens
+    function setTaskHandlingReward(uint256 _taskHandlingReward) public onlyOwner {
+        _taskHandlingReward = _taskHandlingReward * 1e18;
+        uint256 newProposalFee = proposalBurntFee + _taskHandlingReward + taskErasingReward;
         // Proposal fee must always be greater than or equal to sum of burntFee and rewards
-        if (newProposalFee > _proposalFee) {
+        if (newProposalFee > proposalFee) {
             revert ProposalFeeTooLow(newProposalFee);
         }
-        _taskHandlingReward = __taskHandlingReward;
+        taskHandlingReward = _taskHandlingReward;
     }
 
-    /// @notice setTaskErasingReward sets a reward for erasing each task and
-    /// @notice and if necessary updates proposalFee accordingly
-    /// @param __taskErasingReward new task erasing reward in native tokens
-    function setTaskErasingReward(uint256 __taskErasingReward) public onlyOwner {
-        __taskErasingReward = __taskErasingReward * 1e18;
-        uint256 newProposalFee = _proposalBurntFee + _taskHandlingReward + __taskErasingReward;
+    /// @notice setTaskErasingReward sets a reward for erasing each task
+    /// @param _taskErasingReward new task erasing reward in native tokens
+    function setTaskErasingReward(uint256 _taskErasingReward) public onlyOwner {
+        _taskErasingReward = _taskErasingReward * 1e18;
+        uint256 newProposalFee = proposalBurntFee + taskHandlingReward + _taskErasingReward;
         // Proposal fee must always be greater than or equal to sum of burntFee and rewards
-        if (newProposalFee > _proposalFee) {
+        if (newProposalFee > proposalFee) {
             revert ProposalFeeTooLow(newProposalFee);
         }
-        _taskErasingReward = __taskErasingReward;
+        taskErasingReward = _taskErasingReward;
     }
 
     /// @notice setMaxOptions sets maximum number of options to choose
-    /// @param __maxOptions new maximum number of options
-    function setMaxOptions(uint256 __maxOptions) public onlyOwner {
-        _maxOptions = __maxOptions;
+    /// @param _maxOptions new maximum number of options
+    function setMaxOptions(uint256 _maxOptions) public onlyOwner {
+        maxOptions = _maxOptions;
     }
 
-    /// @notice setMaxExecutionPeriod sets maximum time for which proposal is executable after maximum voting end date
-    /// @param __maxExecutionPeriod new maximum execution period in hours
-    function setMaxExecutionPeriod(uint256 __maxExecutionPeriod) public onlyOwner {
-        _maxExecutionPeriod = __maxExecutionPeriod * 1 hours;
+    /// @notice setMaxExecutionPeriod sets the period after the end of voting during which the proposal can be executed
+    /// @param _maxExecutionPeriod new maximum execution period in hours
+    function setMaxExecutionPeriod(uint256 _maxExecutionPeriod) public onlyOwner {
+        maxExecutionPeriod = _maxExecutionPeriod * 1 hours;
     }
 
     /// @notice calculates the minimum number of votes required for a proposal

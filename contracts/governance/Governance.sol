@@ -244,14 +244,14 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @notice Create a new proposal.
     /// @param proposalContract The address of the proposal contract.
     function createProposal(address proposalContract) nonReentrant external payable {
-        require(msg.value == proposalFee(), "paid proposal fee is wrong");
+        require(msg.value == proposalFee, "paid proposal fee is wrong");
 
         lastProposalID++;
         _createProposal(lastProposalID, proposalContract);
         addTasks(lastProposalID);
 
         // burn a non-reward part of the proposal fee
-        burn(proposalBurntFee());
+        burn(proposalBurntFee);
 
         emit ProposalCreated(lastProposalID);
     }
@@ -273,8 +273,6 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         uint256 votingMaxEndTime = p.votingMaxEndTime();
         bytes32[] memory options = p.options();
         // check the parameters and contract
-        require(options.length != 0, "proposal options are empty - nothing to vote for");
-        require(options.length <= maxOptions(), "too many options");
         proposalVerifier.verifyProposalParams(
             pType,
             executable,
@@ -330,7 +328,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
 
         emit TasksHandled(startIdx, i, handled);
         // reward the sender
-        (bool success, ) = payable(msg.sender).call{value: handled * taskHandlingReward()}("");
+        (bool success, ) = payable(msg.sender).call{value: handled * taskHandlingReward}("");
         require(success, "transfer failed");
     }
 
@@ -350,7 +348,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         require(erased > 0, "no tasks erased");
         emit TasksErased(erased);
         // reward the sender
-        (bool success, ) = payable(msg.sender).call{value: erased * taskErasingReward()}("");
+        (bool success, ) = payable(msg.sender).call{value: erased * taskErasingReward}("");
         require(success, "transfer failed");
     }
 
@@ -430,7 +428,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
             return (true, false);
         }
 
-        bool executionExpired = block.timestamp > prop.params.deadlines.votingMaxEndTime + maxExecutionPeriod();
+        bool executionExpired = block.timestamp > prop.params.deadlines.votingMaxEndTime + maxExecutionPeriod;
         if (executionExpired) {
             // protection against proposals which revert or consume too much gas
             return (true, true);
