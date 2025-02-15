@@ -81,10 +81,10 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
 
     // Vote
     error UnknownVote(address voter, address delegatedTo, uint256 proposalID);
-    error VoteExists(address delegatedTo, uint256 proposalID);
+    error AlreadyVoted(address delegatedTo, uint256 proposalID);
     error WrongNumberOfChoices(uint256 got, uint256 want);
     error ZeroWeightVote(address delegatedTo, uint256 proposalID);
-    error TooManyOptions(address proposalContract);
+    error TooManyOptions(uint256 max);
 
 
     // Rewards and burn
@@ -92,7 +92,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
 
     // Tasks
     error NoTasksHandled();
-    error NoTasksErased();
+    error NoTasksToClean();
     error UnknownTaskIndex(uint256 taskIdx);
 
     /// @notice Emitted when a new proposal is created.
@@ -269,7 +269,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
             revert VotingNotStarted();
         }
         if (_votes[msg.sender][delegatedTo][proposalID].weight != 0) {
-            revert VoteExists(delegatedTo, proposalID);
+            revert AlreadyVoted(delegatedTo, proposalID);
         }
         if (choices.length != prop.params.options.length) {
             revert WrongNumberOfChoices(choices.length, prop.params.options.length);
@@ -321,8 +321,10 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         if (options.length == 0) {
             revert EmptyProposalOptions();
         }
-        if (options.length > maxOptions()) {
-            revert TooManyOptions(proposalContract);
+
+        uint256 max = maxOptions();
+        if (options.length > max) {
+            revert TooManyOptions(max);
         }
         // Verify
         proposalVerifier.verifyProposalParams(
@@ -412,7 +414,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         }
 
         if (erased == 0) {
-            revert NoTasksErased();
+            revert NoTasksToClean();
         }
 
         emit TasksErased(erased);

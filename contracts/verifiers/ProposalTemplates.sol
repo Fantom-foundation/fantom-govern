@@ -77,7 +77,7 @@ contract ProposalTemplates is IProposalVerifier, OwnableUpgradeable, Version {
     error EmptyName();
     error TemplateExists(uint256 pType);
     error EmptyOpinions();
-    error WrongOpinionOrder();
+    error OpinionsNotSorted();
     error AllOpinionsZero();
     error MinVotesTooBig();
     error MinAgreementTooBig();
@@ -120,7 +120,7 @@ contract ProposalTemplates is IProposalVerifier, OwnableUpgradeable, Version {
             revert EmptyOpinions();
         }
         if (!checkNonDecreasing(opinionScales)) {
-            revert WrongOpinionOrder();
+            revert OpinionsNotSorted();
         }
         if (opinionScales[opinionScales.length - 1] == 0) {
             revert AllOpinionsZero();
@@ -177,62 +177,63 @@ contract ProposalTemplates is IProposalVerifier, OwnableUpgradeable, Version {
     ) external view {
         if (!exists(pType)) {
             // non-existing template
-            revert VerifierErrors.ParametersVerificationFailed("non-existing template");
+            revert VerifierErrors.UnknownTemplate(pType);
         }
         ProposalTemplate memory template = proposalTemplates[pType];
         if (executable != template.executable) {
             // inconsistent executable flag
-            revert VerifierErrors.ParametersVerificationFailed("incorrect executable");
+            revert VerifierErrors.ExecutableTypeMismatch(executable, template.executable);
         }
         if (minVotes < template.minVotes) {
             // turnout is too small
-            revert VerifierErrors.ParametersVerificationFailed("minVotes too small");
+            revert VerifierErrors.MinVotesTooSmall(minVotes, template.minVotes);
         }
-        if (minVotes > Decimal.unit()) {
+        uint256 decUnit =  Decimal.unit();
+        if (minVotes > decUnit) {
             // turnout is bigger than 100%
-            revert VerifierErrors.ParametersVerificationFailed("minVotes too big");
+            revert VerifierErrors.MinVotesTooLarge(minVotes, decUnit);
         }
         if (minAgreement < template.minAgreement) {
             // quorum is too small
-            revert VerifierErrors.ParametersVerificationFailed("minAgreement too small");
+            revert VerifierErrors.MinAgreementTooSmall(minAgreement, template.minAgreement);
         }
-        if (minAgreement > Decimal.unit()) {
+        if (minAgreement > decUnit) {
             // quorum is bigger than 100%
-            revert VerifierErrors.ParametersVerificationFailed("minAgreement too big");
+            revert VerifierErrors.MinAgreementTooLarge(minAgreement, decUnit);
         }
         if (opinionScales.length != template.opinionScales.length) {
             // wrong opinion scales
-            revert VerifierErrors.ParametersVerificationFailed("incorrect opinion length");
+            revert VerifierErrors.OpinionScalesLengthMismatch(opinionScales.length, template.opinionScales.length);
         }
         for (uint256 i = 0; i < opinionScales.length; i++) {
             if (opinionScales[i] != template.opinionScales[i]) {
-                revert VerifierErrors.ParametersVerificationFailed("wrong opinion scales");
+                revert VerifierErrors.OpinionScalesMismatch(opinionScales[i], template.opinionScales[i], i);
             }
         }
         if (start < block.timestamp) {
-            revert VerifierErrors.ParametersVerificationFailed("start is in the past");
+            revert VerifierErrors.StartIsInThePast();
         }
         if (start > minEnd) {
-            revert VerifierErrors.ParametersVerificationFailed("start is after minEnd");
+            revert VerifierErrors.StartIsAfterMinEnd(start, minEnd);
         }
         if (minEnd > maxEnd) {
-            revert VerifierErrors.ParametersVerificationFailed("minEnd is after maxEnd");
+            revert VerifierErrors.MinEndIsAfterMaxEnd(minEnd, maxEnd);
         }
 
         uint256 minDuration = minEnd - start;
         uint256 maxDuration = maxEnd - start;
         uint256 startDelay_ = start - block.timestamp;
         if (minDuration < template.minVotingDuration) {
-            revert VerifierErrors.ParametersVerificationFailed("minDuration too short");
+            revert VerifierErrors.MinDurationIsTooShort(minDuration, template.minVotingDuration);
         }
         if (maxDuration > template.maxVotingDuration) {
-            revert VerifierErrors.ParametersVerificationFailed("maxDuration too long");
+            revert VerifierErrors.MaxDurationIsTooLong(maxDuration, template.maxVotingDuration);
         }
         if (startDelay_ < template.minStartDelay) {
-            revert VerifierErrors.ParametersVerificationFailed("startDelay is too small");
+            revert VerifierErrors.StartDelayIsTooSmall(startDelay_, template.minStartDelay);
         }
         if (startDelay_ > template.maxStartDelay) {
-            revert VerifierErrors.ParametersVerificationFailed("startDelay is too big");
+            revert VerifierErrors.StartDelayIsTooLarge(startDelay_, template.maxStartDelay);
         }
         if (template.verifier == address(0)) {
             return;

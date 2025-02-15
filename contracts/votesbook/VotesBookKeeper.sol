@@ -21,6 +21,8 @@ contract VotesBookKeeper is OwnableUpgradeable {
     // voter => delegatedTo => proposal ID => {index in the list + 1}
     mapping(address => mapping(address => mapping(uint256 => uint256))) votesIndex;
 
+    error TooManyVotes(uint256 got, uint256 max);
+
     /// @notice Initialize the contract
     /// @param _owner The owner of the contract
     /// @param _gov The address of the governance contract
@@ -89,7 +91,9 @@ contract VotesBookKeeper is OwnableUpgradeable {
         votesList[voter][delegatedTo].push(proposalID);
         idx = votesList[voter][delegatedTo].length;
         // this file is getting removed, no need to replace
-        require(idx <= maxProposalsPerVoter, "too many votes");
+        if (idx > maxProposalsPerVoter) {
+            revert TooManyVotes(idx, maxProposalsPerVoter);
+        }
         votesIndex[voter][delegatedTo][proposalID] = idx;
     }
 

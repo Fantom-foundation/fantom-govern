@@ -15,7 +15,7 @@ contract ScopedVerifier is IProposalVerifier {
     // verifyProposalContract verifies proposal creator
     function verifyProposalContract(uint256, address propAddr) external view {
         if (propAddr != unlockedFor) {
-            revert VerifierErrors.ContractVerificationFailed("incorrect prop address");
+            revert VerifierErrors.AppropriateFactoryNotUsed();
         }
     }
 }
