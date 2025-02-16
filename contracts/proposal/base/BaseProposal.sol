@@ -24,10 +24,9 @@ contract BaseProposal is IProposal {
 
     /// @notice Verify the parameters of the proposal using a given verifier.
     /// @param verifier The address of the verifier contract.
-    /// @return bool indicating whether the proposal parameters are valid.
-    function verifyProposalParams(address verifier) public view returns (bool) {
+    function verifyProposalParams(address verifier) public view {
         IProposalVerifier proposalVerifier = IProposalVerifier(verifier);
-        return proposalVerifier.verifyProposalParams(pType(), executable(), minVotes(), minAgreement(), opinionScales(), votingStartTime(), votingMinEndTime(), votingMaxEndTime());
+        proposalVerifier.verifyProposalParams(pType(), executable(), minVotes(), minAgreement(), opinionScales(), votingStartTime(), votingMinEndTime(), votingMaxEndTime());
     }
 
     function pType() public virtual view returns (uint256) {
