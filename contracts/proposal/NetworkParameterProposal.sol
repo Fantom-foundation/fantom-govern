@@ -112,7 +112,7 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         consts = ConstsI(__consts);
         // verify the proposal right away to avoid deploying a wrong proposal
         if (verifier != address(0)) {
-            require(verifyProposalParams(verifier), "failed verification");
+            verifyProposalParams(verifier);
         }
     }
 
