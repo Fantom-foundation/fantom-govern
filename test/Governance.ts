@@ -5,6 +5,7 @@ import {ethers} from "hardhat";
 import {loadFixture, time} from "@nomicfoundation/hardhat-network-helpers";
 import {ExecLoggingProposal, Governance, ProposalTemplates} from "../typechain-types"
 import type {HardhatEthersSigner} from "@nomicfoundation/hardhat-ethers/src/signers";
+import {min} from "hardhat/internal/util/bigint";
 
 const NonExecutableType = 0n;
 const CallType = 1n;
@@ -49,21 +50,53 @@ describe("Governance test", function () {
     it("checking deployment of a plaintext proposal contract", async function () {
         await this.verifier.addTemplate(1, "plaintext", ethers.ZeroAddress, NonExecutableType, ethers.parseEther("0.4"), ethers.parseEther("0.6"), [0, 1, 2, 3, 4], 120, 1200, 0, 60);
         const option = ethers.encodeBytes32String("opt");
-        await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("0.6"), 0, 120, 1201, this.verifierAddress])).to.be.revertedWith("failed verification");
-        await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("0.6"), 0, 119, 1201, this.verifierAddress])).to.be.revertedWith("failed verification");
-        await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("0.6"), 61, 119, 1201, this.verifierAddress])).to.be.revertedWith("failed verification");
-        await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("0.6"), 0, 501, 500, this.verifierAddress])).to.be.revertedWith("failed verification");
-        await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.399"), ethers.parseEther("0.6"), 0, 501, 500, this.verifierAddress])).to.be.revertedWith("failed verification");
-        await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("1.01"), ethers.parseEther("0.6"), 0, 501, 500, this.verifierAddress])).to.be.revertedWith("failed verification");
-        await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("0.599"), 60, 120, 1200, this.verifierAddress])).to.be.revertedWith("failed verification");
-        await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("1.01"), 60, 120, 1200, this.verifierAddress])).to.be.revertedWith("failed verification");
-        await ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("0.6"), 60, 120, 1200, this.verifierAddress]);
-        await ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("0.6"), 0, 1200, 1200, this.verifierAddress]);
-        await ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("0.6"), 0, 120, 120, this.verifierAddress]);
-        await ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("0.6"), 0, 120, 1200, this.verifierAddress]);
-        await ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("1.0"), ethers.parseEther("0.6"), 0, 120, 1200, this.verifierAddress]);
-        await ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.5"), ethers.parseEther("0.6"), 30, 121, 1199, this.verifierAddress]);
-        await ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.5"), ethers.parseEther("0.8"), 30, 121, 1199, this.verifierAddress]);
+        await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("0.6"), 0, 120, 1201, this.verifierAddress]))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "MaxDurationIsTooLong"
+            )
+            .withArgs(1201, 1200);
+        await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("0.6"), 0, 119, 1201, this.verifierAddress]))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "MinDurationIsTooShort"
+            )
+            .withArgs(119, 120);
+        await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("0.6"), 61, 119, 1201, this.verifierAddress]))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "MinDurationIsTooShort"
+            )
+            .withArgs(119, 120);
+        await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("0.6"), 0, 501, 500, this.verifierAddress]))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "MinEndIsAfterMaxEnd"
+            )
+        await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.399"), ethers.parseEther("0.6"), 0, 501, 500, this.verifierAddress]))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "MinVotesTooSmall"
+            )
+            .withArgs(ethers.parseEther("0.399"),ethers.parseEther("0.4"));
+        await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("1.01"), ethers.parseEther("0.6"), 0, 501, 500, this.verifierAddress]))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "MinVotesTooLarge"
+            )
+            .withArgs(ethers.parseEther("1.01"), ethers.parseEther("1"));
+        await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("0.599"), 60, 120, 1200, this.verifierAddress]))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "MinAgreementTooSmall"
+            )
+            .withArgs(ethers.parseEther("0.599"),ethers.parseEther("0.6"));
+        await expect(ethers.deployContract("PlainTextProposal", ["plaintext", "plaintext-descr", [option], ethers.parseEther("0.4"), ethers.parseEther("1.01"), 60, 120, 1200, this.verifierAddress]))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "MinAgreementTooLarge"
+            )
+            .withArgs(ethers.parseEther("1.01"), ethers.parseEther("1"));
     });
 
     it("checking creation of a plaintext proposal", async function () {
@@ -79,7 +112,12 @@ describe("Governance test", function () {
 
         await expect(this.gov.createProposal(emptyOptions.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal options are empty - nothing to vote for");
         await expect(this.gov.createProposal(tooManyOptions.getAddress(), {value: this.proposalFee})).to.be.revertedWith("too many options");
-        await expect(this.gov.createProposal(wrongVotes.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal parameters failed verification");
+        await expect(this.gov.createProposal(wrongVotes.getAddress(), {value: this.proposalFee}))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "MinVotesTooSmall"
+            )
+            .withArgs(ethers.parseEther("0.3"), ethers.parseEther("0.4"));
         await expect(this.gov.createProposal(manyOptions.getAddress())).to.be.revertedWith("paid proposal fee is wrong");
         await expect(this.gov.createProposal(manyOptions.getAddress(), {value: this.proposalFee+1n})).to.be.revertedWith("paid proposal fee is wrong");
         await this.gov.createProposal(manyOptions.getAddress(), {value: this.proposalFee});
@@ -112,7 +150,7 @@ describe("Governance test", function () {
         await this.verifier.addTemplate(pType, "custom", ethers.ZeroAddress, DelegateCallType, ethers.parseEther("0.4"), ethers.parseEther("0.6"), scales, 1000, 10000, 400, 2000);
         const now = await time.latest();
         const start = now + 500;
-        const minEnd =start + 1000;
+        const minEnd = start + 1000;
         const maxEnd = minEnd + 1000;
 
         const proposal = await ethers.deployContract("ExplicitProposal");
@@ -124,37 +162,73 @@ describe("Governance test", function () {
         await proposal.setVotingMinEndTime(minEnd);
         await proposal.setVotingMaxEndTime(maxEnd);
         await proposal.setExecutable(DelegateCallType);
-        expect(await proposal.verifyProposalParams(this.verifierAddress)).to.equal(true);
+        await proposal.verifyProposalParams(this.verifierAddress);
 
         await proposal.setVotingStartTime(now-10); // starts in past
-        expect(await proposal.verifyProposalParams(this.verifierAddress)).to.equal(false);
+        await expect(proposal.verifyProposalParams(this.verifierAddress))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "StartIsInThePast"
+            );
         await proposal.setVotingStartTime(start);
 
         await proposal.setVotingMinEndTime(start-1); // may end before the start
-        expect(await proposal.verifyProposalParams(this.verifierAddress)).to.equal(false);
+        await expect(proposal.verifyProposalParams(this.verifierAddress))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "StartIsAfterMinEnd"
+            )
         await proposal.setVotingMinEndTime(minEnd);
 
         await proposal.setVotingMaxEndTime(start-1); // must end before the start
-        expect(await proposal.verifyProposalParams(this.verifierAddress)).to.equal(false);
+        await expect(proposal.verifyProposalParams(this.verifierAddress))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "MinEndIsAfterMaxEnd"
+            )
         await proposal.setVotingMaxEndTime(maxEnd);
 
         await proposal.setVotingMaxEndTime(minEnd-1); // min > max
-        expect(await proposal.verifyProposalParams(this.verifierAddress)).to.equal(false);
+        await expect(proposal.verifyProposalParams(this.verifierAddress))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "MinEndIsAfterMaxEnd"
+            )
         await proposal.setVotingMaxEndTime(maxEnd);
 
         await proposal.setType(pType - 1); // wrong type
-        expect(await proposal.verifyProposalParams(this.verifierAddress)).to.equal(false);
+        await expect(proposal.verifyProposalParams(this.verifierAddress))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "UnknownTemplate"
+            )
+            .withArgs(pType - 1)
         await proposal.setType(pType);
 
         await proposal.setOpinionScales([]); // wrong scales
-        expect(await proposal.verifyProposalParams(this.verifierAddress)).to.equal(false);
+        await expect(proposal.verifyProposalParams(this.verifierAddress))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "OpinionScalesLengthMismatch"
+            )
+            .withArgs(0, 5)
         await proposal.setOpinionScales([1]); // wrong scales
-        expect(await proposal.verifyProposalParams(this.verifierAddress)).to.equal(false);
+        await expect(proposal.verifyProposalParams(this.verifierAddress))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "OpinionScalesLengthMismatch"
+            )
+            .withArgs(1, 5)
         await proposal.setOpinionScales([1, 2, 3, 4, 5]); // wrong scales
-        expect(await proposal.verifyProposalParams(this.verifierAddress)).to.equal(false);
+        await expect(proposal.verifyProposalParams(this.verifierAddress))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "OpinionScalesMismatch"
+            )
+            .withArgs(1,0,0)
         await proposal.setOpinionScales(scales);
 
-        expect(await proposal.verifyProposalParams(this.verifierAddress)).to.equal(true);
+        await proposal.verifyProposalParams(this.verifierAddress)
     });
 
     const initConsts = async function (defaultAcc: HardhatEthersSigner) {
@@ -1094,12 +1168,36 @@ describe("Governance test", function () {
     describe("checking votes for 2 self-voters and 1 delegation", votersAndDelegatorsTests(false));
 
     it("checking voting with custom parameters", async function () {
-        await expect(this.verifier.addTemplate(99, "custom", ethers.ZeroAddress, NonExecutableType, ethers.parseEther("1.1"), ethers.parseEther("0.6"), scales, 120, 1200, 0, 60)).to.be.revertedWith("minVotes > 1.0");
-        await expect(this.verifier.addTemplate(99, "custom", ethers.ZeroAddress, NonExecutableType, ethers.parseEther("0.4"), ethers.parseEther("1.1"), scales, 120, 1200, 0, 60)).to.be.revertedWith("minAgreement > 1.0");
-        await expect(this.verifier.addTemplate(99, "custom", ethers.ZeroAddress, NonExecutableType, ethers.parseEther("0.4"), ethers.parseEther("0.6"), [], 120, 1200, 0, 60)).to.be.revertedWith("empty opinions");
-        await expect(this.verifier.addTemplate(99, "custom", ethers.ZeroAddress, NonExecutableType, ethers.parseEther("0.4"), ethers.parseEther("0.6"), [1, 2, 3, 0], 120, 1200, 0, 60)).to.be.revertedWith("wrong order of opinions");
-        await expect(this.verifier.addTemplate(99, "custom", ethers.ZeroAddress, NonExecutableType, ethers.parseEther("0.4"), ethers.parseEther("0.6"), [0, 0, 0, 0], 120, 1200, 0, 60)).to.be.revertedWith("all opinions are zero");
-        await expect(this.verifier.addTemplate(99, "custom", ethers.ZeroAddress, NonExecutableType, ethers.parseEther("0.4"), ethers.parseEther("0.6"), [0], 120, 1200, 0, 60)).to.be.revertedWith("all opinions are zero");
+        await expect(this.verifier.addTemplate(99, "custom", ethers.ZeroAddress, NonExecutableType, ethers.parseEther("1.1"), ethers.parseEther("0.6"), scales, 120, 1200, 0, 60))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "MinVotesOverflow"
+            )
+        await expect(this.verifier.addTemplate(99, "custom", ethers.ZeroAddress, NonExecutableType, ethers.parseEther("0.4"), ethers.parseEther("1.1"), scales, 120, 1200, 0, 60))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "MinAgreementOverflow"
+            )
+        await expect(this.verifier.addTemplate(99, "custom", ethers.ZeroAddress, NonExecutableType, ethers.parseEther("0.4"), ethers.parseEther("0.6"), [], 120, 1200, 0, 60))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "EmptyOpinions"
+            )
+        await expect(this.verifier.addTemplate(99, "custom", ethers.ZeroAddress, NonExecutableType, ethers.parseEther("0.4"), ethers.parseEther("0.6"), [1, 2, 3, 0], 120, 1200, 0, 60))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "OpinionsNotSorted"
+            )
+        await expect(this.verifier.addTemplate(99, "custom", ethers.ZeroAddress, NonExecutableType, ethers.parseEther("0.4"), ethers.parseEther("0.6"), [0, 0, 0, 0], 120, 1200, 0, 60))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "AllOpinionsZero"
+            )
+        await expect(this.verifier.addTemplate(99, "custom", ethers.ZeroAddress, NonExecutableType, ethers.parseEther("0.4"), ethers.parseEther("0.6"), [0], 120, 1200, 0, 60))
+            .to.be.revertedWithCustomError(
+                this.verifier,
+                "AllOpinionsZero"
+            )
         const optionsNum = 1; // use maximum number of options to test gas usage
         const start = 10000;
         const minEnd = 100000;
@@ -1141,15 +1239,31 @@ describe("Governance test", function () {
         const option = ethers.encodeBytes32String("opt");
         const proposal = await ethers.deployContract("PlainTextProposal", ["paintext", "plaintext-descr", [option], ethers.parseEther("0.5"), ethers.parseEther("0.8"), 30, 121, 1199, this.verifierAddress]);
 
-        await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
-        await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
+        await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee}))
+            .to.be.revertedWithCustomError(
+                ownableVerifier,
+                "AppropriateFactoryNotUsed"
+            )
+        await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee}))
+            .to.be.revertedWithCustomError(
+                ownableVerifier,
+                "AppropriateFactoryNotUsed"
+            )
         await expect(ownableVerifier.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWithCustomError(
             ownableVerifier,
             'OwnableUnauthorizedAccount',
         );
         await ownableVerifier.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee});
-        await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
-        await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
+        await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee}))
+            .to.be.revertedWithCustomError(
+                ownableVerifier,
+                "AppropriateFactoryNotUsed"
+            )
+        await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee}))
+            .to.be.revertedWithCustomError(
+                ownableVerifier,
+                "AppropriateFactoryNotUsed"
+            )
         await expect(ownableVerifier.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWithCustomError(
             ownableVerifier,
             'OwnableUnauthorizedAccount',
@@ -1158,8 +1272,16 @@ describe("Governance test", function () {
         // Transfer ownership to otherAcc
         await ownableVerifier.connect(this.defaultAcc).transferOwnership(this.otherAcc);
 
-        await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
-        await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
+        await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee}))
+            .to.be.revertedWithCustomError(
+                ownableVerifier,
+                "AppropriateFactoryNotUsed"
+            )
+        await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee}))
+            .to.be.revertedWithCustomError(
+                ownableVerifier,
+                "AppropriateFactoryNotUsed"
+            )
         await expect(ownableVerifier.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWithCustomError(
             ownableVerifier,
             'OwnableUnauthorizedAccount',

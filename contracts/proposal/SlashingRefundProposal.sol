@@ -32,7 +32,7 @@ contract SlashingRefundProposal is DelegatecallExecutableProposal, Cancelable {
         sfc = __sfc;
         // verify the proposal right away to avoid deploying a wrong proposal
         if (verifier != address(0)) {
-            require(verifyProposalParams(verifier), "failed verification");
+            verifyProposalParams(verifier);
         }
     }
 

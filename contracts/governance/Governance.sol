@@ -269,7 +269,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         require(options.length != 0, "proposal options are empty - nothing to vote for");
         require(options.length <= maxOptions(), "too many options");
         bool ok;
-        ok = proposalVerifier.verifyProposalParams(
+        proposalVerifier.verifyProposalParams(
             pType,
             executable,
             minVotes,
@@ -279,9 +279,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
             votingMinEndTime,
             votingMaxEndTime
         );
-        require(ok, "proposal parameters failed verification");
-        ok = proposalVerifier.verifyProposalContract(pType, proposalContract);
-        require(ok, "proposal contract failed verification");
+        proposalVerifier.verifyProposalContract(pType, proposalContract);
         // save the parameters
         ProposalState storage prop = proposals[proposalID];
         prop.params.pType = pType;
