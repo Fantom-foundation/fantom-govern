@@ -200,8 +200,7 @@ contract ProposalTemplates is IProposalVerifier, OwnableUpgradeable, Version {
             // turnout is too small
             revert MinVotesTooSmall(minVotes, template.minVotes);
         }
-        uint256 decUnit =  Decimal.unit();
-        if (minVotes > decUnit) {
+        if (minVotes > Decimal.unit()) {
             // turnout is bigger than 100%
             revert MinVotesTooLarge(minVotes, Decimal.unit());
         }
@@ -209,7 +208,7 @@ contract ProposalTemplates is IProposalVerifier, OwnableUpgradeable, Version {
             // quorum is too small
             revert MinAgreementTooSmall(minAgreement, template.minAgreement);
         }
-        if (minAgreement > decUnit) {
+        if (minAgreement > Decimal.unit()) {
             // quorum is bigger than 100%
             revert MinAgreementTooLarge(minAgreement, Decimal.unit());
         }
