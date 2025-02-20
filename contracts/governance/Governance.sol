@@ -268,7 +268,6 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         // check the parameters and contract
         require(options.length != 0, "proposal options are empty - nothing to vote for");
         require(options.length <= maxOptions(), "too many options");
-        bool ok;
         proposalVerifier.verifyProposalParams(
             pType,
             executable,

@@ -188,18 +188,17 @@ contract ProposalTemplates is IProposalVerifier, OwnableUpgradeable, Version {
             // turnout is too small
             revert VerifierErrors.MinVotesTooSmall(minVotes, template.minVotes);
         }
-        uint256 decUnit =  Decimal.unit();
-        if (minVotes > decUnit) {
+        if (minVotes > Decimal.unit()) {
             // turnout is bigger than 100%
-            revert VerifierErrors.MinVotesTooLarge(minVotes, decUnit);
+            revert VerifierErrors.MinVotesTooLarge(minVotes, Decimal.unit());
         }
         if (minAgreement < template.minAgreement) {
             // quorum is too small
             revert VerifierErrors.MinAgreementTooSmall(minAgreement, template.minAgreement);
         }
-        if (minAgreement > decUnit) {
+        if (minAgreement > Decimal.unit()) {
             // quorum is bigger than 100%
-            revert VerifierErrors.MinAgreementTooLarge(minAgreement, decUnit);
+            revert VerifierErrors.MinAgreementTooLarge(minAgreement, Decimal.unit());
         }
         if (opinionScales.length != template.opinionScales.length) {
             // wrong opinion scales
@@ -236,6 +235,7 @@ contract ProposalTemplates is IProposalVerifier, OwnableUpgradeable, Version {
             revert VerifierErrors.StartDelayIsTooLarge(startDelay_, template.maxStartDelay);
         }
         if (template.verifier == address(0)) {
+            // template with no additional verifier
             return;
         }
         IProposalVerifier(template.verifier).verifyProposalParams(
