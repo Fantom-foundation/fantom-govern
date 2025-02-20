@@ -9,7 +9,7 @@ import {Proposal} from "../../governance/Proposal.sol";
 contract BaseProposal is IProposal {
     string internal _name;
     string internal _description;
-    bytes32[]internal  _options;
+    bytes32[] internal  _options;
 
     uint256 internal _minVotes;
     uint256 internal _minAgreement;

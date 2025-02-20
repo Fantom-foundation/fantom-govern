@@ -419,6 +419,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @dev Execute a proposal.
     /// @param prop The state of the proposal.
     /// @param winnerOptionID The ID of the winning option.
+    /// @return success Whether the execution was successful.
     /// @return expired Whether the execution period has expired.
     function executeProposal(ProposalState storage prop, uint256 winnerOptionID) internal returns (bool, bool) {
         bool executable = prop.params.executable == Proposal.ExecType.CALL || prop.params.executable == Proposal.ExecType.DELEGATECALL;
