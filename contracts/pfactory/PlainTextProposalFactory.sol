@@ -53,14 +53,6 @@ contract PlainTextProposalFactory is ScopedVerifier {
             __minEnd,
             __maxEnd
         );
-        _create(p);
-    }
-
-    /// @dev internal function to create a new PlainTextProposal
-    /// @param p The parameters of the proposal
-    function _create(
-        Params memory p
-    ) internal {
         PlainTextProposal proposal = new PlainTextProposal(
             p.name,
             p.description,
