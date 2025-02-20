@@ -26,7 +26,7 @@ describe("GovernanceSettings", function () {
         );
         // Make sure default value is different
         expect(await this.gov.proposalFee()).not.to.be.equal(BigInt(newProposalFee*1e18));
-        await this.gov.connect(this.defaultAcc).setProposalFee(newProposalFee);
+        await this.gov.connect(this.defaultAcc).setProposalFee(BigInt(newProposalFee*1e18));
         expect(await this.gov.proposalFee()).to.be.equal(BigInt(newProposalFee*1e18));
     })
     it("proposalBurntFee is changeable by owner", async function () {
@@ -38,7 +38,7 @@ describe("GovernanceSettings", function () {
         // Make sure default value is different
         expect(await this.gov.proposalBurntFee()).not.to.be.equal(BigInt(newProposalBurntFee*1e18));
         await this.gov.connect(this.defaultAcc).setProposalBurntFee(newProposalBurntFee);
-        expect(await this.gov.proposalBurntFee()).to.be.equal(BigInt(newProposalBurntFee*1e18));
+        expect(await this.gov.proposalBurntFee()).to.be.equal(newProposalBurntFee);
     })
     it("taskHandlingReward is changeable by owner", async function () {
         const newTaskHandlingReward = 1;
@@ -49,7 +49,7 @@ describe("GovernanceSettings", function () {
         // Make sure default value is different
         expect(await this.gov.taskHandlingReward()).not.to.be.equal(BigInt(newTaskHandlingReward*1e18));
         await this.gov.connect(this.defaultAcc).setTaskHandlingReward(newTaskHandlingReward);
-        expect(await this.gov.taskHandlingReward()).to.be.equal(BigInt(newTaskHandlingReward*1e18));
+        expect(await this.gov.taskHandlingReward()).to.be.equal(newTaskHandlingReward);
     })
     it("taskErasingReward is changeable by owner", async function () {
         const newTaskErasingReward = 1;
@@ -60,7 +60,7 @@ describe("GovernanceSettings", function () {
         // Make sure default value is different
         expect(await this.gov.taskErasingReward()).not.to.be.equal(BigInt(newTaskErasingReward*1e18));
         await this.gov.connect(this.defaultAcc).setTaskErasingReward(newTaskErasingReward);
-        expect(await this.gov.taskErasingReward()).to.be.equal(BigInt(newTaskErasingReward*1e18));
+        expect(await this.gov.taskErasingReward()).to.be.equal(newTaskErasingReward);
     })
     it("maxOptions is changeable by owner", async function () {
         const newMaxOptions = 1n;
@@ -82,7 +82,7 @@ describe("GovernanceSettings", function () {
         // Make sure default value is different
         expect(await this.gov.maxExecutionPeriod()).not.to.be.equal(hours(newMaxExecutionPeriod));
         await this.gov.connect(this.defaultAcc).setMaxExecutionPeriod(newMaxExecutionPeriod);
-        expect(await this.gov.maxExecutionPeriod()).to.be.equal(hours(newMaxExecutionPeriod));
+        expect(await this.gov.maxExecutionPeriod()).to.be.equal(newMaxExecutionPeriod);
     })
 
 })
@@ -111,27 +111,27 @@ describe("GovernanceSettings - proposalFeeTooLow", function () {
         await expect(this.gov.connect(this.defaultAcc).setProposalFee(newProposalFee)).to.be.revertedWithCustomError(
             this.gov,
             'ProposalFeeTooLow',
-        ).withArgs(BigInt(3*1e18));
+        ).withArgs(3);
     })
     it("setProposalBurntFee should revert when proposalFee is too low", async function () {
         const newProposalBurntFee = 2;
         await expect(this.gov.connect(this.defaultAcc).setProposalBurntFee(newProposalBurntFee)).to.be.revertedWithCustomError(
             this.gov,
             'ProposalFeeTooLow',
-        ).withArgs(BigInt(4*1e18));
+        ).withArgs(4);
     })
     it("taskHandlingReward is changeable by owner", async function () {
         const setTaskHandlingReward = 2;
         await expect(this.gov.connect(this.defaultAcc).setTaskHandlingReward(setTaskHandlingReward)).to.be.revertedWithCustomError(
             this.gov,
             'ProposalFeeTooLow',
-        ).withArgs(BigInt(4*1e18));
+        ).withArgs(4);
     })
     it("taskErasingReward is changeable by owner", async function () {
         const setTaskErasingReward = 2;
         await expect(this.gov.connect(this.defaultAcc).setTaskErasingReward(setTaskErasingReward)).to.be.revertedWithCustomError(
             this.gov,
             'ProposalFeeTooLow',
-        ).withArgs(BigInt(4*1e18));
+        ).withArgs(4);
     })
 })
