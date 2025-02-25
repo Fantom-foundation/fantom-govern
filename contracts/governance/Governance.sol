@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import {Governable} from "../model/Governable.sol";
+import {IGovernable} from "../interfaces/IGovernable.sol";
 import {IProposal} from "../interfaces/IProposal.sol";
 import {IProposalVerifier} from "../verifiers/IProposalVerifier.sol";
 import {Proposal} from "./Proposal.sol";
@@ -46,7 +46,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         uint256 proposalID;
     }
 
-    Governable public governableContract; // SFC to Governable adapter refer to SFCToGovernable.sol
+    IGovernable public governableContract; // SFC to Governable adapter refer to SFCToGovernable.sol
     IProposalVerifier public proposalVerifier;
     uint256 public lastProposalID;
 
@@ -120,7 +120,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @param _proposalVerifier The address of the proposal verifier.
     /// @param _votebook The address of the votebook contract.
     function initialize(address _governableContract, address _proposalVerifier, address _votebook) public initializer {
-        governableContract = Governable(_governableContract);
+        governableContract = IGovernable(_governableContract);
         proposalVerifier = IProposalVerifier(_proposalVerifier);
         votebook = VotesBookKeeper(_votebook);
     }

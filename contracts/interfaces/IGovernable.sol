@@ -2,8 +2,8 @@
 pragma solidity 0.8.27;
 
 
-/// @notice Governable defines the main interface for all governable items
-interface Governable {
+/// @notice IGovernable.sol defines the main interface for all governable items
+interface IGovernable {
     /// @notice Retrieves the total active stake across all validators.
     /// @return The sum of all active delegated stakes.
     function getTotalWeight() external view returns (uint256);
