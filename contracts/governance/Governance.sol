@@ -3,7 +3,7 @@ pragma solidity 0.8.27;
 
 import {IGovernable} from "../interfaces/IGovernable.sol";
 import {IProposal} from "../interfaces/IProposal.sol";
-import {IProposalVerifier} from "../verifiers/IProposalVerifier.sol";
+import {IProposalVerifier} from "../interfaces/IProposalVerifier.sol";
 import {Proposal} from "./Proposal.sol";
 import {GovernanceSettings} from "./GovernanceSettings.sol";
 import {LRC} from "./LRC.sol";
