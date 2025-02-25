@@ -1304,6 +1304,25 @@ describe("Votesbook test", function () {
         expect(await this.votebook.getProposalIDs(this.firstVoterAcc, this.delegatorAcc)).to.deep.equal([]);
         expect(await this.votebook.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID)).to.equal(0);
     });
+
+    it("votescap should be changeable", async function () {
+        const choices = [0n, 3n, 4n];
+        await createProposal(this.gov, this.verifier, NonExecutableType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"));
+        const proposalID1 = await this.gov.lastProposalID();
+        await createProposal(this.gov, this.verifier, NonExecutableType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"));
+        const proposalID2 = await this.gov.lastProposalID();
+        await createProposal(this.gov, this.verifier, NonExecutableType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"));
+        const proposalID3 = await this.gov.lastProposalID();
+
+        // two votes for one address is maximum
+        await this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID1, choices);
+        await this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID2, choices);
+        // third should revert
+        await expect(this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID3, choices)).to.be.revertedWith("too many votes");
+
+        await this.votebook.connect(this.defaultAcc).setMaxProposalsPerVoter(3);
+        await this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID3, choices);
+    });
 });
 
 // createProposal deploys and proposes an 'ExecLoggingProposal' proposal with the given parameters,
