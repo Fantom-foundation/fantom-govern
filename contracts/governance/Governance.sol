@@ -5,6 +5,7 @@ import {IGovernable} from "../interfaces/IGovernable.sol";
 import {IProposal} from "../interfaces/IProposal.sol";
 import {IProposalVerifier} from "../interfaces/IProposalVerifier.sol";
 import {Proposal} from "./Proposal.sol";
+import {SoftwareUpgradeProposal} from "../proposal/SoftwareUpgradeProposal.sol";
 import {GovernanceSettings} from "./GovernanceSettings.sol";
 import {LRC} from "./LRC.sol";
 import {Version} from "../version/Version.sol";
