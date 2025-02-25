@@ -11,6 +11,8 @@ contract SlashingRefundProposalFactory is ScopedVerifier {
     Governance internal gov;
     address internal sfcAddress;
 
+    error ValidatorNotSlashed(); // thrown when proposing un-slashed validator
+
     constructor(address _govAddress, address _sfcAddress) public {
         gov = Governance(_govAddress);
         sfcAddress = _sfcAddress;
@@ -33,7 +35,9 @@ contract SlashingRefundProposalFactory is ScopedVerifier {
         uint256 __minEnd,
         uint256 __maxEnd
     ) external payable {
-        require(ISFC(sfcAddress).isSlashed(__validatorID), "validator isn't slashed");
+        if (!ISFC(sfcAddress).isSlashed(__validatorID)) {
+            revert ValidatorNotSlashed();
+        }
         SlashingRefundProposal proposal = new SlashingRefundProposal(
             __validatorID,
             __description,
