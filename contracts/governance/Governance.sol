@@ -2,7 +2,7 @@
 pragma solidity 0.8.27;
 
 import {Governable} from "../model/Governable.sol";
-import {IProposal} from "../proposal/base/IProposal.sol";
+import {IProposal} from "../interfaces/IProposal.sol";
 import {IProposalVerifier} from "../verifiers/IProposalVerifier.sol";
 import {SoftwareUpgradeProposal} from "../proposal/SoftwareUpgradeProposal.sol";
 import {Proposal} from "./Proposal.sol";

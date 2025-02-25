@@ -2,7 +2,7 @@
 pragma solidity 0.8.27;
 
 import {Decimal} from "../common/Decimal.sol";
-import {IProposal} from "../proposal/base/IProposal.sol";
+import {IProposal} from "../interfaces/IProposal.sol";
 import {IProposalVerifier} from "./IProposalVerifier.sol";
 import {Version} from "../version/Version.sol";
 import {Proposal} from "../governance/Proposal.sol";
