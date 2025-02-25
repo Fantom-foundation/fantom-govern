@@ -2,7 +2,7 @@
 pragma solidity 0.8.27;
 
 
-/// @notice IGovernable.sol defines the main interface for all governable items
+/// @notice IGovernable defines the main interface for all governable items
 interface IGovernable {
     /// @notice Retrieves the total active stake across all validators.
     /// @return The sum of all active delegated stakes.
