@@ -8,12 +8,12 @@ import {ScopedVerifier} from "../verifiers/ScopedVerifier.sol";
 /// @notice NetworkParameterProposalFactory is a factory contract to create NetworkParameterProposal
 contract NetworkParameterProposalFactory is ScopedVerifier {
     Governance internal gov;
-    address internal constsAddress; // address of the Constants contract
+    address internal updaterAddress; // address of the Updater contract
     address public lastNetworkProposal; // address of the last created NetworkParameterProposal
 
-    constructor(address govAddress, address _constsAddress) {
+    constructor(address govAddress, address _updaterAddress) {
         gov = Governance(govAddress);
-        constsAddress = _constsAddress;
+        updaterAddress = _updaterAddress;
     }
 
     /// @notice create a new NetworkParameterProposal
@@ -39,7 +39,7 @@ contract NetworkParameterProposalFactory is ScopedVerifier {
             description,
             methodID,
             optionVals,
-            constsAddress,
+            updaterAddress,
             minVotes,
             minAgreement,
             start,
