@@ -42,6 +42,8 @@ const governanceFixture = async function () {
     }
 }
 
+
+
 describe("Governance test", function () {
     beforeEach(async function (){
         Object.assign(this, await loadFixture(governanceFixture));
@@ -1191,6 +1193,116 @@ describe("Governance test", function () {
         expect(await proposal99.name()).to.equal("Refund for Slashed Validator #99");
         expect(await proposal100.name()).to.equal("Refund for Slashed Validator #100");
         expect(await proposal999.name()).to.equal("Refund for Slashed Validator #999");
+    });
+});
+
+describe("Votesbook test", function () {
+    const fixture = async function () {
+        const [defaultAcc, delegatorAcc, firstVoterAcc, secondVoterAcc] = await ethers.getSigners();
+        const sfc = await ethers.deployContract("UnitTestSFC");
+        await sfc.addValidator(1, 0, delegatorAcc)
+        const govable = await ethers.deployContract("SFCGovernableAdapter", [await sfc.getAddress()]);
+        const verifier = await ethers.deployContract("ProposalTemplates")
+        const verifierAddress = await verifier.getAddress();
+        const votebook = await ethers.deployContract("VotesBookKeeper");
+        const gov = await ethers.deployContract("Governance");
+        await verifier.initialize(defaultAcc.getAddress());
+        await votebook.initialize(defaultAcc.getAddress(), gov.getAddress(), 2);
+        await gov.initialize(govable.getAddress(), verifierAddress, votebook.getAddress());
+        const proposalFee = await gov.proposalFee();
+        // Stake two accounts and delegate it to delegatorAcc
+        await sfc.connect(firstVoterAcc).stake(delegatorAcc, ethers.parseEther("1.0"));
+        await sfc.connect(secondVoterAcc).stake(delegatorAcc, ethers.parseEther("2.0"));
+
+        return {
+            sfc,
+            govable,
+            verifier,
+            verifierAddress,
+            votebook,
+            gov,
+            defaultAcc,
+            delegatorAcc,
+            firstVoterAcc,
+            secondVoterAcc,
+            proposalFee,
+        }
+    }
+
+    beforeEach(async function () {
+        Object.assign(this, await loadFixture(fixture));
+    });
+    const optionsNum = 3;
+    const choices = [0n, 3n, 4n];
+
+    it("vote() should record two votes in votesbook", async function () {
+        await createProposal(this.gov, this.verifier, NonExecutableType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"));
+        const proposalID1 = await this.gov.lastProposalID();
+        await createProposal(this.gov, this.verifier, NonExecutableType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"));
+        const proposalID2 = await this.gov.lastProposalID();
+
+        // Vote with two different accounts to two different proposals
+        await this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID1, choices);
+        await this.gov.connect(this.secondVoterAcc).vote(this.delegatorAcc, proposalID2, choices);
+
+        // Check votesList
+        expect(await this.votebook.getProposalIDs(this.firstVoterAcc, this.delegatorAcc)).to.deep.equal([proposalID1]);
+        expect(await this.votebook.getProposalIDs(this.secondVoterAcc, this.delegatorAcc)).to.deep.equal([proposalID2]);
+
+        // check voteIndex
+        expect(await this.votebook.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID1)).to.equal(1);
+        expect(await this.votebook.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID2)).to.equal(0);
+        expect(await this.votebook.getVoteIndex(this.secondVoterAcc, this.delegatorAcc, proposalID2)).to.equal(1);
+        expect(await this.votebook.getVoteIndex(this.secondVoterAcc, this.delegatorAcc, proposalID1)).to.equal(0);
+    });
+
+    it("vote() should revert when received too many votes from one voter", async function () {
+        const choices = [0n, 3n, 4n];
+        await createProposal(this.gov, this.verifier, NonExecutableType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"));
+        const proposalID1 = await this.gov.lastProposalID();
+        await createProposal(this.gov, this.verifier, NonExecutableType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"));
+        const proposalID2 = await this.gov.lastProposalID();
+        await createProposal(this.gov, this.verifier, NonExecutableType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"));
+        const proposalID3 = await this.gov.lastProposalID();
+
+        // two votes for one address is maximum
+        await this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID1, choices);
+        await this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID2, choices);
+        // third should revert
+        await expect(this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID3, choices)).to.be.revertedWith("too many votes");
+    });
+
+    it("cancelVote() should remove vote from votesbook", async function () {
+        await createProposal(this.gov, this.verifier, NonExecutableType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"));
+        const proposalID1 = await this.gov.lastProposalID();
+        await createProposal(this.gov, this.verifier, NonExecutableType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"));
+        const proposalID2 = await this.gov.lastProposalID();
+
+        // make votes
+        await this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID1, choices);
+        await this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID2, choices);
+        // is it recorded in votesbook?
+        expect(await this.votebook.getProposalIDs(this.firstVoterAcc, this.delegatorAcc)).to.deep.equal([proposalID1, proposalID2]);
+        // cancel it
+        await this.gov.connect(this.firstVoterAcc).cancelVote(this.delegatorAcc, proposalID1);
+        // proposal 1 should not be in votesbook
+        expect(await this.votebook.getProposalIDs(this.firstVoterAcc, this.delegatorAcc)).to.deep.equal([proposalID2]);
+        expect(await this.votebook.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID1)).to.equal(0);
+    });
+
+    it("recountVotes() ", async function () {
+        await createProposal(this.gov, this.verifier, NonExecutableType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"));
+        const proposalID = await this.gov.lastProposalID();
+
+        // make a vote
+        await this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID, choices);
+        // is it recorded in votesbook?
+        expect(await this.votebook.getProposalIDs(this.firstVoterAcc, this.delegatorAcc)).to.deep.equal([proposalID]);
+        // cancel it
+        await this.gov.connect(this.firstVoterAcc).cancelVote(this.delegatorAcc, proposalID);
+        // nothing should be in votesbook
+        expect(await this.votebook.getProposalIDs(this.firstVoterAcc, this.delegatorAcc)).to.deep.equal([]);
+        expect(await this.votebook.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID)).to.equal(0);
     });
 });
 
