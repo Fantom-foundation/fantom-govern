@@ -6,7 +6,6 @@ import {IProposal} from "../proposal/base/IProposal.sol";
 import {IProposalVerifier} from "../verifiers/IProposalVerifier.sol";
 import {SoftwareUpgradeProposal} from "../proposal/SoftwareUpgradeProposal.sol";
 import {Proposal} from "./Proposal.sol";
-import {Constants} from "./Constants.sol";
 import {GovernanceSettings} from "./GovernanceSettings.sol";
 import {LRC} from "./LRC.sol";
 import {Version} from "../version/Version.sol";
@@ -23,22 +22,25 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         uint256[] choices; // Votes choices
     }
 
+    // ProposalState.status constants
+    enum ProposalStatus {
+        INITIAL,
+        RESOLVED,
+        FAILED,
+        CANCELED,
+        EXECUTION_EXPIRED
+    }
+
     struct ProposalState {
         Proposal.Parameters params;
 
         mapping(uint256 => LRC.Option) options; // Voting state OptionID => LRC.Option
         uint256 winnerOptionID;
         uint256 votes; // Sum of total weight of votes
-
-        // Refer to Constants.sol
-        // 0 == STATUS_INITIAL
-        // 1 = STATUS_RESOLVED
-        // 1 << 1 == STATUS_FAILED
-        // 1 << 2 == STATUS_CANCELED
-        // 1 << 3 == STATUS_EXECUTION_EXPIRED
-        uint256 status;
+        ProposalStatus status;
     }
 
+    uint256 constant public TASK_VOTING = 1;
     struct Task {
         bool active;
         uint256 assignment;
@@ -181,7 +183,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @return winnerOptionID The ID of the winning option.
     /// @return votes Sum of total weight of votes
     /// @return status The status of the proposal.
-    function proposalState(uint256 proposalID) public view returns (uint256 winnerOptionID, uint256 votes, uint256 status) {
+    function proposalState(uint256 proposalID) public view returns (uint256 winnerOptionID, uint256 votes, ProposalStatus status) {
         ProposalState storage p = proposals[proposalID];
         return (p.winnerOptionID, p.votes, p.status);
     }
@@ -225,7 +227,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         ProposalState storage prop = proposals[proposalID];
 
         require(prop.params.proposalContract != address(0), "proposal with a given ID doesnt exist");
-        require(isInitialStatus(prop.status), "proposal isn't active");
+        require(prop.status == ProposalStatus.INITIAL, "proposal isn't active");
         require(block.timestamp >= prop.params.deadlines.votingStartTime, "proposal voting hasn't begun");
         require(_votes[msg.sender][delegatedTo][proposalID].weight == 0, "vote already exists");
         require(choices.length == prop.params.options.length, "wrong number of choices");
@@ -237,14 +239,14 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @notice Create a new proposal.
     /// @param proposalContract The address of the proposal contract.
     function createProposal(address proposalContract) nonReentrant external payable {
-        require(msg.value == proposalFee(), "paid proposal fee is wrong");
+        require(msg.value == proposalFee, "paid proposal fee is wrong");
 
         lastProposalID++;
         _createProposal(lastProposalID, proposalContract);
         addTasks(lastProposalID);
 
         // burn a non-reward part of the proposal fee
-        burn(proposalBurntFee());
+        burn(proposalBurntFee);
 
         emit ProposalCreated(lastProposalID);
     }
@@ -267,7 +269,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         bytes32[] memory options = p.options();
         // check the parameters and contract
         require(options.length != 0, "proposal options are empty - nothing to vote for");
-        require(options.length <= maxOptions(), "too many options");
+        require(options.length <= maxOptions, "too many options");
         bool ok;
         ok = proposalVerifier.verifyProposalParams(
             pType,
@@ -301,11 +303,11 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     function cancelProposal(uint256 proposalID) nonReentrant external {
         ProposalState storage prop = proposals[proposalID];
         require(prop.params.proposalContract != address(0), "proposal with a given ID doesnt exist");
-        require(isInitialStatus(prop.status), "proposal isn't active");
+        require(prop.status == ProposalStatus.INITIAL, "proposal isn't active");
         require(prop.votes == 0, "voting has already begun");
         require(msg.sender == prop.params.proposalContract, "must be sent from the proposal contract");
 
-        prop.status = statusCanceled();
+        prop.status = ProposalStatus.CANCELED;
         emit ProposalCanceled(proposalID);
     }
 
@@ -326,7 +328,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
 
         emit TasksHandled(startIdx, i, handled);
         // reward the sender
-        (bool success, ) = payable(msg.sender).call{value: handled * taskHandlingReward()}("");
+        (bool success, ) = payable(msg.sender).call{value: handled * taskHandlingReward}("");
         require(success, "transfer failed");
     }
 
@@ -346,7 +348,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         require(erased > 0, "no tasks erased");
         emit TasksErased(erased);
         // reward the sender
-        (bool success, ) = payable(msg.sender).call{value: erased * taskErasingReward()}("");
+        (bool success, ) = payable(msg.sender).call{value: erased * taskErasingReward}("");
         require(success, "transfer failed");
     }
 
@@ -372,7 +374,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @return handled Whether the task was handled.
     function handleTaskAssignments(uint256 proposalID, uint256 assignment) internal returns (bool handled) {
         ProposalState storage prop = proposals[proposalID];
-        if (!isInitialStatus(prop.status)) {
+        if (prop.status != ProposalStatus.INITIAL) {
             // deactivate all tasks for non-active proposals
             return true;
         }
@@ -401,15 +403,15 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
                 return false;
             }
             if (!expired) {
-                prop.status = statusResolved();
+                prop.status = ProposalStatus.RESOLVED;
                 prop.winnerOptionID = winnerID;
                 emit ProposalResolved(proposalID);
             } else {
-                prop.status = statusExecutionExpired();
+                prop.status = ProposalStatus.EXECUTION_EXPIRED;
                 emit ProposalExecutionExpired(proposalID);
             }
         } else {
-            prop.status = statusFailed();
+            prop.status = ProposalStatus.FAILED;
             emit ProposalRejected(proposalID);
         }
         return true;
@@ -426,7 +428,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
             return (true, false);
         }
 
-        bool executionExpired = block.timestamp > prop.params.deadlines.votingMaxEndTime + maxExecutionPeriod();
+        bool executionExpired = block.timestamp > prop.params.deadlines.votingMaxEndTime + maxExecutionPeriod;
         if (executionExpired) {
             // protection against proposals which revert or consume too much gas
             return (true, true);
@@ -492,7 +494,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         }
         Vote memory v = _votes[msg.sender][delegatedTo][proposalID];
         require(v.weight != 0, "doesn't exist");
-        require(isInitialStatus(proposals[proposalID].status), "proposal isn't active");
+        require(proposals[proposalID].status == ProposalStatus.INITIAL, "proposal isn't active");
         _cancelVote(msg.sender, delegatedTo, proposalID);
     }
 
@@ -584,7 +586,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         Vote storage v = _votes[voterAddr][delegatedTo][proposalID];
         Vote storage vSuper = _votes[delegatedTo][delegatedTo][proposalID];
         require(v.choices.length > 0, "doesn't exist");
-        require(isInitialStatus(proposals[proposalID].status), "proposal isn't active");
+        require(proposals[proposalID].status == ProposalStatus.INITIAL, "proposal isn't active");
         uint256 beforeSelf = v.weight;
         uint256 beforeSuper = vSuper.weight;
         _recountVote(voterAddr, delegatedTo, proposalID);
@@ -686,7 +688,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @param proposalID The ID of the proposal.
     function sanitizeWinnerID(uint256 proposalID) external {
         ProposalState storage prop = proposals[proposalID];
-        require(prop.status == STATUS_RESOLVED, "proposal isn't resolved");
+        require(prop.status == ProposalStatus.RESOLVED, "proposal isn't resolved");
         require(prop.params.executable == Proposal.ExecType.NONE, "proposal is executable");
         require(prop.winnerOptionID == 0, "winner ID is correct");
         (, prop.winnerOptionID) = _calculateVotingTally(prop);

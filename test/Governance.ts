@@ -11,6 +11,14 @@ const CallType = 1n;
 const DelegateCallType = 2n;
 const scales = [0, 2, 3, 4, 5];
 
+const ProposalStatus = {
+    INITIAL: 0n,
+    RESOLVED: 1n,
+    FAILED: 2n,
+    CANCELED: 3n,
+    EXECUTION_EXPIRED: 4n,
+}
+
 const governanceFixture = async function () {
     const [defaultAcc, otherAcc, firstVoterAcc, secondVoterAcc, delegatorAcc] = await ethers.getSigners();
     const sfc = await ethers.deployContract("UnitTestSFC");
@@ -257,7 +265,7 @@ describe("Governance test", function () {
             const proposalStateInfo = await this.gov.proposalState(this.proposalID);
             expect(proposalStateInfo.winnerOptionID).to.be.equal(0n);
             expect(proposalStateInfo.votes).to.be.equal(ethers.parseEther("10.0"));
-            expect(proposalStateInfo.status).to.be.equal(0n);
+            expect(proposalStateInfo.status).to.be.equal(ProposalStatus.INITIAL);
             const option0 = await this.gov.proposalOptionState(this.proposalID, 0);
             const option1 = await this.gov.proposalOptionState(this.proposalID, 1);
             const option2 = await this.gov.proposalOptionState(this.proposalID, 2);
@@ -295,7 +303,7 @@ describe("Governance test", function () {
             const proposalStateInfo = await this.gov.proposalState(this.proposalID);
             expect(proposalStateInfo.winnerOptionID).to.be.equal(0n);
             expect(proposalStateInfo.votes).to.be.equal(ethers.parseEther("15.0"));
-            expect(proposalStateInfo.status).to.be.equal(0n);
+            expect(proposalStateInfo.status).to.be.equal(ProposalStatus.INITIAL);
             const option0 = await this.gov.proposalOptionState(this.proposalID, 0);
             const option1 = await this.gov.proposalOptionState(this.proposalID, 1);
             const option2 = await this.gov.proposalOptionState(this.proposalID, 2);
@@ -335,7 +343,7 @@ describe("Governance test", function () {
             const proposalStateInfo = await this.gov.proposalState(this.proposalID);
             expect(proposalStateInfo.winnerOptionID).to.be.equal(0n);
             expect(proposalStateInfo.votes).to.be.equal(ethers.parseEther("0.0"));
-            expect(proposalStateInfo.status).to.be.equal(0n);
+            expect(proposalStateInfo.status).to.be.equal(ProposalStatus.INITIAL);
             const voteInfo = await this.gov.getVote(this.defaultAcc, this.defaultAcc, this.proposalID);
             expect(voteInfo.weight).to.be.equal(ethers.parseEther("0.0"));
             expect(voteInfo.choices.length).to.equal(0);
@@ -392,7 +400,7 @@ describe("Governance test", function () {
         const proposalStateInfo = await this.gov.proposalState(proposalID);
         expect(proposalStateInfo.winnerOptionID).to.be.equal(2n);
         expect(proposalStateInfo.votes).to.be.equal(ethers.parseEther("10.0"));
-        expect(proposalStateInfo.status).to.be.equal(1n);
+        expect(proposalStateInfo.status).to.be.equal(ProposalStatus.RESOLVED);
 
         // check proposal execution via delegatecall
         expect(await proposalContract.executedCounter()).to.be.equal(1n);
@@ -477,7 +485,7 @@ describe("Governance test", function () {
         const proposalStateInfo = await this.gov.proposalState(proposalID);
         expect(proposalStateInfo.winnerOptionID).to.be.equal(1n);
         expect(proposalStateInfo.votes).to.be.equal(ethers.parseEther("10.0"));
-        expect(proposalStateInfo.status).to.be.equal(1n);
+        expect(proposalStateInfo.status).to.be.equal(ProposalStatus.RESOLVED);
     });
 
     it("checking proposal rejecting before max voting end is reached", async function () {
@@ -498,7 +506,7 @@ describe("Governance test", function () {
         const proposalStateInfo = await this.gov.proposalState(proposalID);
         expect(proposalStateInfo.winnerOptionID).to.be.equal(0n);
         expect(proposalStateInfo.votes).to.be.equal(ethers.parseEther("10.0"));
-        expect(proposalStateInfo.status).to.be.equal(2n);
+        expect(proposalStateInfo.status).to.be.equal(ProposalStatus.FAILED);
     });
 
     it("checking voting tally with low turnout", async function () {
@@ -524,7 +532,7 @@ describe("Governance test", function () {
         const proposalStateInfo = await this.gov.proposalState(proposalID);
         expect(proposalStateInfo.winnerOptionID).to.be.equal(0n);
         expect(proposalStateInfo.votes).to.be.equal(ethers.parseEther("10.0"));
-        expect(proposalStateInfo.status).to.be.equal(1n);
+        expect(proposalStateInfo.status).to.be.equal(ProposalStatus.RESOLVED);
     });
 
     it("checking execution expiration", async function () {
@@ -548,7 +556,7 @@ describe("Governance test", function () {
         const proposalStateInfo = await this.gov.proposalState(proposalID);
         expect(proposalStateInfo.winnerOptionID).to.be.equal(0n);
         expect(proposalStateInfo.votes).to.be.equal(ethers.parseEther("10.0"));
-        expect(proposalStateInfo.status).to.be.equal(8n);
+        expect(proposalStateInfo.status).to.be.equal(ProposalStatus.EXECUTION_EXPIRED);
 
         // check proposal isn't executed
         expect(await proposalContract.executedCounter()).to.be.equal(0n);
@@ -575,7 +583,7 @@ describe("Governance test", function () {
         const proposalStateInfo = await this.gov.proposalState(proposalID);
         expect(proposalStateInfo.winnerOptionID).to.be.equal(0n);
         expect(proposalStateInfo.votes).to.be.equal(ethers.parseEther("10.0"));
-        expect(proposalStateInfo.status).to.be.equal(2n);
+        expect(proposalStateInfo.status).to.be.equal(ProposalStatus.FAILED);
 
         // check proposal isn't executed
         expect(await proposalContract.executedCounter()).to.be.equal(0n);
@@ -605,7 +613,7 @@ describe("Governance test", function () {
         const proposalStateInfo = await this.gov.proposalState(proposalID);
         expect(proposalStateInfo.winnerOptionID).to.be.equal(0n);
         expect(proposalStateInfo.votes).to.be.equal(ethers.parseEther("10.0"));
-        expect(proposalStateInfo.status).to.be.equal(1n);
+        expect(proposalStateInfo.status).to.be.equal(ProposalStatus.RESOLVED);
 
         // check proposal is executed
         expect(await proposalContract.executedCounter()).to.be.equal(1n);
@@ -638,7 +646,7 @@ describe("Governance test", function () {
         const proposalStateInfo = await this.gov.proposalState(proposalID);
         expect(proposalStateInfo.winnerOptionID).to.be.equal(0n);
         expect(proposalStateInfo.votes).to.be.equal(ethers.parseEther("0.0"));
-        expect(proposalStateInfo.status).to.be.equal(4n);
+        expect(proposalStateInfo.status).to.be.equal(ProposalStatus.CANCELED);
 
         // handle task
         await this.gov.handleTasks(0, 1);
@@ -648,7 +656,7 @@ describe("Governance test", function () {
         const proposalStateInfoAfterTask = await this.gov.proposalState(proposalID);
         expect(proposalStateInfoAfterTask.winnerOptionID).to.be.equal(0n);
         expect(proposalStateInfoAfterTask.votes).to.be.equal(ethers.parseEther("0.0"));
-        expect(proposalStateInfoAfterTask.status).to.be.equal(4n);
+        expect(proposalStateInfoAfterTask.status).to.be.equal(3n);
 
         // check proposal isn't executed
         expect(await proposalContract.executedCounter()).to.be.equal(0n);
@@ -677,7 +685,7 @@ describe("Governance test", function () {
             const proposalID = i + 1;
             // check proposal status
             const proposalStateInfo = await this.gov.proposalState(proposalID);
-            expect(proposalStateInfo.status).to.be.equal(1n);
+            expect(proposalStateInfo.status).to.be.equal(ProposalStatus.RESOLVED);
             // check task status
             const task = await this.gov.getTask(i);
             expect(task.active).to.equal(false);
@@ -686,7 +694,7 @@ describe("Governance test", function () {
             const proposalID = i + 1;
             // check proposal status
             const proposalStateInfo = await this.gov.proposalState(proposalID);
-            expect(proposalStateInfo.status).to.be.equal(0n);
+            expect(proposalStateInfo.status).to.be.equal(ProposalStatus.INITIAL);
             // check task status
             const task = await this.gov.getTask(i);
             expect(task.active).to.equal(true);
@@ -706,7 +714,7 @@ describe("Governance test", function () {
             const proposalID = i + 1;
             // check proposal status
             const proposalStateInfo = await this.gov.proposalState(proposalID);
-            expect(proposalStateInfo.status).to.be.equal(1n);
+            expect(proposalStateInfo.status).to.be.equal(ProposalStatus.RESOLVED);
         }
     });
 
@@ -732,7 +740,7 @@ describe("Governance test", function () {
         const proposalStateInfo = await this.gov.proposalState(proposalID);
         expect(proposalStateInfo.winnerOptionID).to.be.equal(0n);
         expect(proposalStateInfo.votes).to.be.equal(ethers.parseEther("10.0"));
-        expect(proposalStateInfo.status).to.be.equal(2n);
+        expect(proposalStateInfo.status).to.be.equal(ProposalStatus.FAILED);
 
         // check proposal isn't executed
         expect(await proposalContract.executedCounter()).to.be.equal(0n);
@@ -861,7 +869,7 @@ describe("Governance test", function () {
                 const proposalStateInfo = await this.gov.proposalState(this.proposalID);
                 expect(proposalStateInfo.winnerOptionID).to.be.equal(0n);
                 expect(proposalStateInfo.votes).to.be.equal(ethers.parseEther("60.0"));
-                expect(proposalStateInfo.status).to.be.equal(0n);
+                expect(proposalStateInfo.status).to.be.equal(ProposalStatus.INITIAL);
                 const option0 = await this.gov.proposalOptionState(this.proposalID, 0);
                 const option1 = await this.gov.proposalOptionState(this.proposalID, 1);
                 const option2 = await this.gov.proposalOptionState(this.proposalID, 2);
@@ -892,7 +900,7 @@ describe("Governance test", function () {
                 const proposalStateInfo = await this.gov.proposalState(this.proposalID);
                 expect(proposalStateInfo.winnerOptionID).to.be.equal(0n);
                 expect(proposalStateInfo.votes).to.be.equal(ethers.parseEther("50.0"));
-                expect(proposalStateInfo.status).to.be.equal(0n);
+                expect(proposalStateInfo.status).to.be.equal(ProposalStatus.INITIAL);
                 const option0 = await this.gov.proposalOptionState(this.proposalID, 0);
                 const option1 = await this.gov.proposalOptionState(this.proposalID, 1);
                 const option2 = await this.gov.proposalOptionState(this.proposalID, 2);
@@ -923,7 +931,7 @@ describe("Governance test", function () {
                 const proposalStateInfo = await this.gov.proposalState(this.proposalID);
                 expect(proposalStateInfo.winnerOptionID).to.be.equal(0n);
                 expect(proposalStateInfo.votes).to.be.equal(ethers.parseEther("55.0"));
-                expect(proposalStateInfo.status).to.be.equal(0n);
+                expect(proposalStateInfo.status).to.be.equal(ProposalStatus.INITIAL);
                 const option0 = await this.gov.proposalOptionState(this.proposalID, 0);
                 const option1 = await this.gov.proposalOptionState(this.proposalID, 1);
                 const option2 = await this.gov.proposalOptionState(this.proposalID, 2);
@@ -955,7 +963,7 @@ describe("Governance test", function () {
                 const proposalStateInfo = await this.gov.proposalState(this.proposalID);
                 expect(proposalStateInfo.winnerOptionID).to.be.equal(0n);
                 expect(proposalStateInfo.votes).to.be.equal(ethers.parseEther("70.0"));
-                expect(proposalStateInfo.status).to.be.equal(0n);
+                expect(proposalStateInfo.status).to.be.equal(ProposalStatus.INITIAL);
                 const option0 = await this.gov.proposalOptionState(this.proposalID, 0);
                 const option1 = await this.gov.proposalOptionState(this.proposalID, 1);
                 const option2 = await this.gov.proposalOptionState(this.proposalID, 2);
@@ -990,7 +998,7 @@ describe("Governance test", function () {
                 const proposalStateInfo = await this.gov.proposalState(this.proposalID);
                 expect(proposalStateInfo.winnerOptionID).to.be.equal(0n);
                 expect(proposalStateInfo.votes).to.be.equal(ethers.parseEther("75.0"));
-                expect(proposalStateInfo.status).to.be.equal(0n);
+                expect(proposalStateInfo.status).to.be.equal(ProposalStatus.INITIAL);
                 const option0 = await this.gov.proposalOptionState(this.proposalID, 0);
                 const option1 = await this.gov.proposalOptionState(this.proposalID, 1);
                 const option2 = await this.gov.proposalOptionState(this.proposalID, 2);
@@ -1057,7 +1065,7 @@ describe("Governance test", function () {
                 const proposalStateInfo = await this.gov.proposalState(this.proposalID);
                 expect(proposalStateInfo.winnerOptionID).to.be.equal(0n);
                 expect(proposalStateInfo.votes).to.be.equal(ethers.parseEther("0.0"));
-                expect(proposalStateInfo.status).to.be.equal(0n);
+                expect(proposalStateInfo.status).to.be.equal(ProposalStatus.INITIAL);
                 const voteInfo1 = await this.gov.getVote(this.firstVoterAcc, this.firstVoterAcc, this.proposalID);
                 expect(voteInfo1.weight).to.be.equal(ethers.parseEther("0.0"));
                 expect(voteInfo1.choices.length).to.equal(0);
@@ -1283,7 +1291,7 @@ const checkFullVotes = async function (
     expect(proposalStateInfo.winnerOptionID).to.be.equal(0n);
     // total of 60 eth voted
     expect(proposalStateInfo.votes).to.be.equal(ethers.parseEther("60.0"));
-    expect(proposalStateInfo.status).to.be.equal(0n);
+    expect(proposalStateInfo.status).to.be.equal(ProposalStatus.INITIAL);
     const option0 = await gov.proposalOptionState(proposalID, 0);
     const option1 = await gov.proposalOptionState(proposalID, 1);
     const option2 = await gov.proposalOptionState(proposalID, 2);
