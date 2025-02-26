@@ -62,6 +62,40 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
 
     VotesBookKeeper votebook;
 
+    // Proposal
+    error UnknownProposalID(uint256 proposalID);
+    error InactiveProposal(uint256 proposalID);
+    error EmptyProposalAddress();
+    error EmptyProposalOptions();
+    error ProposalNotResolved(uint256 proposalID);
+    error ProposalIsExecutable(uint256 proposalID);
+    error IncorrectProposalFee(uint256 got, uint256 want);
+    error RecountChangedNothing();
+    error WinnerIDIsCorrect(uint256 proposalID);
+
+    // Auth
+    error SenderNotProposal(address sender, address proposal);
+
+    // Voting
+    error VotingStarted();
+    error VotingNotStarted();
+
+    // Vote
+    error UnknownVote(address voter, address delegatedTo, uint256 proposalID);
+    error AlreadyVoted(address delegatedTo, uint256 proposalID);
+    error WrongNumberOfChoices(uint256 got, uint256 want);
+    error ZeroWeightVote(address delegatedTo, uint256 proposalID);
+    error TooManyOptions(uint256 max);
+
+
+    // Rewards and burn
+    error TransferFailed();
+
+    // Tasks
+    error NoTasksHandled();
+    error NoTasksToClean();
+    error UnknownTaskIndex(uint256 taskIdx);
+
     /// @notice Emitted when a new proposal is created.
     /// @param proposalID ID of newly created proposal.
     event ProposalCreated(uint256 proposalID);
@@ -226,20 +260,34 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
 
         ProposalState storage prop = proposals[proposalID];
 
-        require(prop.params.proposalContract != address(0), "proposal with a given ID doesnt exist");
-        require(prop.status == ProposalStatus.INITIAL, "proposal isn't active");
-        require(block.timestamp >= prop.params.deadlines.votingStartTime, "proposal voting hasn't begun");
-        require(_votes[msg.sender][delegatedTo][proposalID].weight == 0, "vote already exists");
-        require(choices.length == prop.params.options.length, "wrong number of choices");
+        if (prop.params.proposalContract == address(0)) {
+            revert UnknownProposalID(proposalID);
+        }
+        if (prop.status != ProposalStatus.INITIAL) {
+            revert InactiveProposal(proposalID);
+        }
+        if (block.timestamp < prop.params.deadlines.votingStartTime) {
+            revert VotingNotStarted();
+        }
+        if (_votes[msg.sender][delegatedTo][proposalID].weight != 0) {
+            revert AlreadyVoted(delegatedTo, proposalID);
+        }
+        if (choices.length != prop.params.options.length) {
+            revert WrongNumberOfChoices(choices.length, prop.params.options.length);
+        }
 
         uint256 weight = _processNewVote(proposalID, msg.sender, delegatedTo, choices);
-        require(weight != 0, "zero weight");
+        if (weight == 0) {
+            revert ZeroWeightVote(delegatedTo, proposalID);
+        }
     }
 
     /// @notice Create a new proposal.
     /// @param proposalContract The address of the proposal contract.
     function createProposal(address proposalContract) nonReentrant external payable {
-        require(msg.value == proposalFee, "paid proposal fee is wrong");
+        if (msg.value != proposalFee) {
+            revert IncorrectProposalFee(msg.value, proposalFee);
+        }
 
         lastProposalID++;
         _createProposal(lastProposalID, proposalContract);
@@ -255,7 +303,10 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @param proposalID The ID of the proposal.
     /// @param proposalContract The address of the proposal contract.
     function _createProposal(uint256 proposalID, address proposalContract) internal {
-        require(proposalContract != address(0), "empty proposal address");
+        if (proposalContract == address(0)) {
+            revert EmptyProposalAddress();
+        }
+
         IProposal p = IProposal(proposalContract);
         // capture the parameters once to ensure that contract will not return different values
         uint256 pType = p.pType();
@@ -268,8 +319,14 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         uint256 votingMaxEndTime = p.votingMaxEndTime();
         bytes32[] memory options = p.options();
         // check the parameters and contract
-        require(options.length != 0, "proposal options are empty - nothing to vote for");
-        require(options.length <= maxOptions, "too many options");
+        if (options.length == 0) {
+            revert EmptyProposalOptions();
+        }
+        uint256 max = maxOptions;
+        if (options.length > max) {
+            revert TooManyOptions(max);
+        }
+
         bool ok;
         ok = proposalVerifier.verifyProposalParams(
             pType,
@@ -302,10 +359,18 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @param proposalID The ID of the proposal.
     function cancelProposal(uint256 proposalID) nonReentrant external {
         ProposalState storage prop = proposals[proposalID];
-        require(prop.params.proposalContract != address(0), "proposal with a given ID doesnt exist");
-        require(prop.status == ProposalStatus.INITIAL, "proposal isn't active");
-        require(prop.votes == 0, "voting has already begun");
-        require(msg.sender == prop.params.proposalContract, "must be sent from the proposal contract");
+        if (prop.params.proposalContract == address(0)) {
+            revert UnknownProposalID(proposalID);
+        }
+        if (prop.status != ProposalStatus.INITIAL) {
+            revert InactiveProposal(proposalID);
+        }
+        if (prop.votes != 0) {
+            revert VotingStarted();
+        }
+        if (msg.sender != prop.params.proposalContract) {
+            revert SenderNotProposal(msg.sender, prop.params.proposalContract);
+        }
 
         prop.status = ProposalStatus.CANCELED;
         emit ProposalCanceled(proposalID);
@@ -324,12 +389,16 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
             }
         }
 
-        require(handled != 0, "no tasks handled");
+        if (handled == 0) {
+            revert NoTasksHandled();
+        }
 
         emit TasksHandled(startIdx, i, handled);
         // reward the sender
         (bool success, ) = payable(msg.sender).call{value: handled * taskHandlingReward}("");
-        require(success, "transfer failed");
+        if (!success) {
+            revert TransferFailed();
+        }
     }
 
     /// @notice Clean up inactive tasks.
@@ -345,18 +414,24 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
                 // stop when first active task was met
             }
         }
-        require(erased > 0, "no tasks erased");
+        if (erased == 0) {
+            revert NoTasksToClean();
+        }
         emit TasksErased(erased);
         // reward the sender
         (bool success, ) = payable(msg.sender).call{value: erased * taskErasingReward}("");
-        require(success, "transfer failed");
+        if (!success) {
+            revert TransferFailed();
+        }
     }
 
     /// @dev Handle a single specific task.
     /// @param taskIdx The index of the task.
     /// @return handled Whether the task was handled.
     function handleTask(uint256 taskIdx) internal returns (bool handled) {
-        require(taskIdx < tasks.length, "incorrect task index");
+        if (taskIdx >= tasks.length) {
+            revert UnknownTaskIndex(taskIdx);
+        }
         Task storage task = tasks[taskIdx];
         if (!task.active) {
             return false;
@@ -493,8 +568,12 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
             delegatedTo = msg.sender;
         }
         Vote memory v = _votes[msg.sender][delegatedTo][proposalID];
-        require(v.weight != 0, "doesn't exist");
-        require(proposals[proposalID].status == ProposalStatus.INITIAL, "proposal isn't active");
+        if (v.weight == 0) {
+            revert UnknownVote(msg.sender, delegatedTo, proposalID);
+        }
+        if (proposals[proposalID].status != ProposalStatus.INITIAL) {
+            revert InactiveProposal(proposalID);
+        }
         _cancelVote(msg.sender, delegatedTo, proposalID);
     }
 
@@ -585,15 +664,21 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     function recountVote(address voterAddr, address delegatedTo, uint256 proposalID) nonReentrant external {
         Vote storage v = _votes[voterAddr][delegatedTo][proposalID];
         Vote storage vSuper = _votes[delegatedTo][delegatedTo][proposalID];
-        require(v.choices.length > 0, "doesn't exist");
-        require(proposals[proposalID].status == ProposalStatus.INITIAL, "proposal isn't active");
+        if (v.choices.length == 0) {
+            revert UnknownVote(voterAddr, delegatedTo, proposalID);
+        }
+        if (proposals[proposalID].status != ProposalStatus.INITIAL) {
+            revert InactiveProposal(proposalID);
+        }
         uint256 beforeSelf = v.weight;
         uint256 beforeSuper = vSuper.weight;
         _recountVote(voterAddr, delegatedTo, proposalID);
         uint256 afterSelf = v.weight;
         uint256 afterSuper = vSuper.weight;
         // check that some weight has changed due to recounting
-        require(beforeSelf != afterSelf || beforeSuper != afterSuper, "nothing changed");
+        if (beforeSelf == afterSelf && beforeSuper == afterSuper) {
+            revert RecountChangedNothing();
+        }
     }
 
     /// @dev internal function for recounting votes.
@@ -681,16 +766,24 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @param amount The amount of tokens to burn.
     function burn(uint256 amount) internal {
         (bool success, ) = payable(address(0)).call{value: amount}("");
-        require(success, "transfer failed");
+        if (!success) {
+            revert TransferFailed();
+        }
     }
 
     /// @dev Sanitize the winner ID of a resolved proposal.
     /// @param proposalID The ID of the proposal.
     function sanitizeWinnerID(uint256 proposalID) external {
         ProposalState storage prop = proposals[proposalID];
-        require(prop.status == ProposalStatus.RESOLVED, "proposal isn't resolved");
-        require(prop.params.executable == Proposal.ExecType.NONE, "proposal is executable");
-        require(prop.winnerOptionID == 0, "winner ID is correct");
+        if (prop.status != ProposalStatus.RESOLVED) {
+            revert ProposalNotResolved(proposalID);
+        }
+        if (prop.params.executable != Proposal.ExecType.NONE) {
+            revert ProposalIsExecutable(proposalID);
+        }
+        if (prop.winnerOptionID != 0) {
+            revert WinnerIDIsCorrect(proposalID);
+        }
         (, prop.winnerOptionID) = _calculateVotingTally(prop);
     }
 

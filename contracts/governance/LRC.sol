@@ -12,6 +12,8 @@ library LRC {
         uint256 agreement;
     }
 
+    error WrongOpinionID(uint256 got, uint256 max);
+
     /// @dev ratio of option agreement (higher -> option is less supported)
     /// @param self The option for which the agreement will be calculated
     /// @return agreement ratio
@@ -36,7 +38,9 @@ library LRC {
     /// @param weight The weight of the vote
     /// @param opinionScales The opinion scales
     function addVote(Option storage self, uint256 opinionID, uint256 weight, uint256[] storage opinionScales) internal {
-        require(opinionID < opinionScales.length, "wrong opinion ID");
+        if (opinionID >= opinionScales.length) {
+            revert WrongOpinionID(opinionID, opinionScales.length-1);
+        }
 
         uint256 scale = opinionScales[opinionID];
 
@@ -50,7 +54,9 @@ library LRC {
     /// @param weight The weight of the vote
     /// @param opinionScales The opinion scales
     function removeVote(Option storage self, uint256 opinionID, uint256 weight, uint256[] storage opinionScales) internal {
-        require(opinionID < opinionScales.length, "wrong opinion ID");
+        if (opinionID >= opinionScales.length) {
+            revert WrongOpinionID(opinionID, opinionScales.length-1);
+        }
 
         uint256 scale = opinionScales[opinionID];
 
