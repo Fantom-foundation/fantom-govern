@@ -2,7 +2,7 @@
 pragma solidity 0.8.27;
 
 import {IProposal} from "../../interfaces/IProposal.sol";
-import {IProposalVerifier} from "../../verifiers/IProposalVerifier.sol";
+import {IProposalVerifier} from "../../interfaces/IProposalVerifier.sol";
 import {Proposal} from "../../governance/Proposal.sol";
 
 /// @notice A base for any proposal
