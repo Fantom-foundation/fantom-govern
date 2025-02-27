@@ -30,7 +30,7 @@ contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
         newImplementation = __newImplementation;
         // verify the proposal right away to avoid deploying a wrong proposal
         if (verifier != address(0)) {
-            require(verifyProposalParams(verifier), "failed verification");
+            verifyProposalParams(verifier);
         }
     }
 

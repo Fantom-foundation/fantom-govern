@@ -72,6 +72,29 @@ contract ProposalTemplates is IProposalVerifier, OwnableUpgradeable, Version {
         );
     }
 
+    error EmptyName();
+    error TemplateExists(uint256 pType);
+    error EmptyOpinions();
+    error OpinionsNotSorted();
+    error AllOpinionsZero();
+    error MinVotesOverflow();
+    error MinAgreementOverflow();
+    error UnknownTemplate(uint256 pType);
+    error ExecutableTypeMismatch(Proposal.ExecType got, Proposal.ExecType want);
+    error MinVotesTooSmall(uint256 got, uint256 min);
+    error MinVotesTooLarge(uint256 got, uint256 max);
+    error MinAgreementTooSmall(uint256 got, uint256 min);
+    error MinAgreementTooLarge(uint256 got, uint256 max);
+    error OpinionScalesLengthMismatch(uint256 got, uint256 want);
+    error OpinionScalesMismatch(uint256 got, uint256 want, uint256 idx);
+    error StartIsInThePast();
+    error StartIsAfterMinEnd(uint256 start, uint256 minEnd);
+    error MinEndIsAfterMaxEnd(uint256 minEnd, uint256 maxEnd);
+    error MinDurationIsTooShort(uint256 got, uint256 min);
+    error MaxDurationIsTooLong(uint256 got, uint256 max);
+    error StartDelayIsTooSmall(uint256 got, uint256 min);
+    error StartDelayIsTooLarge(uint256 got, uint256 max);
+
     /// @notice adds a new template to the library
     /// @param pType The type of the template - must not already exist
     /// @param name The name of the template
@@ -99,13 +122,27 @@ contract ProposalTemplates is IProposalVerifier, OwnableUpgradeable, Version {
     ) external onlyOwner {
         ProposalTemplate storage template = proposalTemplates[pType];
         // empty name is a marker of non-existing template
-        require(bytes(name).length != 0, "empty name");
-        require(!exists(pType), "template already exists");
-        require(opinionScales.length != 0, "empty opinions");
-        require(checkNonDecreasing(opinionScales), "wrong order of opinions");
-        require(opinionScales[opinionScales.length - 1] != 0, "all opinions are zero");
-        require(minVotes <= Decimal.unit(), "minVotes > 1.0");
-        require(minAgreement <= Decimal.unit(), "minAgreement > 1.0");
+        if (bytes(name).length == 0) {
+            revert EmptyName();
+        }
+        if (exists(pType)) {
+            revert TemplateExists(pType);
+        }
+        if (opinionScales.length == 0) {
+            revert EmptyOpinions();
+        }
+        if (!checkNonDecreasing(opinionScales)) {
+            revert OpinionsNotSorted();
+        }
+        if (opinionScales[opinionScales.length - 1] == 0) {
+            revert AllOpinionsZero();
+        }
+        if (minVotes > Decimal.unit()) {
+            revert MinVotesOverflow();
+        }
+        if (minAgreement > Decimal.unit()) {
+            revert MinAgreementOverflow();
+        }
         template.verifier = verifier;
         template.name = name;
         template.executable = executable;
@@ -123,7 +160,9 @@ contract ProposalTemplates is IProposalVerifier, OwnableUpgradeable, Version {
     /// @notice erases a template from the library - Only the owner can erase a template
     /// @param pType The type of the template
     function eraseTemplate(uint256 pType) external onlyOwner {
-        require(exists(pType), "template doesn't exist");
+        if (exists(pType)) {
+            revert UnknownTemplate(pType);
+        }
         delete (proposalTemplates[pType]);
 
         emit ErasedTemplate(pType);
@@ -138,7 +177,6 @@ contract ProposalTemplates is IProposalVerifier, OwnableUpgradeable, Version {
     /// @param start The start time
     /// @param minEnd The minimum end time
     /// @param maxEnd The maximum end time
-    /// @return true if the proposal parameters are valid
     function verifyProposalParams(
         uint256 pType,
         Proposal.ExecType executable,
@@ -148,79 +186,71 @@ contract ProposalTemplates is IProposalVerifier, OwnableUpgradeable, Version {
         uint256 start,
         uint256 minEnd,
         uint256 maxEnd
-    ) external view returns (bool) {
+    ) external view {
         if (!exists(pType)) {
             // non-existing template
-            return false;
+            revert UnknownTemplate(pType);
         }
         ProposalTemplate memory template = proposalTemplates[pType];
         if (executable != template.executable) {
             // inconsistent executable flag
-            return false;
+            revert ExecutableTypeMismatch(executable, template.executable);
         }
         if (minVotes < template.minVotes) {
             // turnout is too small
-            return false;
+            revert MinVotesTooSmall(minVotes, template.minVotes);
         }
         if (minVotes > Decimal.unit()) {
             // turnout is bigger than 100%
-            return false;
+            revert MinVotesTooLarge(minVotes, Decimal.unit());
         }
         if (minAgreement < template.minAgreement) {
             // quorum is too small
-            return false;
+            revert MinAgreementTooSmall(minAgreement, template.minAgreement);
         }
         if (minAgreement > Decimal.unit()) {
             // quorum is bigger than 100%
-            return false;
+            revert MinAgreementTooLarge(minAgreement, Decimal.unit());
         }
         if (opinionScales.length != template.opinionScales.length) {
             // wrong opinion scales
-            return false;
+            revert OpinionScalesLengthMismatch(opinionScales.length, template.opinionScales.length);
         }
         for (uint256 i = 0; i < opinionScales.length; i++) {
             if (opinionScales[i] != template.opinionScales[i]) {
-                // wrong opinion scales
-                return false;
+                revert OpinionScalesMismatch(opinionScales[i], template.opinionScales[i], i);
             }
         }
         if (start < block.timestamp) {
-            // start in the past
-            return false;
+            revert StartIsInThePast();
         }
         if (start > minEnd) {
-            // inconsistent data
-            return false;
+            revert StartIsAfterMinEnd(start, minEnd);
         }
         if (minEnd > maxEnd) {
-            // inconsistent data
-            return false;
+            revert MinEndIsAfterMaxEnd(minEnd, maxEnd);
         }
 
         uint256 minDuration = minEnd - start;
         uint256 maxDuration = maxEnd - start;
         uint256 startDelay_ = start - block.timestamp;
         if (minDuration < template.minVotingDuration) {
-            // min. voting duration is too short
-            return false;
+            revert MinDurationIsTooShort(minDuration, template.minVotingDuration);
         }
         if (maxDuration > template.maxVotingDuration) {
-            // max. voting duration is too long
-            return false;
+            revert MaxDurationIsTooLong(maxDuration, template.maxVotingDuration);
         }
         if (startDelay_ < template.minStartDelay) {
-            // voting must start later
-            return false;
+            revert StartDelayIsTooSmall(startDelay_, template.minStartDelay);
         }
         if (startDelay_ > template.maxStartDelay) {
-            // voting is too distant in future
-            return false;
+            revert StartDelayIsTooLarge(startDelay_, template.maxStartDelay);
         }
         if (template.verifier == address(0)) {
             // template with no additional verifier
-            return true;
+            return;
         }
-        return IProposalVerifier(template.verifier).verifyProposalParams(
+        IProposalVerifier(template.verifier).verifyProposalParams(
             pType,
             executable,
             minVotes,
@@ -235,18 +265,17 @@ contract ProposalTemplates is IProposalVerifier, OwnableUpgradeable, Version {
     /// @notice Verify proposal contract against its template
     /// @param pType The type of the template
     /// @param propAddr The address of the proposal contract
-    /// @return true if the proposal contract is valid
-    function verifyProposalContract(uint256 pType, address propAddr) external view returns (bool) {
+    function verifyProposalContract(uint256 pType, address propAddr) external view {
         if (!exists(pType)) {
-            // non-existing template
-            return false;
+            revert UnknownTemplate(pType);
         }
         ProposalTemplate memory template = proposalTemplates[pType];
+        // Skip verification if no verifier is set
         if (template.verifier == address(0)) {
-            // template with no additional verifier
-            return true;
+            return;
         }
-        return IProposalVerifier(template.verifier).verifyProposalContract(pType, propAddr);
+
+        IProposalVerifier(template.verifier).verifyProposalContract(pType, propAddr);
     }
 
     /// @dev Check if array values are monotonically non-decreasing
