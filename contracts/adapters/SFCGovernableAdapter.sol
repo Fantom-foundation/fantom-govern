@@ -4,7 +4,7 @@ pragma solidity 0.8.27;
 import {IGovernable} from "../interfaces/IGovernable.sol";
 import {ISFC} from "../interfaces/ISFC.sol";
 
-// @dev SFCToGovernable is an adapter allowing to use the network SFC contract as IGovernable.sol (governance votes weights provider).
+// @dev SFCToGovernable is an adapter allowing to use the network SFC contract as IGovernable (governance votes weights provider).
 contract SFCGovernableAdapter is IGovernable {
     ISFC internal immutable sfc;
 

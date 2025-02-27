@@ -46,7 +46,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         uint256 proposalID;
     }
 
-    IGovernable public governableContract; // SFC to Governable adapter refer to SFCToGovernable.sol
+    IGovernable public governableContract; // SFC to Governable adapter refer to SFCToGovernable
     IProposalVerifier public proposalVerifier;
     uint256 public lastProposalID;
 
