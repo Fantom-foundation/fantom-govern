@@ -5,12 +5,12 @@ import {Cancelable} from "./base/Cancelable.sol";
 import {DelegatecallExecutableProposal} from "./base/DelegatecallExecutableProposal.sol";
 import {Proposal} from "../governance/Proposal.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {INetworkParametersUpdater} from "../interfaces/INetworkParameterUpdater.sol";
+import {IConstants} from "../interfaces/IConstants.sol";
 
 /// @notice A proposal to update network parameters
 contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable {
     Proposal.ExecType _exec;
-    INetworkParametersUpdater public updater;
+    IConstants public updater;
     uint8 public methodID;
     uint256[] public getOptionVal;
 
@@ -78,7 +78,7 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         _maxEnd = __maxEnd;
         getOptionVal = __optionsVals;
         _opinionScales = [0, 1, 2, 3, 4];
-        updater = INetworkParametersUpdater(__networkParameterUpdater);
+        updater = IConstants(__networkParameterUpdater);
         // verify the proposal right away to avoid deploying a wrong proposal
         if (verifier != address(0)) {
             require(verifyProposalParams(verifier), "failed verification");
