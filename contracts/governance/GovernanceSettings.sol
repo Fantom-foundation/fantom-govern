@@ -2,7 +2,7 @@
 pragma solidity 0.8.27;
 
 import {Decimal} from "../common/Decimal.sol";
-import {Governable} from "../model/Governable.sol";
+import {IGovernable} from "../interfaces/IGovernable.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @notice GovernanceSettings is a contract for managing governance settings
