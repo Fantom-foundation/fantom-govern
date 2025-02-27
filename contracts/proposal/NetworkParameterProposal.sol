@@ -40,7 +40,7 @@ interface ConstsI {
 
 /// @notice A proposal to update network parameters
 contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable {
-    Proposal.ExecType _exec;
+    Proposal.ExecType internal _exec;
     ConstsI public consts;
     uint8 public methodID;
     uint256[] public getOptionVal;
@@ -130,7 +130,7 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
     /// @dev Depending on the methodID, the corresponding network parameter will be updated
     /// @param selfAddr The address of the proposal
     /// @param winnerOptionID The winning option ID
-    function execute_delegatecall(address selfAddr, uint256 winnerOptionID) external override {
+    function executeDelegateCall(address selfAddr, uint256 winnerOptionID) external override {
         NetworkParameterProposal self = NetworkParameterProposal(selfAddr);
         uint256 __methodID = self.methodID();
 
@@ -170,7 +170,7 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
     }
 
     function decimalsNum(uint256 num) internal pure returns (uint256) {
-        uint decimals;
+        uint256 decimals;
         while (num != 0) {
             decimals++;
             num /= 10;

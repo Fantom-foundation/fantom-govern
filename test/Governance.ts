@@ -85,9 +85,9 @@ describe("Governance test", function () {
         const manyOptions = await ethers.deployContract("PlainTextProposal", ["plaintext","plaintext-descr", [option, option, option, option, option, option, option, option, option, option], ethers.parseEther("0.5"), ethers.parseEther("0.6"), 30, 121, 1199, this.verifierAddress]);
         const oneOption = await ethers.deployContract("PlainTextProposal", ["plaintext","plaintext-descr", [option], ethers.parseEther("0.51"), ethers.parseEther("0.6"), 30, 122, 1198, this.verifierAddress]);
 
-        await expect(this.gov.createProposal(emptyOptions.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal options are empty - nothing to vote for");
+        await expect(this.gov.createProposal(emptyOptions.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal options are empty");
         await expect(this.gov.createProposal(tooManyOptions.getAddress(), {value: this.proposalFee})).to.be.revertedWith("too many options");
-        await expect(this.gov.createProposal(wrongVotes.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal parameters failed verification");
+        await expect(this.gov.createProposal(wrongVotes.getAddress(), {value: this.proposalFee})).to.be.revertedWith("parameters failed verification");
         await expect(this.gov.createProposal(manyOptions.getAddress())).to.be.revertedWith("paid proposal fee is wrong");
         await expect(this.gov.createProposal(manyOptions.getAddress(), {value: this.proposalFee+1n})).to.be.revertedWith("paid proposal fee is wrong");
         await this.gov.createProposal(manyOptions.getAddress(), {value: this.proposalFee});
@@ -236,7 +236,7 @@ describe("Governance test", function () {
         await expect(this.gov.vote(this.defaultAcc, proposalID, choices)).to.be.revertedWith("zero weight");
         await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.0"));
         // Non-existent proposal
-        await expect(this.gov.vote(this.defaultAcc, proposalID+1n, choices)).to.be.revertedWith("proposal with a given ID doesnt exist");
+        await expect(this.gov.vote(this.defaultAcc, proposalID+1n, choices)).to.be.revertedWith("given proposalID doesn't exist");
         // Incorrect choices
         await expect(this.gov.vote(this.defaultAcc, proposalID, [3n, 4n])).to.be.revertedWith("wrong number of choices");
         // Non-existent opinion
@@ -634,10 +634,10 @@ describe("Governance test", function () {
         await this.gov.vote(this.defaultAcc, proposalID, choices);
 
         // try to cancel proposal
-        await expect(this.gov.cancelProposal(proposalID+1n)).to.be.revertedWith("proposal with a given ID doesnt exist");
+        await expect(this.gov.cancelProposal(proposalID+1n)).to.be.revertedWith("given proposalID doesn't exist");
         await expect(this.gov.cancelProposal(proposalID)).to.be.revertedWith("voting has already begun");
         await this.gov.cancelVote(this.defaultAcc, proposalID);
-        await expect(this.gov.cancelProposal(proposalID)).to.be.revertedWith("must be sent from the proposal contract");
+        await expect(this.gov.cancelProposal(proposalID)).to.be.revertedWith("sender not the proposal address");
         await proposalContract.cancel(proposalID, this.gov.getAddress());
         await expect(this.gov.cancelProposal(proposalID)).to.be.revertedWith("proposal isn't active");
         await expect(this.gov.vote(this.defaultAcc, proposalID, choices)).to.be.revertedWith("proposal isn't active");
@@ -764,7 +764,7 @@ describe("Governance test", function () {
         await expect(this.gov.connect(this.delegatorAcc).vote(this.delegatorAcc, proposalID, choices1)).to.be.revertedWith("zero weight");
         await expect(this.gov.connect(this.delegatorAcc).vote(this.otherAcc, proposalID, choices1)).to.be.revertedWith("zero weight");
         await expect(this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID, choices1)).to.be.revertedWith("zero weight");
-        await expect(this.gov.vote(this.firstVoterAcc, proposalID + 1n, choices1), "proposal with a given ID doesnt exist");
+        await expect(this.gov.vote(this.firstVoterAcc, proposalID + 1n, choices1), "given proposalID doesn't exist");
         await expect(this.gov.connect(this.delegatorAcc).vote(this.firstVoterAcc, proposalID, [3n, 4n]), "wrong number of choices");
         await expect(this.gov.connect(this.delegatorAcc).vote(this.firstVoterAcc, proposalID, [3n, 4n, 5n]), "wrong opinion ID");
         await this.gov.connect(this.delegatorAcc).vote(this.firstVoterAcc, proposalID, choices1);
@@ -1149,15 +1149,15 @@ describe("Governance test", function () {
         const option = ethers.encodeBytes32String("opt");
         const proposal = await ethers.deployContract("PlainTextProposal", ["paintext", "plaintext-descr", [option], ethers.parseEther("0.5"), ethers.parseEther("0.8"), 30, 121, 1199, this.verifierAddress]);
 
-        await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
-        await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
+        await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("contract failed verification");
+        await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("contract failed verification");
         await expect(ownableVerifier.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWithCustomError(
             ownableVerifier,
             'OwnableUnauthorizedAccount',
         );
         await ownableVerifier.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee});
-        await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
-        await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
+        await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("contract failed verification");
+        await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("contract failed verification");
         await expect(ownableVerifier.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWithCustomError(
             ownableVerifier,
             'OwnableUnauthorizedAccount',
@@ -1166,8 +1166,8 @@ describe("Governance test", function () {
         // Transfer ownership to otherAcc
         await ownableVerifier.connect(this.defaultAcc).transferOwnership(this.otherAcc);
 
-        await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
-        await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("proposal contract failed verification");
+        await expect(this.gov.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("contract failed verification");
+        await expect(this.gov.connect(this.otherAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWith("contract failed verification");
         await expect(ownableVerifier.connect(this.defaultAcc).createProposal(proposal.getAddress(), {value: this.proposalFee})).to.be.revertedWithCustomError(
             ownableVerifier,
             'OwnableUnauthorizedAccount',

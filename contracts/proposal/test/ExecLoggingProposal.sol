@@ -8,7 +8,7 @@ import {Proposal} from "../../governance/Proposal.sol";
 /// @dev A proposal that can be stores data about NonDelegateCall
 /// @dev Used for testing purposes
 contract ExecLoggingProposal is PlainTextProposal {
-    Proposal.ExecType _exec;
+    Proposal.ExecType internal _exec;
 
     constructor(string memory v1, string memory v2, bytes32[] memory v3,
         uint256 v4, uint256 v5, uint256 v6, uint256 v7, uint256 v8, address v9) PlainTextProposal(v1, v2, v3, v4, v5, v6, v7, v8, v9) {}
@@ -46,12 +46,12 @@ contract ExecLoggingProposal is PlainTextProposal {
         executedOption = optionID;
     }
 
-    function execute_delegatecall(address selfAddr, uint256 optionID) external override {
+    function executeDelegateCall(address selfAddr, uint256 optionID) external override {
         ExecLoggingProposal self = ExecLoggingProposal(selfAddr);
         self.executeNonDelegateCall(address(this), msg.sender, optionID);
     }
 
-    function execute_call(uint256 optionID) external override {
+    function executeCall(uint256 optionID) external override {
         executeNonDelegateCall(address(this), msg.sender, optionID);
     }
 }
