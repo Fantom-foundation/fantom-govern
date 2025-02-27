@@ -225,7 +225,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
 
         ProposalState storage prop = _proposals[proposalID];
 
-        require(prop.params.proposalContract != address(0), "proposal with a given ID doesnt exist");
+        require(prop.params.proposalContract != address(0), "given proposalID doesn't exist");
         require(prop.status == ProposalStatus.INITIAL, "proposal isn't active");
         require(block.timestamp >= prop.params.deadlines.votingStartTime, "proposal voting hasn't begun");
         require(_votes[msg.sender][delegatedTo][proposalID].weight == 0, "vote already exists");
@@ -238,7 +238,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @notice Create a new proposal.
     /// @param proposalContract The address of the proposal contract.
     function createProposal(address proposalContract) external nonReentrant payable {
-        require(msg.value == proposalFee(), "paid proposal fee is wrong");
+        require(msg.value == proposalFee, "paid proposal fee is wrong");
 
         lastProposalID++;
         _createProposal(lastProposalID, proposalContract);
@@ -267,7 +267,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         uint256 votingMaxEndTime = p.votingMaxEndTime();
         bytes32[] memory options = p.options();
         // check the parameters and contract
-        require(options.length != 0, "proposal options are empty - nothing to vote for");
+        require(options.length != 0, "proposal options are empty");
         require(options.length <= maxOptions, "too many options");
         bool ok;
         ok = proposalVerifier.verifyProposalParams(
@@ -301,7 +301,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @param proposalID The ID of the proposal.
     function cancelProposal(uint256 proposalID) external nonReentrant {
         ProposalState storage prop = _proposals[proposalID];
-        require(prop.params.proposalContract != address(0), "proposal with a given ID doesnt exist");
+        require(prop.params.proposalContract != address(0), "given proposalID doesn't exist");
         require(prop.status == ProposalStatus.INITIAL, "proposal isn't active");
         require(prop.votes == 0, "voting has already begun");
         require(msg.sender == prop.params.proposalContract, "sender not the proposal address");
