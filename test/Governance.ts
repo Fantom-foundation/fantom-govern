@@ -1196,7 +1196,7 @@ describe("Governance test", function () {
     });
 });
 
-describe("Votesbook test", function () {
+describe("Governance voting test", function () {
     const fixture = async function () {
         const [defaultAcc, delegatorAcc, firstVoterAcc, secondVoterAcc] = await ethers.getSigners();
         const sfc = await ethers.deployContract("UnitTestSFC");
