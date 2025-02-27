@@ -2,7 +2,7 @@
 pragma solidity 0.8.27;
 
 import {Decimal} from "../common/Decimal.sol";
-import {IProposalVerifier} from "./IProposalVerifier.sol";
+import {IProposalVerifier} from "../interfaces/IProposalVerifier.sol";
 import {Version} from "../version/Version.sol";
 import {Proposal} from "../governance/Proposal.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
