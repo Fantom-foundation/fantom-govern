@@ -3,11 +3,7 @@ pragma solidity 0.8.27;
 
 import {Cancelable} from "./base/Cancelable.sol";
 import {DelegatecallExecutableProposal} from "./base/DelegatecallExecutableProposal.sol";
-
-/// @notice An interface to update this contract to a destination address
-interface Upgradability {
-    function upgradeTo(address newImplementation) external;
-}
+import {IUpgradeable} from "../interfaces/IUpgradable.sol";
 
 /// @notice A proposal to upgrade a contract to a new implementation
 contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
@@ -36,6 +32,6 @@ contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
 
     function execute_delegatecall(address selfAddr, uint256) external override {
         SoftwareUpgradeProposal self = SoftwareUpgradeProposal(selfAddr);
-        Upgradability(self.upgradeableContract()).upgradeTo(self.newImplementation());
+        IUpgradeable(self.upgradeableContract()).upgradeTo(self.newImplementation());
     }
 }

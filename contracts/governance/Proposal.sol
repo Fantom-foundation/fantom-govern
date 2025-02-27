@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import {IProposal} from "../proposal/base/IProposal.sol";
+import {IProposal} from "../interfaces/IProposal.sol";
 
 /// @notice Proposal is a library for handling information about proposal
 library Proposal {
