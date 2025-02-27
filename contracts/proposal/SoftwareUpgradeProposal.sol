@@ -36,6 +36,7 @@ contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
         upgradeableContract = _upgradeableContract;
         newImplementation = _newImplementation;
         upgradeCallData = _upgradeCallData;
+        data = _upgradeCallData;
         // verify the proposal right away to avoid deploying a wrong proposal
         if (verifier != address(0)) {
             verifyProposalParams(verifier);

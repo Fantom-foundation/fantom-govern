@@ -83,7 +83,7 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         _maxEnd = __maxEnd;
         getOptionVal = __optionsVals;
         _opinionScales = [0, 1, 2, 3, 4];
-        updater = INetworkParametersUpdater(__networkParameterUpdater);
+        updater = IConstants(__networkParameterUpdater);
         // verify the proposal right away to avoid deploying a wrong proposal
         if (verifier != address(0)) {
             verifyProposalParams(verifier);

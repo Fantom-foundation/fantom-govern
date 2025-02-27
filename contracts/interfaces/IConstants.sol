@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-interface INetworkParametersUpdater {
+interface IConstants {
     function updateMinSelfStake(uint256 v) external;
 
     function updateMaxDelegatedRatio(uint256 v) external;
