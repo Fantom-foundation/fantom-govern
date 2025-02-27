@@ -5,7 +5,6 @@ import {Decimal} from "../common/Decimal.sol";
 import {IProposalVerifier} from "./IProposalVerifier.sol";
 import {Version} from "../version/Version.sol";
 import {Proposal} from "../governance/Proposal.sol";
-import {VerifierErrors} from "./VerifierErrors.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 // @notice A storage of current proposal templates. Any new proposal will be verified against the stored template of its type.
@@ -81,6 +80,20 @@ contract ProposalTemplates is IProposalVerifier, OwnableUpgradeable, Version {
     error MinVotesOverflow();
     error MinAgreementOverflow();
     error UnknownTemplate(uint256 pType);
+    error ExecutableTypeMismatch(Proposal.ExecType got, Proposal.ExecType want);
+    error MinVotesTooSmall(uint256 got, uint256 min);
+    error MinVotesTooLarge(uint256 got, uint256 max);
+    error MinAgreementTooSmall(uint256 got, uint256 min);
+    error MinAgreementTooLarge(uint256 got, uint256 max);
+    error OpinionScalesLengthMismatch(uint256 got, uint256 want);
+    error OpinionScalesMismatch(uint256 got, uint256 want, uint256 idx);
+    error StartIsInThePast();
+    error StartIsAfterMinEnd(uint256 start, uint256 minEnd);
+    error MinEndIsAfterMaxEnd(uint256 minEnd, uint256 maxEnd);
+    error MinDurationIsTooShort(uint256 got, uint256 min);
+    error MaxDurationIsTooLong(uint256 got, uint256 max);
+    error StartDelayIsTooSmall(uint256 got, uint256 min);
+    error StartDelayIsTooLarge(uint256 got, uint256 max);
 
     /// @notice adds a new template to the library
     /// @param pType The type of the template - must not already exist
@@ -176,62 +189,62 @@ contract ProposalTemplates is IProposalVerifier, OwnableUpgradeable, Version {
     ) external view {
         if (!exists(pType)) {
             // non-existing template
-            revert VerifierErrors.UnknownTemplate(pType);
+            revert UnknownTemplate(pType);
         }
         ProposalTemplate memory template = proposalTemplates[pType];
         if (executable != template.executable) {
             // inconsistent executable flag
-            revert VerifierErrors.ExecutableTypeMismatch(executable, template.executable);
+            revert ExecutableTypeMismatch(executable, template.executable);
         }
         if (minVotes < template.minVotes) {
             // turnout is too small
-            revert VerifierErrors.MinVotesTooSmall(minVotes, template.minVotes);
+            revert MinVotesTooSmall(minVotes, template.minVotes);
         }
         if (minVotes > Decimal.unit()) {
             // turnout is bigger than 100%
-            revert VerifierErrors.MinVotesTooLarge(minVotes, Decimal.unit());
+            revert MinVotesTooLarge(minVotes, Decimal.unit());
         }
         if (minAgreement < template.minAgreement) {
             // quorum is too small
-            revert VerifierErrors.MinAgreementTooSmall(minAgreement, template.minAgreement);
+            revert MinAgreementTooSmall(minAgreement, template.minAgreement);
         }
         if (minAgreement > Decimal.unit()) {
             // quorum is bigger than 100%
-            revert VerifierErrors.MinAgreementTooLarge(minAgreement, Decimal.unit());
+            revert MinAgreementTooLarge(minAgreement, Decimal.unit());
         }
         if (opinionScales.length != template.opinionScales.length) {
             // wrong opinion scales
-            revert VerifierErrors.OpinionScalesLengthMismatch(opinionScales.length, template.opinionScales.length);
+            revert OpinionScalesLengthMismatch(opinionScales.length, template.opinionScales.length);
         }
         for (uint256 i = 0; i < opinionScales.length; i++) {
             if (opinionScales[i] != template.opinionScales[i]) {
-                revert VerifierErrors.OpinionScalesMismatch(opinionScales[i], template.opinionScales[i], i);
+                revert OpinionScalesMismatch(opinionScales[i], template.opinionScales[i], i);
             }
         }
         if (start < block.timestamp) {
-            revert VerifierErrors.StartIsInThePast();
+            revert StartIsInThePast();
         }
         if (start > minEnd) {
-            revert VerifierErrors.StartIsAfterMinEnd(start, minEnd);
+            revert StartIsAfterMinEnd(start, minEnd);
         }
         if (minEnd > maxEnd) {
-            revert VerifierErrors.MinEndIsAfterMaxEnd(minEnd, maxEnd);
+            revert MinEndIsAfterMaxEnd(minEnd, maxEnd);
         }
 
         uint256 minDuration = minEnd - start;
         uint256 maxDuration = maxEnd - start;
         uint256 startDelay_ = start - block.timestamp;
         if (minDuration < template.minVotingDuration) {
-            revert VerifierErrors.MinDurationIsTooShort(minDuration, template.minVotingDuration);
+            revert MinDurationIsTooShort(minDuration, template.minVotingDuration);
         }
         if (maxDuration > template.maxVotingDuration) {
-            revert VerifierErrors.MaxDurationIsTooLong(maxDuration, template.maxVotingDuration);
+            revert MaxDurationIsTooLong(maxDuration, template.maxVotingDuration);
         }
         if (startDelay_ < template.minStartDelay) {
-            revert VerifierErrors.StartDelayIsTooSmall(startDelay_, template.minStartDelay);
+            revert StartDelayIsTooSmall(startDelay_, template.minStartDelay);
         }
         if (startDelay_ > template.maxStartDelay) {
-            revert VerifierErrors.StartDelayIsTooLarge(startDelay_, template.maxStartDelay);
+            revert StartDelayIsTooLarge(startDelay_, template.maxStartDelay);
         }
         if (template.verifier == address(0)) {
             // template with no additional verifier
