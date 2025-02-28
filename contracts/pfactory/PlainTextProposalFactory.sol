@@ -8,18 +8,6 @@ import {ScopedVerifier} from "../verifiers/ScopedVerifier.sol";
 /// @notice PlainTextProposalFactory is a factory contract to create PlainTextProposal
 contract PlainTextProposalFactory is ScopedVerifier {
     Governance internal gov;
-    // @dev used to avoid 'Stack too deep' error
-    struct Params {
-        string name;
-        string description;
-        bytes32[] options;
-        uint256 minVotes;
-        uint256 minAgreement;
-        uint256 start;
-        uint256 minEnd;
-        uint256 maxEnd;
-    }
-
     constructor(address _govAddress) public {
         gov = Governance(_govAddress);
     }
@@ -34,16 +22,16 @@ contract PlainTextProposalFactory is ScopedVerifier {
     /// @param __minEnd The minimum end time
     /// @param __maxEnd The maximum end time
     function create(
-        string calldata __name,
-        string calldata __description,
-        bytes32[] calldata __options,
+        string memory __name,
+        string memory __description,
+        bytes32[] memory __options,
         uint256 __minVotes,
         uint256 __minAgreement,
         uint256 __start,
         uint256 __minEnd,
         uint256 __maxEnd
-    ) payable external payable {
-        Params memory p = Params(
+    ) payable external {
+        PlainTextProposal proposal = new PlainTextProposal(
             __name,
             __description,
             __options,
@@ -51,17 +39,7 @@ contract PlainTextProposalFactory is ScopedVerifier {
             __minAgreement,
             __start,
             __minEnd,
-            __maxEnd
-        );
-        PlainTextProposal proposal = new PlainTextProposal(
-            p.name,
-            p.description,
-            p.options,
-            p.minVotes,
-            p.minAgreement,
-            p.start,
-            p.minEnd,
-            p.maxEnd,
+            __maxEnd,
             address(0)
         );
         proposal.transferOwnership(msg.sender);
