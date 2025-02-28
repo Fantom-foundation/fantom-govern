@@ -22,6 +22,10 @@ contract BaseProposal is IProposal {
     uint256 internal _minEnd; // Minimal end time of the voting
     uint256 internal _maxEnd; // Maximal end time of the voting
 
+    error MustBeOverwritten(); // when a function is not overwritten
+    error NotDelegateCallExecutable(); // when proposals ExecuteDelegateCall is called but it is not delegate call proposal
+    error NotCallExecutable(); // when proposals ExecuteCall is called but it is not a call
+
     /// @notice Verify the parameters of the proposal using a given verifier.
     /// @param verifier The address of the verifier contract.
     function verifyProposalParams(address verifier) public view {
@@ -30,12 +34,12 @@ contract BaseProposal is IProposal {
     }
 
     function pType() public virtual view returns (uint256) {
-        require(false, "must be overridden");
+        revert MustBeOverwritten();
         return uint256(StdProposalTypes.NOT_INIT);
     }
 
     function executable() public virtual view returns (Proposal.ExecType) {
-        require(false, "must be overridden");
+        revert MustBeOverwritten();
         return Proposal.ExecType.NONE;
     }
 
@@ -76,10 +80,10 @@ contract BaseProposal is IProposal {
     }
 
     function executeDelegateCall(address, uint256) external virtual {
-        require(false, "not delegatecall-executable");
+        revert NotDelegateCallExecutable();
     }
 
     function executeCall(uint256) external virtual {
-        require(false, "not call-executable");
+        revert NotCallExecutable();
     }
 }

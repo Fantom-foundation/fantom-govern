@@ -15,6 +15,6 @@ contract DelegatecallExecutableProposal is BaseProposal {
     }
 
     function executeDelegateCall(address, uint256) external override virtual{
-        require(false, "must be overridden");
+        revert MustBeOverwritten();
     }
 }

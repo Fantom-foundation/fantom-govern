@@ -16,6 +16,6 @@ contract CallExecutableProposal is BaseProposal {
     }
 
     function executeCall(uint256) external override virtual {
-        require(false, "must be overridden");
+        revert MustBeOverwritten();
     }
 }

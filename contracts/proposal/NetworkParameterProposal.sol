@@ -45,6 +45,9 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
     uint8 public methodID;
     uint256[] public getOptionVal;
 
+    error WrongMethodID();
+    error StringOver32Bytes();
+
     constructor(
         string memory __description,
         uint8 __methodID,
@@ -53,7 +56,9 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd,
         address verifier
     ) {
-        require(__methodID >= 1 && __methodID <= 15, "wrong methodID");
+        if (__methodID < 1 || __methodID > 15) {
+            revert WrongMethodID();
+        }
         if (__methodID == 1) {
             _name = "Update minimum self-stake";
             _options = uintsToStrs(__optionsVals, 1e18, " FTM");
@@ -235,7 +240,9 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
     /// @return result The converted bytes32
     function strToB32(string memory str) internal pure returns (bytes32 result) {
         bytes memory tempEmptyStringTest = bytes(str);
-        require(tempEmptyStringTest.length <= 32, "string is too long");
+        if (tempEmptyStringTest.length > 32) {
+            revert StringOver32Bytes();
+        }
         if (tempEmptyStringTest.length == 0) {
             return 0x0;
         }
