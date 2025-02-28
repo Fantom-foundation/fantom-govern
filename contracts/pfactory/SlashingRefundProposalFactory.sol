@@ -45,7 +45,7 @@ contract SlashingRefundProposalFactory is ScopedVerifier {
             minAgreement,
             start,
             minEnd,
-        maxEnd,
+            maxEnd,
             sfcAddress,
             address(0)
         );
