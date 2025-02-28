@@ -11,37 +11,42 @@ contract NetworkParameterProposalFactory is ScopedVerifier {
     address internal constsAddress; // address of the Constants contract
     address public lastNetworkProposal; // address of the last created NetworkParameterProposal
 
-    constructor(address _governance, address _constsAddress) {
-        gov = Governance(_governance);
+    constructor(address govAddress, address _constsAddress) {
+        gov = Governance(govAddress);
         constsAddress = _constsAddress;
     }
 
     /// @notice create a new NetworkParameterProposal
-    /// @param __description The description of the proposal
-    /// @param __methodID The method ID of the proposal
-    /// @param __optionVals The option values of the proposal
-    /// @param __minVotes The minimum number of votes required
-    /// @param __minAgreement The minimum agreement required
-    /// @param __start The start time
-    /// @param __minEnd The minimum end time
-    /// @param __maxEnd The maximum end time
+    /// @param description The description of the proposal
+    /// @param methodID The method ID of the proposal
+    /// @param optionVals The option values of the proposal
+    /// @param minVotes The minimum number of votes required
+    /// @param minAgreement The minimum agreement required
+    /// @param start The start time
+    /// @param minEnd The minimum end time
+    /// @param maxEnd The maximum end time
     function create(
-        string memory __description,
-        uint8 __methodID,
-        uint256[] memory __optionVals,
-        uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd
+        string memory description,
+        uint8 methodID,
+        uint256[] memory optionVals,
+        uint256 minVotes,
+        uint256 minAgreement,
+        uint256 start,
+        uint256 minEnd,
+        uint256 maxEnd
     ) public payable {
         NetworkParameterProposal proposal = new NetworkParameterProposal(
-            __description,
-            __methodID,
-            __optionVals,
+            description,
+            methodID,
+            optionVals,
             constsAddress,
-            __minVotes,
-            __minAgreement,
-            __start,
-            __minEnd,
-            __maxEnd,
-            address(0));
+            minVotes,
+            minAgreement,
+            start,
+            minEnd,
+            maxEnd,
+            address(0)
+        );
         proposal.transferOwnership(msg.sender);
         lastNetworkProposal = address(proposal);
 

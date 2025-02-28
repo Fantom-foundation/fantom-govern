@@ -10,31 +10,45 @@ import {SlashingRefundProposal} from "../proposal/SlashingRefundProposal.sol";
 contract SlashingRefundProposalFactory is ScopedVerifier {
     Governance internal gov;
     address internal sfcAddress;
-    constructor(address _govAddress, address _sfcAddress) {
-        gov = Governance(_govAddress);
+
+    error ValidatorNotSlashed(); // thrown when proposing not slashed validator
+
+    constructor(address govAddress, address _sfcAddress) public {
+        gov = Governance(govAddress);
         sfcAddress = _sfcAddress;
     }
 
     /// @notice create a new SlashingRefundProposal
-    /// @param __validatorID The ID of the validator
-    /// @param __description The description of the proposal
-    /// @param __minVotes The minimum number of votes required
-    /// @param __minAgreement The minimum agreement required
-    /// @param __start The start time
-    /// @param __minEnd The minimum end time
-    /// @param __maxEnd The maximum end time
-    function create(uint256 __validatorID, string calldata __description,
-        uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd) external payable {
-        // use memory to avoid stack overflow
-        uint256[] memory params = new uint256[](5);
-        params[0] = __minVotes;
-        params[1] = __minAgreement;
-        params[2] = __start;
-        params[3] = __minEnd;
-        params[4] = __maxEnd;
-        require(ISFC(sfcAddress).isSlashed(__validatorID), "validator isn't slashed");
-        SlashingRefundProposal proposal = new SlashingRefundProposal(__validatorID, __description,
-            params[0], params[1], params[2], params[3], params[4], sfcAddress, address(0));
+    /// @param validatorID The ID of the validator
+    /// @param description The description of the proposal
+    /// @param minVotes The minimum number of votes required
+    /// @param minAgreement The minimum agreement required
+    /// @param start The start time
+    /// @param minEnd The minimum end time
+    /// @param maxEnd The maximum end time
+    function create(
+        uint256 validatorID,
+        string calldata description,
+        uint256 minVotes,
+        uint256 minAgreement,
+        uint256 start,
+        uint256 minEnd,
+        uint256 maxEnd
+    ) external payable {
+        if (!ISFC(sfcAddress).isSlashed(validatorID)) {
+            revert ValidatorNotSlashed();
+        }
+        SlashingRefundProposal proposal = new SlashingRefundProposal(
+            validatorID,
+            description,
+            minVotes,
+            minAgreement,
+            start,
+            minEnd,
+            maxEnd,
+            sfcAddress,
+            address(0)
+        );
         proposal.transferOwnership(msg.sender);
 
         unlockedFor = address(proposal);
