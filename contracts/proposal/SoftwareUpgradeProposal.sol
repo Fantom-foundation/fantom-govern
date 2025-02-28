@@ -3,13 +3,13 @@ pragma solidity 0.8.27;
 
 import {Cancelable} from "./base/Cancelable.sol";
 import {DelegatecallExecutableProposal} from "./base/DelegatecallExecutableProposal.sol";
-import {ITransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /// @notice A proposal to upgrade a contract to a new implementation
 contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
     address public upgradeableContract;
     address public newImplementation;
-    bytes public data;
+    bytes public upgradeCallData;
 
     constructor(
         string memory name,
@@ -19,10 +19,10 @@ contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
         uint256 start,
         uint256 minEnd,
         uint256 maxEnd,
-        address upgradeableContract,
-        address newImplementation,
+        address _upgradeableContract,
+        address _newImplementation,
         address verifier,
-        bytes memory _data
+        bytes memory _upgradeCallData
     ) {
         _name = name;
         _description = description;
@@ -33,9 +33,9 @@ contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
         _start = start;
         _minEnd = minEnd;
         _maxEnd = maxEnd;
-        upgradeableContract = upgradeableContract;
-        newImplementation = newImplementation;
-        data = _data;
+        upgradeableContract = _upgradeableContract;
+        newImplementation = _newImplementation;
+        upgradeCallData = _upgradeCallData;
         // verify the proposal right away to avoid deploying a wrong proposal
         if (verifier != address(0)) {
             verifyProposalParams(verifier);
@@ -43,12 +43,13 @@ contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
     }
 
     function executeDelegateCall(address selfAddr, uint256) external override {
+        // this must be called like this as it runs in the context of the governance contract
         SoftwareUpgradeProposal self = SoftwareUpgradeProposal(selfAddr);
-        ITransparentUpgradeableProxy(
+        UUPSUpgradeable(
             self.upgradeableContract()
         ).upgradeToAndCall(
             self.newImplementation(),
-            self.data()
+            self.upgradeCallData()
         );
     }
 }

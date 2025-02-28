@@ -357,6 +357,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         if (!task.active) {
             return false;
         }
+
         handled = handleTaskAssignments(tasks[taskIdx].proposalID, task.assignment);
         if (handled) {
             task.active = false;
