@@ -11,41 +11,41 @@ contract SlashingRefundProposalFactory is ScopedVerifier {
     Governance internal gov;
     address internal sfcAddress;
 
-    error ValidatorNotSlashed(); // thrown when proposing un-slashed validator
+    error ValidatorNotSlashed(); // thrown when proposing not slashed validator
 
-    constructor(address _govAddress, address _sfcAddress) public {
-        gov = Governance(_govAddress);
+    constructor(address govAddress, address _sfcAddress) public {
+        gov = Governance(govAddress);
         sfcAddress = _sfcAddress;
     }
 
     /// @notice create a new SlashingRefundProposal
-    /// @param __validatorID The ID of the validator
-    /// @param __description The description of the proposal
-    /// @param __minVotes The minimum number of votes required
-    /// @param __minAgreement The minimum agreement required
-    /// @param __start The start time
-    /// @param __minEnd The minimum end time
-    /// @param __maxEnd The maximum end time
+    /// @param validatorID The ID of the validator
+    /// @param description The description of the proposal
+    /// @param minVotes The minimum number of votes required
+    /// @param minAgreement The minimum agreement required
+    /// @param start The start time
+    /// @param minEnd The minimum end time
+    /// @param maxEnd The maximum end time
     function create(
-        uint256 __validatorID,
-        string calldata __description,
-        uint256 __minVotes,
-        uint256 __minAgreement,
-        uint256 __start,
-        uint256 __minEnd,
-        uint256 __maxEnd
+        uint256 validatorID,
+        string calldata description,
+        uint256 minVotes,
+        uint256 minAgreement,
+        uint256 start,
+        uint256 minEnd,
+        uint256 maxEnd
     ) external payable {
-        if (!ISFC(sfcAddress).isSlashed(__validatorID)) {
+        if (!ISFC(sfcAddress).isSlashed(validatorID)) {
             revert ValidatorNotSlashed();
         }
         SlashingRefundProposal proposal = new SlashingRefundProposal(
-            __validatorID,
-            __description,
-            __minVotes,
-            __minAgreement,
-            __start,
-            __minEnd,
-        __maxEnd,
+            validatorID,
+            description,
+            minVotes,
+            minAgreement,
+            start,
+            minEnd,
+        maxEnd,
             sfcAddress,
             address(0)
         );
