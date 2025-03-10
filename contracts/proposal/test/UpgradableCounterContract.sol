@@ -5,13 +5,11 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 // @dev UpgradableContract serves as a mock for testing SoftwareUpgradeProposal
-contract UpgradableCounterContract is UUPSUpgradeable {
-    uint256 public counter;
-    function initialize() public initializer {
+contract UpgradableCounterContract is UUPSUpgradeable, OwnableUpgradeable {
+    function initialize(address govAddr) public initializer {
+        __Ownable_init(govAddr);
         __UUPSUpgradeable_init();
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override {
-        counter++;
-    }
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }
