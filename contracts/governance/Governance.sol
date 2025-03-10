@@ -280,7 +280,7 @@ contract Governance is ReentrancyGuardTransientUpgradeable, GovernanceSettings, 
         Vote storage v = _votes[voterAddr][delegatedTo][proposalID];
         Vote storage vSuper = _votes[delegatedTo][delegatedTo][proposalID];
         require(v.choices.length > 0, "doesn't exist");
-        require(isInitialStatus(proposals[proposalID].status), "proposal isn't active");
+        require(_proposals[proposalID].status == ProposalStatus.INITIAL, "proposal isn't active");
         uint256 beforeSelf = v.weight;
         uint256 beforeSuper = vSuper.weight;
         _recountVote(voterAddr, delegatedTo, proposalID);
