@@ -1438,7 +1438,7 @@ describe("Governance voting test", function () {
         await this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID3, choices);
     });
 
-    it("onVoted() should call recountVote if voter has voted too many times", async function () {
+    it("expired proposal releases vote from votesbook", async function () {
         // First proposal ends sooner
         const minEnd = 10;
         const maxEnd = 20;
