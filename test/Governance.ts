@@ -1437,6 +1437,37 @@ describe("Governance voting test", function () {
         await this.votebook.connect(this.defaultAcc).setMaxProposalsPerVoter(3);
         await this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID3, choices);
     });
+
+    it("expired proposal releases vote from votesbook", async function () {
+        // First proposal ends sooner
+        const minEnd = 10;
+        const maxEnd = 20;
+        await createProposal(this.gov, this.verifier, NonExecutableType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"), 0, minEnd, maxEnd);
+        const proposalID1 = await this.gov.lastProposalID();
+        await createProposal(this.gov, this.verifier, NonExecutableType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"));
+        const proposalID2 = await this.gov.lastProposalID();
+        await createProposal(this.gov, this.verifier, NonExecutableType, optionsNum, ethers.parseEther("0.5"), ethers.parseEther("0.6"));
+        const proposalID3 = await this.gov.lastProposalID();
+
+        // two votes for one address is maximum
+        await this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID1, choices);
+        await this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID2, choices);
+        // third should revert
+        await expect(this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID3, choices)).to.be.revertedWith("too many votes");
+        // proposal 3 should not be in votesbook
+        expect(await this.votebook.getProposalIDs(this.firstVoterAcc, this.delegatorAcc)).to.deep.equal([proposalID1, proposalID2]);
+        // Advance time to be over maxEnd - proposal didn't have enough votes
+        await time.increase(BigInt(maxEnd) + 10n);
+        // Handle tasks marks proposal as 'FAILED' after finding out the time is over
+        await this.gov.handleTasks(0, 10);
+        // vote now triggers recountVotes in votesbook and allows additional vote
+        await this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID3, choices);
+        // proposal 3 should not be in votesbook
+        expect(await this.votebook.getProposalIDs(this.firstVoterAcc, this.delegatorAcc)).to.deep.equal([proposalID2, proposalID3]);
+        expect(await this.votebook.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID1)).to.equal(0);
+        expect(await this.votebook.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID2)).to.equal(1);
+        expect(await this.votebook.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID3)).to.equal(2);
+    });
 });
 
 // createProposal deploys and proposes an 'ExecLoggingProposal' proposal with the given parameters,
