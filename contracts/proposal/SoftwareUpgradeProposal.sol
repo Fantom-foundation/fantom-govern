@@ -3,31 +3,39 @@ pragma solidity 0.8.27;
 
 import {Cancelable} from "./base/Cancelable.sol";
 import {DelegatecallExecutableProposal} from "./base/DelegatecallExecutableProposal.sol";
-
-/// @notice An interface to update this contract to a destination address
-interface Upgradability {
-    function upgradeTo(address newImplementation) external;
-}
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /// @notice A proposal to upgrade a contract to a new implementation
 contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
     address public upgradeableContract;
     address public newImplementation;
+    bytes public upgradeCallData;
 
-    constructor(string memory __name, string memory __description,
-        uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd,
-        address __upgradeableContract, address __newImplementation, address verifier) {
-        _name = __name;
-        _description = __description;
+    constructor(
+        string memory name,
+        string memory description,
+        uint256 minVotes,
+        uint256 minAgreement,
+        uint256 start,
+        uint256 minEnd,
+        uint256 maxEnd,
+        address _upgradeableContract,
+        address _newImplementation,
+        address verifier,
+        bytes memory _upgradeCallData
+    ) {
+        _name = name;
+        _description = description;
         _options.push(bytes32("Level of agreement"));
-        _minVotes = __minVotes;
-        _minAgreement = __minAgreement;
+        _minVotes = minVotes;
+        _minAgreement = minAgreement;
         _opinionScales = [0, 1, 2, 3, 4];
-        _start = __start;
-        _minEnd = __minEnd;
-        _maxEnd = __maxEnd;
-        upgradeableContract = __upgradeableContract;
-        newImplementation = __newImplementation;
+        _start = start;
+        _minEnd = minEnd;
+        _maxEnd = maxEnd;
+        upgradeableContract = _upgradeableContract;
+        newImplementation = _newImplementation;
+        upgradeCallData = _upgradeCallData;
         // verify the proposal right away to avoid deploying a wrong proposal
         if (verifier != address(0)) {
             verifyProposalParams(verifier);
@@ -35,7 +43,13 @@ contract SoftwareUpgradeProposal is DelegatecallExecutableProposal, Cancelable {
     }
 
     function executeDelegateCall(address selfAddr, uint256) external override {
+        // this must be called like this as it runs in the context of the governance contract
         SoftwareUpgradeProposal self = SoftwareUpgradeProposal(selfAddr);
-        Upgradability(self.upgradeableContract()).upgradeTo(self.newImplementation());
+        UUPSUpgradeable(
+            self.upgradeableContract()
+        ).upgradeToAndCall(
+            self.newImplementation(),
+            self.upgradeCallData()
+        );
     }
 }

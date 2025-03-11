@@ -1,9 +1,9 @@
 import {BigNumberish} from "ethers";
 
 import {expect} from "chai";
-import {ethers} from "hardhat";
+import {ethers, upgrades} from "hardhat";
 import {loadFixture, time} from "@nomicfoundation/hardhat-network-helpers";
-import {ExecLoggingProposal, Governance, ProposalTemplates} from "../typechain-types"
+import {ExecLoggingProposal, Governance, ProposalTemplates, UpgradableCounterContract} from "../typechain-types"
 import type {HardhatEthersSigner} from "@nomicfoundation/hardhat-ethers/src/signers";
 import {CallType, DelegateCallType, initConsts, NonExecutableType} from "./utils";
 import {min} from "hardhat/internal/util/bigint";
@@ -1467,6 +1467,67 @@ describe("Governance voting test", function () {
         expect(await this.votebook.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID1)).to.equal(0);
         expect(await this.votebook.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID2)).to.equal(1);
         expect(await this.votebook.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID3)).to.equal(2);
+    });
+});
+
+describe("Proposals test", function () {
+    beforeEach(async function (){
+        Object.assign(this, await loadFixture(governanceFixture));
+    });
+    it("SoftwareUpgradeProposal", async function () {
+        const upgradableProxy: UpgradableCounterContract = await upgrades.deployProxy(
+            await ethers.getContractFactory('UpgradableCounterContract'),
+            [await this.gov.getAddress()],
+            {kind: 'uups'}
+        );
+
+        // Register a template used by SoftwareUpgradeProposal
+        await this.verifier.addTemplate(
+            3, // pType
+            "templ", // name
+            ethers.ZeroAddress, // Verifier - zero address means no verification
+            DelegateCallType,
+            ethers.parseEther("0.5"), // minVotes
+            ethers.parseEther("0.6"), // minAgreement
+            [0, 1, 2, 3, 4], // Opinion scale
+            1, // minVote duration
+            2, // maxVote duration
+            0, // minStartDelay
+            100 // maxStartDelay
+        );
+
+        // Deploy new implementation
+        const newImplContract = await ethers.deployContract('UpgradableCounterContract');
+        await newImplContract.initialize(await this.gov.getAddress());
+
+        // Create a proposal to upgrade upgradableProxy to a new implementation
+        const proposalContract = await ethers.deployContract(
+            "SoftwareUpgradeProposal",
+            [
+                "upgrade", // name
+                "upgrade-descr", // description
+                ethers.parseEther("0.5"), // minVotes
+                ethers.parseEther("0.6"), // minAgreement
+                0, // startDelay
+                1, // minEnd
+                2, // maxEnd
+                upgradableProxy, // current upgradable contract
+                newImplContract, // new implementation
+                ethers.ZeroAddress, // Verifier - zero address means no verification
+                "0x" // upgrade calldata - 0x means no calldata
+            ]
+        );
+
+        await this.gov.createProposal(await proposalContract.getAddress(), {value: this.proposalFee});
+        const proposalIdOne = await this.gov.lastProposalID();
+        // Pass the voting
+        await this.sfc.stake(this.defaultAcc, ethers.parseEther("10.0"));
+        await this.gov.vote(this.defaultAcc, proposalIdOne, [4n]);
+        // Advance time to make sure the voting has ended
+        await time.increase(3);
+
+        // Handle tasks now calls delegateCall because the proposal won
+        await expect(this.gov.handleTasks(0, 1)).to.emit(upgradableProxy, "Upgraded").withArgs(newImplContract);
     });
 });
 
