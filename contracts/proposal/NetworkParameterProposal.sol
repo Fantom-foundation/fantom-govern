@@ -10,7 +10,7 @@ import {IConstants} from "../interfaces/IConstants.sol";
 /// @notice A proposal to update network parameters
 contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable {
     Proposal.ExecType internal _exec;
-    IConstants public updater;
+    IConstants public consts;
     uint8 public methodID;
     uint256[] public getOptionVal;
 
@@ -21,8 +21,12 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         string memory __description,
         uint8 __methodID,
         uint256[] memory __optionsVals,
-        address __networkParameterUpdater,
-        uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd,
+        address __consts,
+        uint256 __minVotes,
+        uint256 __minAgreement,
+        uint256 __start,
+        uint256 __minEnd,
+        uint256 __maxEnd,
         address verifier
     ) {
         if (__methodID < 1 || __methodID > 15) {
@@ -83,7 +87,7 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         _maxEnd = __maxEnd;
         getOptionVal = __optionsVals;
         _opinionScales = [0, 1, 2, 3, 4];
-        updater = IConstants(__networkParameterUpdater);
+        consts = IConstants(__consts);
         // verify the proposal right away to avoid deploying a wrong proposal
         if (verifier != address(0)) {
             verifyProposalParams(verifier);
@@ -109,35 +113,35 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         uint256 __methodID = self.methodID();
 
         if (__methodID == 1) {
-            self.updater().updateMinSelfStake(self.getOptionVal(winnerOptionID));
+            self.consts().updateMinSelfStake(self.getOptionVal(winnerOptionID));
         } else if (__methodID == 2) {
-            self.updater().updateMaxDelegatedRatio(self.getOptionVal(winnerOptionID));
+            self.consts().updateMaxDelegatedRatio(self.getOptionVal(winnerOptionID));
         } else if (__methodID == 3) {
-            self.updater().updateValidatorCommission(self.getOptionVal(winnerOptionID));
+            self.consts().updateValidatorCommission(self.getOptionVal(winnerOptionID));
         } else if (__methodID == 4) {
-            self.updater().updateBurntFeeShare(self.getOptionVal(winnerOptionID));
+            self.consts().updateBurntFeeShare(self.getOptionVal(winnerOptionID));
         } else if (__methodID == 5) {
-            self.updater().updateTreasuryFeeShare(self.getOptionVal(winnerOptionID));
+            self.consts().updateTreasuryFeeShare(self.getOptionVal(winnerOptionID));
         } else if (__methodID == 6) {
-            self.updater().updateUnlockedRewardRatio(self.getOptionVal(winnerOptionID));
+            self.consts().updateUnlockedRewardRatio(self.getOptionVal(winnerOptionID));
         } else if (__methodID == 7) {
-            self.updater().updateMinLockupDuration(self.getOptionVal(winnerOptionID));
+            self.consts().updateMinLockupDuration(self.getOptionVal(winnerOptionID));
         } else if (__methodID == 8) {
-            self.updater().updateMaxLockupDuration(self.getOptionVal(winnerOptionID));
+            self.consts().updateMaxLockupDuration(self.getOptionVal(winnerOptionID));
         } else if (__methodID == 9) {
-            self.updater().updateWithdrawalPeriodEpochs(self.getOptionVal(winnerOptionID));
+            self.consts().updateWithdrawalPeriodEpochs(self.getOptionVal(winnerOptionID));
         } else if (__methodID == 10) {
-            self.updater().updateWithdrawalPeriodTime(self.getOptionVal(winnerOptionID));
+            self.consts().updateWithdrawalPeriodTime(self.getOptionVal(winnerOptionID));
         } else if (__methodID == 11) {
-            self.updater().updateBaseRewardPerSecond(self.getOptionVal(winnerOptionID));
+            self.consts().updateBaseRewardPerSecond(self.getOptionVal(winnerOptionID));
         } else if (__methodID == 12) {
-            self.updater().updateOfflinePenaltyThresholdTime(self.getOptionVal(winnerOptionID));
+            self.consts().updateOfflinePenaltyThresholdTime(self.getOptionVal(winnerOptionID));
         } else if (__methodID == 13) {
-            self.updater().updateOfflinePenaltyThresholdBlocksNum(self.getOptionVal(winnerOptionID));
+            self.consts().updateOfflinePenaltyThresholdBlocksNum(self.getOptionVal(winnerOptionID));
         } else if (__methodID == 14) {
-            self.updater().updateTargetGasPowerPerSecond(self.getOptionVal(winnerOptionID));
+            self.consts().updateTargetGasPowerPerSecond(self.getOptionVal(winnerOptionID));
         } else {
-            self.updater().updateGasPriceBalancingCounterweight(self.getOptionVal(winnerOptionID));
+            self.consts().updateGasPriceBalancingCounterweight(self.getOptionVal(winnerOptionID));
         }
 
         emit NetworkParameterUpgradeIsDone(self.getOptionVal(winnerOptionID));
