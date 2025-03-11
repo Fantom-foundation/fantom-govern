@@ -1480,39 +1480,41 @@ describe("Proposals test", function () {
             [await this.gov.getAddress()],
             {kind: 'uups'}
         );
+
+        // Register a template used by SoftwareUpgradeProposal
         await this.verifier.addTemplate(
-            3,
-            "templ",
-            ethers.ZeroAddress,
+            3, // pType
+            "templ", // name
+            ethers.ZeroAddress, // Verifier - zero address means no verification
             DelegateCallType,
-            ethers.parseEther("0.5"),
-            ethers.parseEther("0.6"),
-            [0, 1, 2, 3, 4],
-            1,
-            2,
-            0,
-            100
+            ethers.parseEther("0.5"), // minVotes
+            ethers.parseEther("0.6"), // minAgreement
+            [0, 1, 2, 3, 4], // Opinion scale
+            1, // minVote duration
+            2, // maxVote duration
+            0, // minStartDelay
+            100 // maxStartDelay
         );
 
         // Deploy new implementation
         const newImplContract = await ethers.deployContract('UpgradableCounterContract');
         await newImplContract.initialize(await this.gov.getAddress());
 
-        // Create the proposal with the current implementation (proxy) and the new implementation as the proposed one
+        // Create a proposal to upgrade upgradableProxy to a new implementation
         const proposalContract = await ethers.deployContract(
             "SoftwareUpgradeProposal",
             [
-                "upgrade",
-                "upgrade-descr",
-                ethers.parseEther("0.5"),
-                ethers.parseEther("0.6"),
-                0,
-                1,
-                2,
-                upgradableProxy,
-                newImplContract,
-                ethers.ZeroAddress,
-                "0x"
+                "upgrade", // name
+                "upgrade-descr", // description
+                ethers.parseEther("0.5"), // minVotes
+                ethers.parseEther("0.6"), // minAgreement
+                0, // startDelay
+                1, // minEnd
+                2, // maxEnd
+                upgradableProxy, // current upgradable contract
+                newImplContract, // new implementation
+                ethers.ZeroAddress, // Verifier - zero address means no verification
+                "0x" // upgrade calldata - 0x means no calldata
             ]
         );
 
