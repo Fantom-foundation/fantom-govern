@@ -5,43 +5,12 @@ import {Cancelable} from "./base/Cancelable.sol";
 import {DelegatecallExecutableProposal} from "./base/DelegatecallExecutableProposal.sol";
 import {Proposal} from "../governance/Proposal.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-
-interface ConstsI {
-    function updateMinSelfStake(uint256 v) external;
-
-    function updateMaxDelegatedRatio(uint256 v) external;
-
-    function updateValidatorCommission(uint256 v) external;
-
-    function updateBurntFeeShare(uint256 v) external; // 4
-
-    function updateTreasuryFeeShare(uint256 v) external;
-
-    function updateUnlockedRewardRatio(uint256 v) external;
-
-    function updateMinLockupDuration(uint256 v) external;
-
-    function updateMaxLockupDuration(uint256 v) external; // 8
-
-    function updateWithdrawalPeriodEpochs(uint256 v) external;
-
-    function updateWithdrawalPeriodTime(uint256 v) external;
-
-    function updateBaseRewardPerSecond(uint256 v) external;
-
-    function updateOfflinePenaltyThresholdTime(uint256 v) external; // 12
-
-    function updateOfflinePenaltyThresholdBlocksNum(uint256 v) external;
-
-    function updateTargetGasPowerPerSecond(uint256 v) external;
-
-    function updateGasPriceBalancingCounterweight(uint256 v) external; // 15
-}
+import {IConstants} from "../interfaces/IConstants.sol";
 
 /// @notice A proposal to update network parameters
 contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable {
     Proposal.ExecType internal _exec;
-    ConstsI public consts;
+    IConstants public consts;
     uint8 public methodID;
     uint256[] public getOptionVal;
 
@@ -53,7 +22,11 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         uint8 __methodID,
         uint256[] memory __optionsVals,
         address __consts,
-        uint256 __minVotes, uint256 __minAgreement, uint256 __start, uint256 __minEnd, uint256 __maxEnd,
+        uint256 __minVotes,
+        uint256 __minAgreement,
+        uint256 __start,
+        uint256 __minEnd,
+        uint256 __maxEnd,
         address verifier
     ) {
         if (__methodID < 1 || __methodID > 15) {
@@ -114,7 +87,7 @@ contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable 
         _maxEnd = __maxEnd;
         getOptionVal = __optionsVals;
         _opinionScales = [0, 1, 2, 3, 4];
-        consts = ConstsI(__consts);
+        consts = IConstants(__consts);
         // verify the proposal right away to avoid deploying a wrong proposal
         if (verifier != address(0)) {
             verifyProposalParams(verifier);
