@@ -5,12 +5,12 @@ import {Cancelable} from "./base/Cancelable.sol";
 import {DelegatecallExecutableProposal} from "./base/DelegatecallExecutableProposal.sol";
 import {Proposal} from "../governance/Proposal.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {INetworkParametersUpdater} from "../interfaces/INetworkParameterUpdater.sol";
+import {IConstants} from "../interfaces/IConstants.sol";
 
 /// @notice A proposal to update network parameters
 contract NetworkParameterProposal is DelegatecallExecutableProposal, Cancelable {
     Proposal.ExecType internal _exec;
-    INetworkParametersUpdater public updater;
+    IConstants public updater;
     uint8 public methodID;
     uint256[] public getOptionVal;
 
