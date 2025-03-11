@@ -10,7 +10,7 @@ const proposalFactoryFixture = async function () {
     await verifier.initialize(acc1);
     const gov = await ethers.deployContract("Governance");
     // Governable and VoteBook are not necessary for this test
-    await gov.initialize(ethers.ZeroAddress, await verifier.getAddress(), ethers.ZeroAddress)
+    await gov.initialize(ethers.ZeroAddress, await verifier.getAddress(), 1000, ethers.ZeroAddress)
     return {gov, verifier, acc1, acc2}
 }
 

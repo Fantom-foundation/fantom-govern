@@ -59,6 +59,15 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     // voter => delegationReceiver => proposalID => Vote
     mapping(address => mapping(address => mapping(uint256 => Vote))) internal _votes;
 
+    // Votesbook
+    // Maximum number of proposals a voter can vote on
+    uint256 public maxProposalsPerVoter;
+    // voter => delegatedTo => []proposal IDs
+    mapping(address voted => mapping(address delegatedTo => uint256[] proposalIDs)) public votesList;
+    // Index of vote position in votesList
+    // voter => delegatedTo => proposal ID => {index in the list + 1}
+    mapping(address voter => mapping(address delegatedTo => mapping(uint256 proposalID => uint256 idx))) public votesIndex;
+
     VotesBookKeeper public votebook;
 
     /// @notice Emitted when a new proposal is created.
@@ -119,11 +128,41 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @param _governableContract The address of the governable contract.
     /// @param _proposalVerifier The address of the proposal verifier.
     /// @param _votebook The address of the votebook contract.
-    function initialize(address _governableContract, address _proposalVerifier, address _votebook) public initializer {
+    function initialize(
+        address _governableContract,
+        address _proposalVerifier,
+        uint256 _maxProposalsPerVoter,
+        address _votebook
+    ) public initializer {
         governableContract = IGovernable(_governableContract);
         proposalVerifier = IProposalVerifier(_proposalVerifier);
+        maxProposalsPerVoter = _maxProposalsPerVoter;
         votebook = VotesBookKeeper(_votebook);
     }
+
+    /// @notice Get proposals for which the voter voted
+    /// @param voter The address of the voter
+    /// @param delegatedTo The address of the delegator which the voter has delegated their stake to
+    /// @return An array of proposal IDs
+    function getProposalIDs(address voter, address delegatedTo) public view returns (uint256[] memory) {
+        return votesList[voter][delegatedTo];
+    }
+
+    /// @notice Get position of a proposal in the list of voter's votes.
+    /// @param voter The address of the voter
+    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
+    /// @param proposalID The ID of the proposal
+    /// @return The index of the proposal in votesList plus 1 if the vote exists, otherwise 0
+    function getVoteIndex(address voter, address delegatedTo, uint256 proposalID) public view returns (uint256) {
+        return votesIndex[voter][delegatedTo][proposalID];
+    }
+
+    /// @notice Set the maximum number of proposals a voter can vote on
+    /// @param _maxProposalsPerVoter The new maximum number of proposals
+    function setMaxProposalsPerVoter(uint256 _maxProposalsPerVoter) onlyOwner external {
+        maxProposalsPerVoter = _maxProposalsPerVoter;
+    }
+
 
     /// @notice Get the proposal params of a given proposal.
     /// @param proposalID The ID of the proposal.
@@ -348,6 +387,32 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         require(success, "transfer failed");
     }
 
+
+
+
+    /// @dev Remove a vote from the list of votes
+    /// @param voter The address of the voter
+    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
+    /// @param proposalID The ID of the proposal
+    function _removeVoteFromVotesList(address voter, address delegatedTo, uint256 proposalID) internal {
+        uint256 idx = votesIndex[voter][delegatedTo][proposalID];
+        if (idx == 0) {
+            return;
+        }
+        votesIndex[voter][delegatedTo][proposalID] = 0;
+        uint256[] storage list = votesList[voter][delegatedTo];
+        uint256 len = list.length;
+        if (len == idx) {
+            // last element
+            list.pop();
+        } else {
+            uint256 last = list[len - 1];
+            list[idx - 1] = last;
+            list.pop();
+            votesIndex[voter][delegatedTo][last] = idx;
+        }
+    }
+
     /// @dev Handle a single specific task.
     /// @param taskIdx The index of the task.
     /// @return handled Whether the task was handled.
@@ -501,24 +566,26 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @dev Emits VoteCanceled event.
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     /// @param proposalID The ID of the proposal.
-    function _cancelVote(address voter, address delegatedTo, uint256 proposalID) internal {
+    function _cancelVote(address voter, address delegatedTo, uint256 proposalID) internal returns (bool) {
         Vote storage v = _votes[voter][delegatedTo][proposalID];
         if (v.weight == 0) {
-            return;
+            return false;
         }
 
         if (voter != delegatedTo) {
             unOverrideDelegationWeight(delegatedTo, proposalID, v.weight);
         }
-
         removeChoicesFromProp(proposalID, v.choices, v.weight);
         delete _votes[voter][delegatedTo][proposalID];
+
+        _removeVoteFromVotesList(voter, delegatedTo, proposalID);
 
         if (address(votebook) != address(0)) {
             votebook.onVoteCanceled(voter, delegatedTo, proposalID);
         }
 
         emit VoteCanceled(voter, delegatedTo, proposalID);
+        return true;
     }
 
     /// @dev Cast a vote for a proposal.
@@ -534,7 +601,38 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
         if (address(votebook) != address(0)) {
             votebook.onVoted(voter, delegatedTo, proposalID);
         }
+
+        uint256 idx = votesIndex[voter][delegatedTo][proposalID];
+        if (idx > 0) {
+            return;
+        }
+
+
+        // todo finish recount votes
+        if (votesList[voter][delegatedTo].length >= maxProposalsPerVoter) {
+            // erase votes for outdated proposals
+            _removeInactiveProposalsFromVotesList(voter, delegatedTo);
+        }
+        votesList[voter][delegatedTo].push(proposalID);
+        idx = votesList[voter][delegatedTo].length;
+        require(idx <= maxProposalsPerVoter, "too many votes");
+        votesIndex[voter][delegatedTo][proposalID] = idx;
         emit Voted(voter, delegatedTo, proposalID, choices, weight);
+    }
+
+    /// @dev Removes inactive proposals from votesList for given pair of voter and delegator.
+    /// @param voter The address of the voter.
+    /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
+    function _removeInactiveProposalsFromVotesList(address voter, address delegatedTo) internal {
+        uint256[] storage list = votesList[voter][delegatedTo];
+        for (uint256 i = 0; i < list.length; i++) {
+            uint256 proposalID = list[i];
+            (,, ProposalStatus status) = proposalState(proposalID);
+            if (status != ProposalStatus.INITIAL) {
+                // remove inactive proposal from the list
+                _removeVoteFromVotesList(voter, delegatedTo, proposalID);
+            }
+        }
     }
 
     /// @dev Process a new vote for a proposal.
@@ -581,7 +679,7 @@ contract Governance is Initializable, ReentrancyGuardTransient, GovernanceSettin
     /// @param voterAddr The address of the voter.
     /// @param delegatedTo The address of the delegator which the sender has delegated their stake to.
     /// @param proposalID The ID of the proposal.
-    function recountVote(address voterAddr, address delegatedTo, uint256 proposalID) external nonReentrant {
+    function recountVote(address voterAddr, address delegatedTo, uint256 proposalID) nonReentrant external {
         Vote storage v = _votes[voterAddr][delegatedTo][proposalID];
         Vote storage vSuper = _votes[delegatedTo][delegatedTo][proposalID];
         require(v.choices.length > 0, "doesn't exist");

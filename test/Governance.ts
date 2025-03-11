@@ -30,8 +30,9 @@ const governanceFixture = async function () {
     const votebook = await ethers.deployContract("VotesBookKeeper");
     const gov = await ethers.deployContract("Governance");
     await verifier.initialize(defaultAcc.getAddress());
-    await votebook.initialize(defaultAcc.getAddress(), gov.getAddress(), 1000);
-    await gov.initialize(govable.getAddress(), verifierAddress, votebook.getAddress());
+    const maxProposalsPerVoter = 1000;
+    await votebook.initialize(defaultAcc.getAddress(), gov.getAddress(), maxProposalsPerVoter);
+    await gov.initialize(govable.getAddress(), verifierAddress, maxProposalsPerVoter, votebook.getAddress());
     const proposalFee = await gov.proposalFee();
 
     return {
@@ -1321,8 +1322,9 @@ describe("Governance voting test", function () {
         const votebook = await ethers.deployContract("VotesBookKeeper");
         const gov = await ethers.deployContract("Governance");
         await verifier.initialize(defaultAcc.getAddress());
-        await votebook.initialize(defaultAcc.getAddress(), gov.getAddress(), 2);
-        await gov.initialize(govable.getAddress(), verifierAddress, votebook.getAddress());
+        const maxProposalsPerVoter = 2;
+        await votebook.initialize(defaultAcc.getAddress(), gov.getAddress(), maxProposalsPerVoter);
+        await gov.initialize(govable.getAddress(), verifierAddress, maxProposalsPerVoter, votebook.getAddress());
         const proposalFee = await gov.proposalFee();
         // Stake two accounts and delegate it to delegatorAcc
         await sfc.connect(firstVoterAcc).stake(delegatorAcc, ethers.parseEther("1.0"));
@@ -1368,6 +1370,16 @@ describe("Governance voting test", function () {
         expect(await this.votebook.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID2)).to.equal(0);
         expect(await this.votebook.getVoteIndex(this.secondVoterAcc, this.delegatorAcc, proposalID2)).to.equal(1);
         expect(await this.votebook.getVoteIndex(this.secondVoterAcc, this.delegatorAcc, proposalID1)).to.equal(0);
+
+        // Check govs votesList
+        expect(await this.gov.getProposalIDs(this.firstVoterAcc, this.delegatorAcc)).to.deep.equal([proposalID1]);
+        expect(await this.gov.getProposalIDs(this.secondVoterAcc, this.delegatorAcc)).to.deep.equal([proposalID2]);
+
+        // check govs voteIndex
+        expect(await this.gov.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID1)).to.equal(1);
+        expect(await this.gov.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID2)).to.equal(0);
+        expect(await this.gov.getVoteIndex(this.secondVoterAcc, this.delegatorAcc, proposalID2)).to.equal(1);
+        expect(await this.gov.getVoteIndex(this.secondVoterAcc, this.delegatorAcc, proposalID1)).to.equal(0);
     });
 
     it("vote() should revert when received too many votes from one voter", async function () {
@@ -1395,13 +1407,21 @@ describe("Governance voting test", function () {
         // make votes
         await this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID1, choices);
         await this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID2, choices);
+
         // is it recorded in votesbook?
         expect(await this.votebook.getProposalIDs(this.firstVoterAcc, this.delegatorAcc)).to.deep.equal([proposalID1, proposalID2]);
+        // is it recorded in govs voteslist?
+        expect(await this.gov.getProposalIDs(this.firstVoterAcc, this.delegatorAcc)).to.deep.equal([proposalID1, proposalID2]);
+
         // cancel it
         await this.gov.connect(this.firstVoterAcc).cancelVote(this.delegatorAcc, proposalID1);
+
         // proposal 1 should not be in votesbook
         expect(await this.votebook.getProposalIDs(this.firstVoterAcc, this.delegatorAcc)).to.deep.equal([proposalID2]);
         expect(await this.votebook.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID1)).to.equal(0);
+        // proposal 1 should not be in govs voteslist
+        expect(await this.gov.getProposalIDs(this.firstVoterAcc, this.delegatorAcc)).to.deep.equal([proposalID2]);
+        expect(await this.gov.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID1)).to.equal(0);
     });
 
     it("recountVotes() ", async function () {
@@ -1410,13 +1430,22 @@ describe("Governance voting test", function () {
 
         // make a vote
         await this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID, choices);
+
         // is it recorded in votesbook?
         expect(await this.votebook.getProposalIDs(this.firstVoterAcc, this.delegatorAcc)).to.deep.equal([proposalID]);
+        // is it recorded in govs voteslist?
+        expect(await this.gov.getProposalIDs(this.firstVoterAcc, this.delegatorAcc)).to.deep.equal([proposalID]);
+
         // cancel it
         await this.gov.connect(this.firstVoterAcc).cancelVote(this.delegatorAcc, proposalID);
+
         // nothing should be in votesbook
         expect(await this.votebook.getProposalIDs(this.firstVoterAcc, this.delegatorAcc)).to.deep.equal([]);
         expect(await this.votebook.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID)).to.equal(0);
+
+        // nothing should be in govs voteslist
+        expect(await this.gov.getProposalIDs(this.firstVoterAcc, this.delegatorAcc)).to.deep.equal([]);
+        expect(await this.gov.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID)).to.equal(0);
     });
 
     it("votescap should be changeable", async function () {
@@ -1435,6 +1464,7 @@ describe("Governance voting test", function () {
         await expect(this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID3, choices)).to.be.revertedWith("too many votes");
 
         await this.votebook.connect(this.defaultAcc).setMaxProposalsPerVoter(3);
+        await this.gov.connect(this.defaultAcc).setMaxProposalsPerVoter(3);
         await this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID3, choices);
     });
 
@@ -1452,21 +1482,32 @@ describe("Governance voting test", function () {
         // two votes for one address is maximum
         await this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID1, choices);
         await this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID2, choices);
+
         // third should revert
         await expect(this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID3, choices)).to.be.revertedWith("too many votes");
+
         // proposal 3 should not be in votesbook
         expect(await this.votebook.getProposalIDs(this.firstVoterAcc, this.delegatorAcc)).to.deep.equal([proposalID1, proposalID2]);
+        // proposal 3 should not be in govs votesList
+        expect(await this.gov.getProposalIDs(this.firstVoterAcc, this.delegatorAcc)).to.deep.equal([proposalID1, proposalID2]);
+
         // Advance time to be over maxEnd - proposal didn't have enough votes
         await time.increase(BigInt(maxEnd) + 10n);
         // Handle tasks marks proposal as 'FAILED' after finding out the time is over
         await this.gov.handleTasks(0, 10);
         // vote now triggers recountVotes in votesbook and allows additional vote
         await this.gov.connect(this.firstVoterAcc).vote(this.delegatorAcc, proposalID3, choices);
+
         // proposal 3 should not be in votesbook
         expect(await this.votebook.getProposalIDs(this.firstVoterAcc, this.delegatorAcc)).to.deep.equal([proposalID2, proposalID3]);
         expect(await this.votebook.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID1)).to.equal(0);
         expect(await this.votebook.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID2)).to.equal(1);
         expect(await this.votebook.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID3)).to.equal(2);
+        // proposal 3 should not be in govs votesBook
+        expect(await this.gov.getProposalIDs(this.firstVoterAcc, this.delegatorAcc)).to.deep.equal([proposalID2, proposalID3]);
+        expect(await this.gov.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID1)).to.equal(0);
+        expect(await this.gov.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID2)).to.equal(1);
+        expect(await this.gov.getVoteIndex(this.firstVoterAcc, this.delegatorAcc, proposalID3)).to.equal(2);
     });
 });
 
