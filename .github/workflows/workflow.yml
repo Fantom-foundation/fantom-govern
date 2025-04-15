@@ -1,4 +1,4 @@
-  name: Typescript
+  name: Workflows
   on:
     push:
       branches: [ "master" ]
@@ -17,9 +17,6 @@
             node-version: 23.7.0
             cache: npm
 
-        - name: Install Hardhat
-          run: npm install --save-dev hardhat@2.22.17
-
         - name: Install Dependencies
           run: npm install
 
@@ -29,8 +26,5 @@
         - name: Run Hardhat Test
           run: npx hardhat test --typecheck
 
-        - name: Install Solhint
-          run: npm install -g solhint
-
-        - name: Run Lint
-          run: solhint 'contracts/**/*.sol'
+        - name: Run Solhint
+          run: npm install -g solhint && solhint 'contracts/**/*.sol'
