@@ -1,0 +1,10 @@
+{
+  "GovernanceModule": {
+    "owner": "0x",
+    "maxProposalsPerVoter": 4,
+    "sfcContract": "0xfc00face00000000000000000000000000000000"
+  },
+  "ProposalTemplatesProxyModule": {
+    "owner": "0x"
+  }
+}
